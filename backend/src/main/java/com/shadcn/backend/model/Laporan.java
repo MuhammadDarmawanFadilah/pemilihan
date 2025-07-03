@@ -41,21 +41,11 @@ public class Laporan {
     private String deskripsi;
     
     @Column(nullable = false)
-    @NotBlank(message = "Nama pelapor tidak boleh kosong")
-    @Size(max = 100)
-    private String namaPelapor;
-    
-    @Column(nullable = false)
-    @NotBlank(message = "Alamat pelapor tidak boleh kosong")
-    @Size(max = 500)
-    private String alamatPelapor;
-    
-    @Column(nullable = false)
     private Long userId; // ID user yang membuat laporan
     
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private StatusLaporan status = StatusLaporan.DRAFT;
+    private StatusLaporan status = StatusLaporan.AKTIF;
     
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
@@ -73,10 +63,9 @@ public class Laporan {
     private List<DetailLaporan> detailLaporanList = new ArrayList<>();
     
     public enum StatusLaporan {
-        DRAFT,
-        DALAM_PROSES,
-        SELESAI,
-        DITOLAK
+        AKTIF,
+        TIDAK_AKTIF,
+        DRAFT
     }
     
     @PreUpdate

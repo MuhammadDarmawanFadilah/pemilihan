@@ -21,6 +21,8 @@ public class LaporanWizardDto {
     
     private String deskripsi;
     
+    private String status; // Status laporan: AKTIF, TIDAK_AKTIF, DRAFT
+    
     @NotEmpty(message = "Minimal satu jenis laporan harus dipilih")
     private List<Long> jenisLaporanIds;
     

@@ -44,11 +44,21 @@ public class LaporanService {
         
         Pageable pageable = PageRequest.of(filterRequest.getPage(), filterRequest.getSize(), sort);
         
+        // Convert status string to enum
+        Laporan.StatusLaporan statusEnum = null;
+        if (filterRequest.getStatus() != null && !filterRequest.getStatus().trim().isEmpty()) {
+            try {
+                statusEnum = Laporan.StatusLaporan.valueOf(filterRequest.getStatus().toUpperCase());
+            } catch (IllegalArgumentException e) {
+                // Invalid status, ignore the filter
+                statusEnum = null;
+            }
+        }
+        
         Page<Laporan> laporanPage = laporanRepository.findWithFilters(
             filterRequest.getNamaLaporan(),
-            filterRequest.getNamaPelapor(),
             filterRequest.getJenisLaporanId(),
-            filterRequest.getStatus(),
+            statusEnum,
             filterRequest.getUserId(),
             pageable
         );
@@ -130,7 +140,9 @@ public class LaporanService {
         laporan.setDeskripsi(wizardDto.getDeskripsi());
         laporan.setJenisLaporan(primaryJenisLaporan);
         laporan.setUserId(wizardDto.getUserId());
-        laporan.setStatus(Laporan.StatusLaporan.DRAFT);
+        laporan.setStatus(wizardDto.getStatus() != null ? 
+                         Laporan.StatusLaporan.valueOf(wizardDto.getStatus().toUpperCase()) : 
+                         Laporan.StatusLaporan.AKTIF);
         laporan.setCreatedAt(LocalDateTime.now());
         laporan.setUpdatedAt(LocalDateTime.now());
         
@@ -168,12 +180,73 @@ public class LaporanService {
         
         existingLaporan.setNamaLaporan(laporanDto.getNamaLaporan());
         existingLaporan.setDeskripsi(laporanDto.getDeskripsi());
-        existingLaporan.setNamaPelapor(laporanDto.getNamaPelapor());
-        existingLaporan.setAlamatPelapor(laporanDto.getAlamatPelapor());
-        existingLaporan.setStatus(laporanDto.getStatus());
+        
+        // Convert string status to enum
+        if (laporanDto.getStatus() != null) {
+            existingLaporan.setStatus(Laporan.StatusLaporan.valueOf(laporanDto.getStatus().toUpperCase()));
+        }
+        
         existingLaporan.setUpdatedAt(LocalDateTime.now());
         
         Laporan savedLaporan = laporanRepository.save(existingLaporan);
+        return convertToDto(savedLaporan);
+    }
+    
+    // Update laporan dengan wizard (support multiple jenis laporan)
+    @Transactional
+    public LaporanDto updateLaporanWizard(Long id, LaporanWizardDto wizardDto, Long userId) {
+        // Get existing laporan
+        Laporan existingLaporan = laporanRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Laporan tidak ditemukan"));
+        
+        // Check authorization
+        if (!existingLaporan.getUserId().equals(userId)) {
+            throw new SecurityException("Anda tidak memiliki akses untuk mengedit laporan ini");
+        }
+        
+        // Validasi jenis laporan
+        List<JenisLaporan> jenisLaporanList = jenisLaporanRepository.findAllById(wizardDto.getJenisLaporanIds());
+        if (jenisLaporanList.size() != wizardDto.getJenisLaporanIds().size()) {
+            throw new RuntimeException("Beberapa jenis laporan tidak ditemukan");
+        }
+        
+        // Update laporan utama
+        existingLaporan.setNamaLaporan(wizardDto.getNamaLaporan());
+        existingLaporan.setDeskripsi(wizardDto.getDeskripsi());
+        
+        // Set primary jenis laporan (first one in the list)
+        JenisLaporan primaryJenisLaporan = jenisLaporanList.get(0);
+        existingLaporan.setJenisLaporan(primaryJenisLaporan);
+        
+        // Convert string status to enum
+        if (wizardDto.getStatus() != null) {
+            existingLaporan.setStatus(Laporan.StatusLaporan.valueOf(wizardDto.getStatus().toUpperCase()));
+        }
+        
+        existingLaporan.setUpdatedAt(LocalDateTime.now());
+        
+        Laporan savedLaporan = laporanRepository.save(existingLaporan);
+        
+        // Delete existing detail laporan to recreate them
+        List<DetailLaporan> existingDetails = detailLaporanRepository.findByLaporanLaporanIdOrderByTahapanLaporanUrutanTahapanAsc(id);
+        detailLaporanRepository.deleteAll(existingDetails);
+        
+        // Create new detail laporan untuk semua jenis laporan yang dipilih
+        for (JenisLaporan jenisLaporan : jenisLaporanList) {
+            List<TahapanLaporan> tahapanList = tahapanLaporanRepository
+                    .findActiveTahapanByJenisLaporan(jenisLaporan.getJenisLaporanId());
+            
+            for (TahapanLaporan tahapan : tahapanList) {
+                DetailLaporan detail = new DetailLaporan();
+                detail.setLaporan(savedLaporan);
+                detail.setTahapanLaporan(tahapan);
+                detail.setStatus(DetailLaporan.StatusDetailLaporan.BELUM_DIKERJAKAN);
+                detail.setCreatedAt(LocalDateTime.now());
+                detail.setUpdatedAt(LocalDateTime.now());
+                detailLaporanRepository.save(detail);
+            }
+        }
+        
         return convertToDto(savedLaporan);
     }
     
@@ -188,6 +261,19 @@ public class LaporanService {
         
         Laporan savedLaporan = laporanRepository.save(laporan);
         return convertToDto(savedLaporan);
+    }
+    
+    // Get all jenis laporan IDs associated with a laporan
+    public List<Long> getAssociatedJenisLaporanIds(Long laporanId) {
+        // Get all detail laporan for this laporan
+        List<DetailLaporan> detailList = detailLaporanRepository
+                .findByLaporanLaporanIdOrderByTahapanLaporanUrutanTahapanAsc(laporanId);
+        
+        // Extract unique jenis laporan IDs from tahapan
+        return detailList.stream()
+                .map(detail -> detail.getTahapanLaporan().getJenisLaporan().getJenisLaporanId())
+                .distinct()
+                .collect(Collectors.toList());
     }
     
     // Delete laporan
@@ -242,7 +328,7 @@ public class LaporanService {
         // Check if all tahapan completed and update laporan status
         boolean allCompleted = detailLaporanRepository.isAllTahapanCompleted(detail.getLaporan().getLaporanId());
         if (allCompleted) {
-            updateLaporanStatus(detail.getLaporan().getLaporanId(), Laporan.StatusLaporan.SELESAI);
+            updateLaporanStatus(detail.getLaporan().getLaporanId(), Laporan.StatusLaporan.AKTIF);
         }
         
         return convertDetailToDto(savedDetail);
@@ -291,12 +377,11 @@ public class LaporanService {
             return new LaporanStats(
                 ((Number) row[0]).longValue(), // total
                 ((Number) row[1]).longValue(), // draft
-                ((Number) row[2]).longValue(), // dalam proses
-                ((Number) row[3]).longValue(), // selesai
-                ((Number) row[4]).longValue()  // ditolak
+                ((Number) row[2]).longValue(), // aktif
+                ((Number) row[3]).longValue()  // tidak aktif
             );
         }
-        return new LaporanStats(0, 0, 0, 0, 0);
+        return new LaporanStats(0, 0, 0, 0);
     }
     
     // Helper methods
@@ -336,10 +421,8 @@ public class LaporanService {
         dto.setLaporanId(laporan.getLaporanId());
         dto.setNamaLaporan(laporan.getNamaLaporan());
         dto.setDeskripsi(laporan.getDeskripsi());
-        dto.setNamaPelapor(laporan.getNamaPelapor());
-        dto.setAlamatPelapor(laporan.getAlamatPelapor());
         dto.setUserId(laporan.getUserId());
-        dto.setStatus(laporan.getStatus());
+        dto.setStatus(laporan.getStatus().name());
         dto.setCreatedAt(laporan.getCreatedAt());
         dto.setUpdatedAt(laporan.getUpdatedAt());
         dto.setJenisLaporanId(laporan.getJenisLaporan().getJenisLaporanId());
@@ -457,10 +540,10 @@ public class LaporanService {
         entity.setLaporanId(dto.getLaporanId());
         entity.setNamaLaporan(dto.getNamaLaporan());
         entity.setDeskripsi(dto.getDeskripsi());
-        entity.setNamaPelapor(dto.getNamaPelapor());
-        entity.setAlamatPelapor(dto.getAlamatPelapor());
         entity.setUserId(dto.getUserId());
-        entity.setStatus(dto.getStatus() != null ? dto.getStatus() : Laporan.StatusLaporan.DRAFT);
+        entity.setStatus(dto.getStatus() != null ? 
+                        Laporan.StatusLaporan.valueOf(dto.getStatus().toUpperCase()) : 
+                        Laporan.StatusLaporan.DRAFT);
         return entity;
     }
     
@@ -475,22 +558,19 @@ public class LaporanService {
     public static class LaporanStats {
         private final long total;
         private final long draft;
-        private final long dalamProses;
-        private final long selesai;
-        private final long ditolak;
+        private final long aktif;
+        private final long tidakAktif;
         
-        public LaporanStats(long total, long draft, long dalamProses, long selesai, long ditolak) {
+        public LaporanStats(long total, long draft, long aktif, long tidakAktif) {
             this.total = total;
             this.draft = draft;
-            this.dalamProses = dalamProses;
-            this.selesai = selesai;
-            this.ditolak = ditolak;
+            this.aktif = aktif;
+            this.tidakAktif = tidakAktif;
         }
         
         public long getTotal() { return total; }
         public long getDraft() { return draft; }
-        public long getDalamProses() { return dalamProses; }
-        public long getSelesai() { return selesai; }
-        public long getDitolak() { return ditolak; }
+        public long getAktif() { return aktif; }
+        public long getTidakAktif() { return tidakAktif; }
     }
 }

@@ -31,8 +31,7 @@ public interface LaporanRepository extends JpaRepository<Laporan, Long> {
     // Find by nama laporan containing
     Page<Laporan> findByNamaLaporanContainingIgnoreCase(String namaLaporan, Pageable pageable);
     
-    // Find by nama pelapor containing
-    Page<Laporan> findByNamaPelaporContainingIgnoreCase(String namaPelapor, Pageable pageable);
+    // Find by nama pelapor containing - REMOVED
     
     // Get recent laporan by user
     @Query("SELECT l FROM Laporan l WHERE l.userId = :userId ORDER BY l.updatedAt DESC")
@@ -51,13 +50,11 @@ public interface LaporanRepository extends JpaRepository<Laporan, Long> {
     // Advanced search
     @Query("SELECT l FROM Laporan l WHERE " +
            "(:namaLaporan IS NULL OR LOWER(l.namaLaporan) LIKE LOWER(CONCAT('%', :namaLaporan, '%'))) AND " +
-           "(:namaPelapor IS NULL OR LOWER(l.namaPelapor) LIKE LOWER(CONCAT('%', :namaPelapor, '%'))) AND " +
            "(:jenisLaporanId IS NULL OR l.jenisLaporan.jenisLaporanId = :jenisLaporanId) AND " +
            "(:status IS NULL OR l.status = :status) AND " +
            "(:userId IS NULL OR l.userId = :userId)")
     Page<Laporan> findWithFilters(
         @Param("namaLaporan") String namaLaporan,
-        @Param("namaPelapor") String namaPelapor,
         @Param("jenisLaporanId") Long jenisLaporanId,
         @Param("status") Laporan.StatusLaporan status,
         @Param("userId") Long userId,
@@ -68,9 +65,8 @@ public interface LaporanRepository extends JpaRepository<Laporan, Long> {
     @Query("SELECT " +
            "COUNT(l) as total, " +
            "SUM(CASE WHEN l.status = 'DRAFT' THEN 1 ELSE 0 END) as draft, " +
-           "SUM(CASE WHEN l.status = 'DALAM_PROSES' THEN 1 ELSE 0 END) as dalamProses, " +
-           "SUM(CASE WHEN l.status = 'SELESAI' THEN 1 ELSE 0 END) as selesai, " +
-           "SUM(CASE WHEN l.status = 'DITOLAK' THEN 1 ELSE 0 END) as ditolak " +
+           "SUM(CASE WHEN l.status = 'AKTIF' THEN 1 ELSE 0 END) as aktif, " +
+           "SUM(CASE WHEN l.status = 'TIDAK_AKTIF' THEN 1 ELSE 0 END) as tidakAktif " +
            "FROM Laporan l WHERE (:userId IS NULL OR l.userId = :userId)")
     Object[] getLaporanStatistics(@Param("userId") Long userId);
 }

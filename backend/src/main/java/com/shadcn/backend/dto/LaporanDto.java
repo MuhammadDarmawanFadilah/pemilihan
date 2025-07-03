@@ -1,6 +1,5 @@
 package com.shadcn.backend.dto;
 
-import com.shadcn.backend.model.Laporan;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -23,17 +22,9 @@ public class LaporanDto {
     
     private String deskripsi;
     
-    @NotBlank(message = "Nama pelapor tidak boleh kosong")
-    @Size(max = 100, message = "Nama pelapor maksimal 100 karakter")
-    private String namaPelapor;
-    
-    @NotBlank(message = "Alamat pelapor tidak boleh kosong")
-    @Size(max = 500, message = "Alamat pelapor maksimal 500 karakter")
-    private String alamatPelapor;
-    
     private Long userId;
     
-    private Laporan.StatusLaporan status;
+    private String status;
     
     private LocalDateTime createdAt;
     
