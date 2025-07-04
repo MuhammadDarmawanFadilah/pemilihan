@@ -69,6 +69,26 @@ public class JenisLaporanService {
         return jenisLaporanPage.map(this::convertToDto);
     }
     
+    // Get all jenis laporan with tahapan, pagination and filters
+    public Page<JenisLaporanDto> getAllJenisLaporanWithTahapan(JenisLaporanFilterRequest filterRequest) {
+        Sort sort = Sort.by(
+            filterRequest.getSortDirection().equalsIgnoreCase("desc") 
+                ? Sort.Direction.DESC 
+                : Sort.Direction.ASC,
+            filterRequest.getSortBy()
+        );
+        
+        Pageable pageable = PageRequest.of(filterRequest.getPage(), filterRequest.getSize(), sort);
+        
+        Page<JenisLaporan> jenisLaporanPage = jenisLaporanRepository.findWithFilters(
+            filterRequest.getNama(),
+            filterRequest.getStatus(),
+            pageable
+        );
+        
+        return jenisLaporanPage.map(this::convertToDtoWithTahapan);
+    }
+    
     // Get active jenis laporan for dropdown
     public List<JenisLaporanDto> getActiveJenisLaporan() {
         List<JenisLaporan> jenisLaporanList = jenisLaporanRepository.findActiveJenisLaporan();
@@ -335,6 +355,21 @@ public class JenisLaporanService {
         // Count related data
         dto.setJumlahTahapan(jenisLaporan.getTahapanList().size());
         dto.setJumlahLaporan(jenisLaporan.getLaporanList().size());
+        
+        return dto;
+    }
+    
+    // Convert entity to DTO with tahapan details
+    private JenisLaporanDto convertToDtoWithTahapan(JenisLaporan jenisLaporan) {
+        JenisLaporanDto dto = convertToDto(jenisLaporan);
+        
+        // Get active tahapan for this jenis laporan
+        List<TahapanLaporan> tahapanList = tahapanLaporanRepository
+                .findActiveTahapanByJenisLaporan(jenisLaporan.getJenisLaporanId());
+        
+        dto.setTahapanList(tahapanList.stream()
+                .map(this::convertTahapanToDto)
+                .collect(Collectors.toList()));
         
         return dto;
     }

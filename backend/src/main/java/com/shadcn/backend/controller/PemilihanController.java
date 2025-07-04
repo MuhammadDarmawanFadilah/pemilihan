@@ -99,12 +99,27 @@ public class PemilihanController {
     }
     
     @PutMapping("/{id}")
-    public ResponseEntity<PemilihanDTO> updatePemilihan(@PathVariable Long id, @RequestBody PemilihanDTO pemilihanDTO) {
+    public ResponseEntity<PemilihanDTO> updatePemilihan(@PathVariable Long id, @RequestBody CreatePemilihanRequest request) {
         try {
-            PemilihanDTO updatedPemilihan = pemilihanService.updatePemilihan(id, pemilihanDTO);
+            System.out.println("=== UPDATE PEMILIHAN REQUEST ===");
+            System.out.println("id: " + id);
+            System.out.println("judulPemilihan: " + request.getJudulPemilihan());
+            System.out.println("tingkatPemilihan: " + request.getTingkatPemilihan());
+            System.out.println("provinsi: " + request.getProvinsi());
+            System.out.println("kota: " + request.getKota());
+            System.out.println("kecamatan: " + request.getKecamatan());
+            System.out.println("kelurahan: " + request.getKelurahan());
+            System.out.println("latitude: " + request.getLatitude());
+            System.out.println("longitude: " + request.getLongitude());
+            System.out.println("detailLaporan count: " + (request.getDetailLaporan() != null ? request.getDetailLaporan().size() : 0));
+            System.out.println("=================================");
+            
+            PemilihanDTO updatedPemilihan = pemilihanService.updatePemilihan(id, request);
             return updatedPemilihan != null ? ResponseEntity.ok(updatedPemilihan) 
                                             : ResponseEntity.notFound().build();
         } catch (Exception e) {
+            System.err.println("Error updating pemilihan: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }

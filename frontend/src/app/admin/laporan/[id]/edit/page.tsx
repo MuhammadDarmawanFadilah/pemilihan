@@ -35,19 +35,229 @@ import {
   Save,
   Eye,
   Calendar,
-  Loader2
+  Loader2,
+  Download,
+  ExternalLink,
+  File,
+  Image,
+  Video,
+  FileIcon,
+  Archive
 } from 'lucide-react';
-import { laporanAPI, LaporanRequest, Laporan } from '@/lib/laporan-api';
+import { laporanAPI, LaporanRequest, Laporan, DetailLaporanDTO } from '@/lib/laporan-api';
 import { jenisLaporanAPI, JenisLaporan, PagedResponse } from '@/lib/api';
 
-// Layout options untuk tampilan jenis laporan
-const LAYOUT_OPTIONS = [
+  const LAYOUT_OPTIONS = [
   { value: 1, label: '1 per baris', icon: Monitor },
   { value: 2, label: '2 per baris', icon: Tablet },
   { value: 3, label: '3 per baris', icon: LayoutGrid },
   { value: 4, label: '4 per baris', icon: Grid3X3 },
   { value: 5, label: '5 per baris', icon: Smartphone },
 ];
+
+// Helper function to extract original filename
+const getOriginalFileName = (uniqueFileName: string) => {
+  try {
+    const parts = uniqueFileName.split('_');
+    if (parts.length >= 3) {
+      return parts.slice(2).join('_'); // Return the originalName.ext part
+    }
+  } catch (e) {
+    console.warn('Could not extract original filename from:', uniqueFileName);
+  }
+  return uniqueFileName; // Fallback to the unique filename
+};
+
+// File Preview Modal Component
+function FilePreviewModal({ 
+  file, 
+  isOpen, 
+  onClose 
+}: { 
+  file: { nama: string; url: string } | null;
+  isOpen: boolean;
+  onClose: () => void;
+}) {
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (file) {
+      setBlobUrl(file.url);
+      setIsLoading(false);
+      setError(null);
+    } else {
+      setBlobUrl(null);
+      setIsLoading(false);
+      setError(null);
+    }
+  }, [file]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = 'hidden';
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = '';
+    };
+  }, [isOpen, onClose]);
+
+  if (!file) return null;
+
+  const fileName = file.nama;
+  const fileExtension = fileName.split('.').pop()?.toLowerCase();
+
+  const renderPreview = () => {
+    if (error) {
+      return (
+        <div className="flex flex-col items-center justify-center h-full text-white">
+          <X className="h-16 w-16 mb-4 text-red-400" />
+          <p className="text-lg mb-2">Gagal memuat preview</p>
+          <p className="text-sm text-gray-300">{error}</p>
+        </div>
+      );
+    }
+
+    if (isLoading || !blobUrl) {
+      return (
+        <div className="flex flex-col items-center justify-center h-full text-white">
+          <Loader2 className="h-16 w-16 mb-4 animate-spin text-blue-400" />
+          <p className="text-lg">Memuat preview...</p>
+        </div>
+      );
+    }
+    
+    switch (fileExtension) {
+      case 'jpg':
+      case 'jpeg':
+      case 'png':
+      case 'gif':
+        return (
+          <div className="flex items-center justify-center h-full">
+            <img 
+              src={blobUrl} 
+              alt={fileName}
+              className="max-w-full max-h-full object-contain"
+              style={{ maxHeight: 'calc(100vh - 120px)' }}
+            />
+          </div>
+        );
+
+      case 'mp4':
+      case 'avi':
+      case 'mov':
+        return (
+          <div className="flex items-center justify-center h-full">
+            <video 
+              src={blobUrl} 
+              controls 
+              className="max-w-full max-h-full"
+              style={{ maxHeight: 'calc(100vh - 120px)' }}
+            >
+              Browser Anda tidak mendukung video playback.
+            </video>
+          </div>
+        );
+
+      default:
+        return (
+          <div className="flex flex-col items-center justify-center h-full text-white">
+            <FileText className="h-16 w-16 mb-4 text-gray-400" />
+            <p className="text-lg mb-2">Preview tidak tersedia</p>
+            <p className="text-sm text-gray-300">File: {fileName}</p>
+            <Button onClick={downloadFile} className="mt-4" variant="secondary">
+              <Download className="h-4 w-4 mr-2" />
+              Download File
+            </Button>
+          </div>
+        );
+    }
+  };
+
+  const downloadFile = () => {
+    if (file) {
+      fetch(file.url)
+        .then(response => {
+          if (!response.ok) throw new Error('Download failed');
+          return response.blob();
+        })
+        .then(blob => {
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = fileName;
+          link.style.display = 'none';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+          
+          toast({
+            title: "Download berhasil",
+            description: `File ${fileName} berhasil didownload`,
+          });
+        })
+        .catch(error => {
+          console.error('Download error:', error);
+          toast({
+            title: "Download gagal",
+            description: "Gagal mendownload file",
+            variant: "destructive",
+          });
+        });
+    }
+  };
+
+  return (
+    <div 
+      className={`fixed inset-0 z-50 transition-opacity duration-300 ${
+        isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+      }`}
+    >
+      <div className="absolute inset-0 bg-black/90 backdrop-blur-sm" />
+      <div className="relative z-10 h-full">
+        <div className="flex items-center justify-between p-4">
+          <div className="text-white">
+            <h2 className="text-xl font-semibold">{fileName}</h2>
+            <p className="text-sm text-gray-300">Preview File</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button 
+              onClick={downloadFile}
+              variant="secondary" 
+              size="sm"
+              className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Download
+            </Button>
+            <Button 
+              onClick={onClose}
+              variant="ghost" 
+              size="sm"
+              className="text-white hover:bg-white/10"
+            >
+              <X className="h-5 w-5" />
+            </Button>
+          </div>
+        </div>
+        <div className="h-[calc(100%-80px)] p-4">
+          {renderPreview()}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // Extended JenisLaporan type same as the original
 type JenisLaporanWithTahapan = JenisLaporan;
@@ -57,7 +267,7 @@ interface LaporanFormData {
   nama: string;
   deskripsi: string;
   status: 'AKTIF' | 'TIDAK_AKTIF' | 'DRAFT';
-  selectedJenisLaporanId?: number;
+  selectedJenisLaporanIds: number[];
 }
 
 // Stepper Component
@@ -129,12 +339,13 @@ export default function EditLaporanPage() {
   const [formData, setFormData] = useState<LaporanFormData>({
     nama: '',
     deskripsi: '',
-    status: 'AKTIF'
+    status: 'AKTIF',
+    selectedJenisLaporanIds: []
   });
   
   // Jenis laporan state
   const [jenisLaporanList, setJenisLaporanList] = useState<JenisLaporanWithTahapan[]>([]);
-  const [selectedJenisLaporan, setSelectedJenisLaporan] = useState<JenisLaporanWithTahapan | null>(null);
+  const [selectedJenisLaporanList, setSelectedJenisLaporanList] = useState<JenisLaporanWithTahapan[]>([]);
   const [loading, setLoading] = useState(false);
   const [totalElements, setTotalElements] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
@@ -146,11 +357,15 @@ export default function EditLaporanPage() {
     sortBy: 'updatedAt',
     sortDirection: 'desc' as 'asc' | 'desc',
     nama: '',
-    tahapanNama: ''
+    tahapanNama: '',
+    status: 'AKTIF' as 'AKTIF' | 'TIDAK_AKTIF' | 'DRAFT' | 'ALL'
   });
   
   // Layout state
   const [layout, setLayout] = useState<1 | 2 | 3 | 4 | 5>(3);
+  
+  // File preview state
+  const [previewFile, setPreviewFile] = useState<{ nama: string; url: string } | null>(null);
   
   // Load laporan data on mount
   useEffect(() => {
@@ -170,18 +385,44 @@ export default function EditLaporanPage() {
       const laporan = await laporanAPI.getById(laporanId);
       setOriginalLaporan(laporan);
       
-      // Set form data from existing laporan
+      // Extract unique jenis laporan IDs from detailLaporanList
+      let jenisLaporanIds: number[] = [];
+      if (laporan.detailLaporanList && laporan.detailLaporanList.length > 0) {
+        const uniqueJenisLaporanIds = new Set(
+          laporan.detailLaporanList.map(detail => detail.jenisLaporanId)
+        );
+        jenisLaporanIds = Array.from(uniqueJenisLaporanIds);
+        console.log('Found jenis laporan IDs from detail laporan:', jenisLaporanIds);
+      } else {
+        // Fallback to primary jenis laporan if no detail laporan
+        jenisLaporanIds = [laporan.jenisLaporanId];
+        console.log('Using fallback primary jenis laporan ID:', jenisLaporanIds);
+      }
+      
+      // Set form data from existing laporan  
       setFormData({
-        nama: laporan.nama,
+        nama: laporan.namaLaporan,
         deskripsi: laporan.deskripsi,
         status: laporan.status,
-        selectedJenisLaporanId: laporan.jenisLaporanId
+        selectedJenisLaporanIds: jenisLaporanIds
       });
       
-      // Load the current jenis laporan details
+      // Load all jenis laporan details
       try {
-        const jenisLaporan = await jenisLaporanAPI.getWithTahapan(laporan.jenisLaporanId);
-        setSelectedJenisLaporan(jenisLaporan);
+        const jenisLaporanDetails = await Promise.all(
+          jenisLaporanIds.map(async (id) => {
+            try {
+              return await jenisLaporanAPI.getWithTahapan(id);
+            } catch (error) {
+              console.error(`Error loading jenis laporan ${id}:`, error);
+              return null;
+            }
+          })
+        );
+        
+        const validJenisLaporan = jenisLaporanDetails.filter(jl => jl !== null);
+        setSelectedJenisLaporanList(validJenisLaporan);
+        console.log('Loaded jenis laporan details:', validJenisLaporan.map(jl => ({ id: jl.jenisLaporanId, nama: jl.nama })));
       } catch (error) {
         console.error('Error loading jenis laporan details:', error);
       }
@@ -201,30 +442,17 @@ export default function EditLaporanPage() {
   const loadJenisLaporan = async () => {
     try {
       setLoading(true);
-      // Use search API for jenis laporan with pagination and filters
-      const response = await jenisLaporanAPI.search({
+      // Use searchWithTahapan API for jenis laporan with pagination and filters
+      const response = await jenisLaporanAPI.searchWithTahapan({
         page: filters.page,
         size: filters.size,
         sortBy: filters.sortBy,
         sortDirection: filters.sortDirection,
         nama: filters.nama,
-        status: 'AKTIF' // Only load active jenis laporan
+        status: filters.status === 'ALL' ? undefined : filters.status
       });
       
-      // Load tahapan details for each jenis laporan
-      const jenisLaporanWithTahapan = await Promise.all(
-        response.content.map(async (jl: JenisLaporan) => {
-          try {
-            const withTahapan = await jenisLaporanAPI.getWithTahapan(jl.jenisLaporanId);
-            return withTahapan;
-          } catch (error) {
-            console.error(`Error loading tahapan for jenis laporan ${jl.jenisLaporanId}:`, error);
-            return jl;
-          }
-        })
-      );
-      
-      setJenisLaporanList(jenisLaporanWithTahapan);
+      setJenisLaporanList(response.content);
       setTotalElements(response.totalElements);
       setTotalPages(response.totalPages);
     } catch (error: any) {
@@ -259,7 +487,8 @@ export default function EditLaporanPage() {
       sortBy: 'updatedAt',
       sortDirection: 'desc' as 'asc' | 'desc',
       nama: '',
-      tahapanNama: ''
+      tahapanNama: '',
+      status: 'AKTIF' as 'AKTIF' | 'TIDAK_AKTIF' | 'DRAFT' | 'ALL'
     });
   };
   
@@ -289,26 +518,64 @@ export default function EditLaporanPage() {
   
   // Jenis laporan selection
   const handleSelectJenisLaporan = (jenisLaporan: JenisLaporanWithTahapan) => {
-    setSelectedJenisLaporan(jenisLaporan);
+    const isAlreadySelected = selectedJenisLaporanList.some(
+      selected => selected.jenisLaporanId === jenisLaporan.jenisLaporanId
+    );
+    
+    if (isAlreadySelected) {
+      // Remove from selection
+      const newSelection = selectedJenisLaporanList.filter(
+        selected => selected.jenisLaporanId !== jenisLaporan.jenisLaporanId
+      );
+      setSelectedJenisLaporanList(newSelection);
+      setFormData({
+        ...formData,
+        selectedJenisLaporanIds: newSelection.map(jl => jl.jenisLaporanId)
+      });
+    } else {
+      // Add to selection
+      const newSelection = [...selectedJenisLaporanList, jenisLaporan];
+      setSelectedJenisLaporanList(newSelection);
+      setFormData({
+        ...formData,
+        selectedJenisLaporanIds: newSelection.map(jl => jl.jenisLaporanId)
+      });
+    }
+  };
+  
+  const handleUnselectJenisLaporan = (jenisLaporanId: number) => {
+    const newSelection = selectedJenisLaporanList.filter(
+      selected => selected.jenisLaporanId !== jenisLaporanId
+    );
+    setSelectedJenisLaporanList(newSelection);
     setFormData({
       ...formData,
-      selectedJenisLaporanId: jenisLaporan.jenisLaporanId
+      selectedJenisLaporanIds: newSelection.map(jl => jl.jenisLaporanId)
     });
   };
   
-  const handleUnselectJenisLaporan = () => {
+  const handleClearAllSelection = () => {
     // Reset to original jenis laporan if available
     if (originalLaporan) {
-      setSelectedJenisLaporan(jenisLaporanList.find(jl => jl.jenisLaporanId === originalLaporan.jenisLaporanId) || null);
-      setFormData({
-        ...formData,
-        selectedJenisLaporanId: originalLaporan.jenisLaporanId
-      });
+      const originalJenisLaporan = jenisLaporanList.find(jl => jl.jenisLaporanId === originalLaporan.jenisLaporanId);
+      if (originalJenisLaporan) {
+        setSelectedJenisLaporanList([originalJenisLaporan]);
+        setFormData({
+          ...formData,
+          selectedJenisLaporanIds: [originalLaporan.jenisLaporanId]
+        });
+      } else {
+        setSelectedJenisLaporanList([]);
+        setFormData({
+          ...formData,
+          selectedJenisLaporanIds: []
+        });
+      }
     } else {
-      setSelectedJenisLaporan(null);
+      setSelectedJenisLaporanList([]);
       setFormData({
         ...formData,
-        selectedJenisLaporanId: undefined
+        selectedJenisLaporanIds: []
       });
     }
   };
@@ -319,7 +586,7 @@ export default function EditLaporanPage() {
   };
 
   const validateStep2 = () => {
-    return selectedJenisLaporan !== null;
+    return selectedJenisLaporanList.length > 0;
   };
   
   // Submit function
@@ -327,14 +594,13 @@ export default function EditLaporanPage() {
     try {
       setIsSubmitting(true);
       
-      const requestData: LaporanRequest = {
-        nama: formData.nama,
+      const requestData = {
+        namaLaporan: formData.nama,
         deskripsi: formData.deskripsi,
-        status: formData.status,
-        jenisLaporanId: formData.selectedJenisLaporanId!
+        jenisLaporanIds: formData.selectedJenisLaporanIds
       };
 
-      await laporanAPI.update(laporanId, requestData);
+      await laporanAPI.updateWizard(laporanId, requestData);
       
       toast({
         title: "Sukses",
@@ -352,6 +618,145 @@ export default function EditLaporanPage() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  // File utility functions
+  const getFileIcon = (fileName: string) => {
+    const extension = fileName.split('.').pop()?.toLowerCase();
+    switch (extension) {
+      case 'jpg':
+      case 'jpeg':
+      case 'png':
+      case 'gif':
+      case 'webp':
+        return Image;
+      case 'mp4':
+      case 'avi':
+      case 'mov':
+      case 'wmv':
+      case 'flv':
+        return Video;
+      case 'pdf':
+        return FileText;
+      case 'doc':
+      case 'docx':
+        return FileText;
+      case 'zip':
+      case 'rar':
+      case '7z':
+        return Archive;
+      default:
+        return File;
+    }
+  };
+
+  const isImageFile = (fileName: string) => {
+    const extension = fileName.split('.').pop()?.toLowerCase();
+    return ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(extension || '');
+  };
+
+  const isVideoFile = (fileName: string) => {
+    const extension = fileName.split('.').pop()?.toLowerCase();
+    return ['mp4', 'avi', 'mov', 'wmv', 'flv'].includes(extension || '');
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const handleDownloadAllFiles = async () => {
+    if (!originalLaporan || !originalLaporan.detailLaporanList) {
+      toast({
+        title: "Info",
+        description: "Tidak ada file untuk diunduh",
+      });
+      return;
+    }
+
+    try {
+      // For demo purposes, we'll simulate downloading template files from tahapan
+      const filesToDownload: { nama: string; url: string }[] = [];
+      
+      // Collect template files from selected jenis laporan
+      selectedJenisLaporanList.forEach(jenisLaporan => {
+        jenisLaporan.tahapanList?.forEach(tahapan => {
+          if (tahapan.templateTahapan) {
+            filesToDownload.push({
+              nama: `Template_${jenisLaporan.nama}_${tahapan.nama}.pdf`,
+              url: `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080'}/api/files/template/${tahapan.tahapanLaporanId}`
+            });
+          }
+        });
+      });
+
+      if (filesToDownload.length === 0) {
+        toast({
+          title: "Info", 
+          description: "Tidak ada file template untuk diunduh",
+        });
+        return;
+      }
+
+      // Download each file
+      for (const file of filesToDownload) {
+        try {
+          const link = document.createElement('a');
+          link.href = file.url;
+          link.download = file.nama;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          
+          // Small delay between downloads
+          await new Promise(resolve => setTimeout(resolve, 500));
+        } catch (error) {
+          console.error(`Error downloading ${file.nama}:`, error);
+        }
+      }
+
+      toast({
+        title: "Sukses",
+        description: `${filesToDownload.length} template file berhasil diunduh`,
+      });
+    } catch (error) {
+      console.error('Error downloading files:', error);
+      toast({
+        title: "Error",
+        description: "Gagal mengunduh file",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDownloadFile = async (file: { nama: string; url: string }) => {
+    try {
+      const link = document.createElement('a');
+      link.href = file.url;
+      link.download = file.nama;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast({
+        title: "Sukses",
+        description: `File ${file.nama} berhasil diunduh`,
+      });
+    } catch (error) {
+      console.error('Error downloading file:', error);
+      toast({
+        title: "Error", 
+        description: "Gagal mengunduh file",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handlePreviewFile = (file: { nama: string; url: string }) => {
+    setPreviewFile(file);
   };
   
   // Status styling
@@ -450,17 +855,6 @@ export default function EditLaporanPage() {
                   </SelectContent>
                 </Select>
               </div>
-              
-              {originalLaporan && (
-                <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                  <h4 className="font-medium text-blue-900 mb-2">Informasi Laporan Asli</h4>
-                  <div className="text-sm text-blue-700 space-y-1">
-                    <p><span className="font-medium">Jenis Laporan:</span> {originalLaporan.jenisLaporanNama}</p>
-                    <p><span className="font-medium">Dibuat:</span> {new Date(originalLaporan.createdAt).toLocaleDateString('id-ID')}</p>
-                    <p><span className="font-medium">Terakhir diubah:</span> {new Date(originalLaporan.updatedAt).toLocaleDateString('id-ID')}</p>
-                  </div>
-                </div>
-              )}
             </CardContent>
           </Card>
         );
@@ -515,7 +909,7 @@ export default function EditLaporanPage() {
                   </div>
                   
                   {/* Filters */}
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                     <div>
                       <Input
                         placeholder="Cari nama jenis laporan..."
@@ -535,6 +929,20 @@ export default function EditLaporanPage() {
                     </div>
                     
                     <div>
+                      <Select value={filters.status} onValueChange={(value) => handleFilterChange('status', value)}>
+                        <SelectTrigger className="h-10">
+                          <SelectValue placeholder="Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="ALL">Semua Status</SelectItem>
+                          <SelectItem value="AKTIF">Aktif</SelectItem>
+                          <SelectItem value="TIDAK_AKTIF">Tidak Aktif</SelectItem>
+                          <SelectItem value="DRAFT">Draft</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div>
                       <Select value={filters.size.toString()} onValueChange={(value) => handleFilterChange('size', parseInt(value))}>
                         <SelectTrigger className="h-10">
                           <SelectValue />
@@ -543,6 +951,7 @@ export default function EditLaporanPage() {
                           <SelectItem value="5">5 per halaman</SelectItem>
                           <SelectItem value="10">10 per halaman</SelectItem>
                           <SelectItem value="25">25 per halaman</SelectItem>
+                          <SelectItem value="50">50 per halaman</SelectItem>
                           <SelectItem value="100">100 per halaman</SelectItem>
                           <SelectItem value="1000">1000 per halaman</SelectItem>
                         </SelectContent>
@@ -582,13 +991,19 @@ export default function EditLaporanPage() {
                       layout === 4 ? 'grid-cols-4' :
                       'grid-cols-5'
                     }`}>
-                      {jenisLaporanList.map((jenisLaporan) => (
+                      {jenisLaporanList.map((jenisLaporan) => {
+                        const isSelected = selectedJenisLaporanList.some(
+                          selected => selected.jenisLaporanId === jenisLaporan.jenisLaporanId
+                        );
+                        const isOriginal = originalLaporan?.jenisLaporanId === jenisLaporan.jenisLaporanId;
+                        
+                        return (
                         <Card 
                           key={jenisLaporan.jenisLaporanId} 
                           className={`cursor-pointer transition-all hover:shadow-md ${
-                            selectedJenisLaporan?.jenisLaporanId === jenisLaporan.jenisLaporanId 
+                            isSelected
                               ? 'border-blue-500 bg-blue-50' 
-                              : originalLaporan?.jenisLaporanId === jenisLaporan.jenisLaporanId
+                              : isOriginal
                                 ? 'border-green-500 bg-green-50'
                                 : 'border-gray-200'
                           }`}
@@ -599,10 +1014,10 @@ export default function EditLaporanPage() {
                               <div className="flex items-start justify-between">
                                 <h3 className="font-semibold text-sm">{jenisLaporan.nama}</h3>
                                 <div className="flex items-center gap-1">
-                                  {selectedJenisLaporan?.jenisLaporanId === jenisLaporan.jenisLaporanId && (
+                                  {isSelected && (
                                     <Check className="h-5 w-5 text-blue-600" />
                                   )}
-                                  {originalLaporan?.jenisLaporanId === jenisLaporan.jenisLaporanId && (
+                                  {isOriginal && !isSelected && (
                                     <div className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
                                       Saat ini
                                     </div>
@@ -623,7 +1038,8 @@ export default function EditLaporanPage() {
                             </div>
                           </CardContent>
                         </Card>
-                      ))}
+                        );
+                      })}
                     </div>
 
                     {/* Pagination */}
@@ -661,77 +1077,82 @@ export default function EditLaporanPage() {
             </Card>
 
             {/* Selected Jenis Laporan */}
-            {selectedJenisLaporan && (
-              <Card className={`border-2 ${
-                originalLaporan?.jenisLaporanId === selectedJenisLaporan.jenisLaporanId 
-                  ? 'border-green-500 bg-green-50' 
-                  : 'border-blue-500 bg-blue-50'
-              }`}>
+            {selectedJenisLaporanList.length > 0 && (
+              <Card className="border-2 border-blue-500 bg-blue-50">
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
                     <span className="flex items-center gap-2">
-                      <Check className={`h-5 w-5 ${
-                        originalLaporan?.jenisLaporanId === selectedJenisLaporan.jenisLaporanId 
-                          ? 'text-green-600' 
-                          : 'text-blue-600'
-                      }`} />
-                      {originalLaporan?.jenisLaporanId === selectedJenisLaporan.jenisLaporanId 
-                        ? 'Jenis Laporan Saat Ini' 
-                        : 'Jenis Laporan Baru Terpilih'
-                      }
+                      <Check className="h-5 w-5 text-blue-600" />
+                      Jenis Laporan Terpilih ({selectedJenisLaporanList.length})
                     </span>
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={handleUnselectJenisLaporan}
+                      onClick={handleClearAllSelection}
                       className="text-red-600 hover:text-red-700"
                     >
                       <X className="h-4 w-4" />
+                      Hapus Semua
                     </Button>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    <div>
-                      <h3 className="font-semibold text-lg">{selectedJenisLaporan.nama}</h3>
-                      <p className="text-gray-600 mt-1">{selectedJenisLaporan.deskripsi}</p>
-                    </div>
-                    
-                    <div className="flex items-center gap-4">
-                      <Badge className={getStatusColor(selectedJenisLaporan.status)}>
-                        {getStatusDisplay(selectedJenisLaporan.status)}
-                      </Badge>
-                      <span className="text-sm text-gray-600">
-                        {selectedJenisLaporan.tahapanList?.length || 0} tahapan
-                      </span>
-                    </div>
-                    
-                    {originalLaporan?.jenisLaporanId !== selectedJenisLaporan.jenisLaporanId && (
-                      <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                        <p className="text-sm text-yellow-800">
-                          <strong>Perhatian:</strong> Mengubah jenis laporan akan mengubah tahapan yang perlu dilalui.
-                        </p>
-                      </div>
-                    )}
-                    
-                    {selectedJenisLaporan.tahapanList && selectedJenisLaporan.tahapanList.length > 0 && (
-                      <div>
-                        <h4 className="font-medium text-gray-900 mb-2">Tahapan yang akan dilalui:</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                          {selectedJenisLaporan.tahapanList.map((tahapan) => (
-                            <div key={tahapan.tahapanLaporanId} className="flex items-center gap-2 p-2 bg-white rounded border">
-                              <span className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs">
-                                {tahapan.urutanTahapan}
-                              </span>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-gray-900 truncate">{tahapan.nama}</p>
-                                <p className="text-xs text-gray-500 truncate">{tahapan.deskripsi}</p>
+                  <div className={`grid gap-4 ${
+                    layout === 1 ? 'grid-cols-1' :
+                    layout === 2 ? 'grid-cols-2' :
+                    layout === 3 ? 'grid-cols-3' :
+                    layout === 4 ? 'grid-cols-4' :
+                    'grid-cols-5'
+                  }`}>
+                    {selectedJenisLaporanList.map((jenisLaporan, index) => {
+                      const isOriginal = originalLaporan?.jenisLaporanId === jenisLaporan.jenisLaporanId;
+                      return (
+                        <Card key={jenisLaporan.jenisLaporanId} className="border border-blue-300 bg-white">
+                          <CardContent className="p-4">
+                            <div className="space-y-3">
+                              <div className="flex items-start justify-between">
+                                <h3 className="font-semibold text-sm">{jenisLaporan.nama}</h3>
+                                <div className="flex items-center gap-1">
+                                  <span className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold">
+                                    {index + 1}
+                                  </span>
+                                  {isOriginal && (
+                                    <Badge className="bg-green-100 text-green-800 text-xs" variant="secondary">
+                                      Asli
+                                    </Badge>
+                                  )}
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleUnselectJenisLaporan(jenisLaporan.jenisLaporanId)}
+                                    className="text-red-600 hover:text-red-700 h-6 w-6 p-0"
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              </div>
+                              
+                              <p className="text-xs text-gray-600 line-clamp-2">{jenisLaporan.deskripsi}</p>
+                              
+                              <div className="flex items-center justify-between">
+                                <Badge className={getStatusColor(jenisLaporan.status)} variant="secondary">
+                                  {getStatusDisplay(jenisLaporan.status)}
+                                </Badge>
+                                <span className="text-xs text-gray-500">
+                                  {jenisLaporan.tahapanList?.length || 0} tahapan
+                                </span>
                               </div>
                             </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                  
+                  <div className="mt-4 p-3 bg-blue-100 border border-blue-200 rounded-lg">
+                    <p className="text-sm text-blue-800">
+                      <strong>Info:</strong> Laporan akan memiliki semua tahapan dari {selectedJenisLaporanList.length} jenis laporan yang dipilih.
+                    </p>
                   </div>
                 </CardContent>
               </Card>
@@ -753,6 +1174,38 @@ export default function EditLaporanPage() {
                 </p>
               </CardHeader>
               <CardContent className="space-y-6">
+                {/* Layout Selection for Preview */}
+                <div className="space-y-2">
+                  <Label className="text-base font-medium">Layout Tampilan Preview</Label>
+                  <p className="text-sm text-gray-600 mb-3">Pilih layout untuk preview jenis laporan</p>
+                  <div className="grid grid-cols-5 gap-3">
+                    {LAYOUT_OPTIONS.map((option) => {
+                      const IconComponent = option.icon;
+                      return (
+                        <button
+                          key={option.value}
+                          onClick={() => setLayout(option.value as any)}
+                          className={`
+                            p-3 rounded-lg border-2 text-center transition-all
+                            ${layout === option.value 
+                              ? 'border-blue-500 bg-blue-50' 
+                              : 'border-gray-200 hover:border-gray-300'
+                            }
+                          `}
+                        >
+                          <IconComponent className={`h-6 w-6 mx-auto mb-2 ${
+                            layout === option.value ? 'text-blue-600' : 'text-gray-400'
+                          }`} />
+                          <div className={`text-xs font-medium ${
+                            layout === option.value ? 'text-blue-600' : 'text-gray-600'
+                          }`}>
+                            {option.label}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
                 {/* Change Summary */}
                 {originalLaporan && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -763,7 +1216,7 @@ export default function EditLaporanPage() {
                       <CardContent className="space-y-3">
                         <div>
                           <p className="text-sm text-gray-600">Nama Laporan</p>
-                          <p className="font-medium">{originalLaporan.nama}</p>
+                          <p className="font-medium">{originalLaporan.namaLaporan}</p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-600">Status</p>
@@ -795,7 +1248,13 @@ export default function EditLaporanPage() {
                         </div>
                         <div>
                           <p className="text-sm text-gray-600">Jenis Laporan</p>
-                          <p className="font-medium">{selectedJenisLaporan?.nama}</p>
+                          <div className="space-y-1">
+                            {selectedJenisLaporanList.map((jl, index) => (
+                              <p key={jl.jenisLaporanId} className="font-medium text-sm">
+                                {index + 1}. {jl.nama}
+                              </p>
+                            ))}
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
@@ -807,7 +1266,7 @@ export default function EditLaporanPage() {
                   <CardContent className="p-4">
                     <h4 className="font-semibold text-gray-900 mb-3">Ringkasan Perubahan</h4>
                     <div className="space-y-2 text-sm">
-                      {originalLaporan?.nama !== formData.nama && (
+                      {originalLaporan?.namaLaporan !== formData.nama && (
                         <div className="flex items-center gap-2">
                           <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
                           <span>Nama laporan akan diubah</span>
@@ -825,16 +1284,17 @@ export default function EditLaporanPage() {
                           <span>Status laporan akan diubah</span>
                         </div>
                       )}
-                      {originalLaporan?.jenisLaporanId !== formData.selectedJenisLaporanId && (
+                      {!formData.selectedJenisLaporanIds.includes(originalLaporan?.jenisLaporanId || 0) && (
                         <div className="flex items-center gap-2">
                           <div className="w-2 h-2 bg-red-500 rounded-full"></div>
                           <span className="text-red-700 font-medium">Jenis laporan akan diubah (tahapan akan berubah)</span>
                         </div>
                       )}
-                      {originalLaporan?.nama === formData.nama && 
+                      {originalLaporan?.namaLaporan === formData.nama && 
                        originalLaporan?.deskripsi === formData.deskripsi && 
                        originalLaporan?.status === formData.status && 
-                       originalLaporan?.jenisLaporanId === formData.selectedJenisLaporanId && (
+                       formData.selectedJenisLaporanIds.includes(originalLaporan?.jenisLaporanId || 0) && 
+                       formData.selectedJenisLaporanIds.length === 1 && (
                         <div className="flex items-center gap-2">
                           <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
                           <span className="text-gray-600">Tidak ada perubahan</span>
@@ -853,75 +1313,122 @@ export default function EditLaporanPage() {
                 </Card>
 
                 {/* Jenis Laporan Details */}
-                {selectedJenisLaporan && (
+                {selectedJenisLaporanList.length > 0 && (
                   <Card>
-                    <CardHeader>
-                      <CardTitle className="text-lg">Detail Jenis Laporan Terpilih</CardTitle>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                      <div>
+                        <CardTitle className="text-lg">Detail Jenis Laporan Terpilih ({selectedJenisLaporanList.length})</CardTitle>
+                        <p className="text-sm text-gray-600 mt-1">
+                          Template dan file terkait jenis laporan yang dipilih
+                        </p>
+                      </div>
+                      <Button
+                        onClick={handleDownloadAllFiles}
+                        variant="outline"
+                        className="flex items-center gap-2"
+                      >
+                        <Download className="h-4 w-4" />
+                        Download Semua Template
+                      </Button>
                     </CardHeader>
                     <CardContent>
-                      <div className="space-y-4">
-                        <div>
-                          <h4 className="font-semibold text-gray-900 mb-1">{selectedJenisLaporan.nama}</h4>
-                          <p className="text-gray-600 text-sm">{selectedJenisLaporan.deskripsi}</p>
-                        </div>
-                        
-                        {selectedJenisLaporan.tahapanList && selectedJenisLaporan.tahapanList.length > 0 && (
-                          <div>
-                            <h4 className="font-semibold text-gray-900 mb-3">Tahapan yang Akan Dilalui</h4>
-                            <div className="space-y-3">
-                              {selectedJenisLaporan.tahapanList.map((tahapan) => (
-                                <Card key={tahapan.tahapanLaporanId} className="border border-gray-200">
-                                  <CardContent className="p-4">
-                                    <div className="flex items-start gap-4">
+                      <div className={`grid gap-6 ${
+                        layout === 1 ? 'grid-cols-1' :
+                        layout === 2 ? 'grid-cols-2' :
+                        layout === 3 ? 'grid-cols-3' :
+                        layout === 4 ? 'grid-cols-4' :
+                        'grid-cols-5'
+                      }`}>
+                        {selectedJenisLaporanList.map((jenisLaporan, index) => (
+                          <Card key={jenisLaporan.jenisLaporanId} className="border rounded-lg">
+                            <CardHeader className="pb-3">
+                              <div className="flex items-center gap-2 mb-2">
+                                <span className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                                  {index + 1}
+                                </span>
+                                <h4 className="font-semibold text-gray-900 text-sm">{jenisLaporan.nama}</h4>
+                                {originalLaporan?.jenisLaporanId === jenisLaporan.jenisLaporanId && (
+                                  <Badge className="bg-green-100 text-green-800 text-xs" variant="secondary">
+                                    Asli
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="text-gray-600 text-xs">{jenisLaporan.deskripsi}</p>
+                            </CardHeader>
+                            <CardContent className="space-y-3">
+                              {jenisLaporan.tahapanList && jenisLaporan.tahapanList.length > 0 ? (
+                                jenisLaporan.tahapanList.map((tahapan: any) => (
+                                  <div key={tahapan.tahapanLaporanId} className="border rounded-lg p-3 bg-gray-50">
+                                    <div className="flex items-start gap-3">
                                       <div className="flex-shrink-0">
-                                        <div className="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-sm">
+                                        <div className="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-xs">
                                           {tahapan.urutanTahapan}
                                         </div>
                                       </div>
                                       <div className="flex-1 min-w-0">
-                                        <div className="flex items-start justify-between">
-                                          <div className="flex-1">
-                                            <h4 className="font-semibold text-gray-900 mb-1">{tahapan.nama}</h4>
-                                            <p className="text-sm text-gray-600 mb-3">{tahapan.deskripsi}</p>
-                                            
-                                            <div className="flex items-center gap-4 text-sm text-gray-500">
-                                              {tahapan.templateTahapan && (
-                                                <div className="flex items-center gap-1">
-                                                  <FileText className="h-4 w-4" />
-                                                  <span>Template tersedia</span>
-                                                </div>
-                                              )}
-                                              {tahapan.jenisFileIzin && tahapan.jenisFileIzin.length > 0 && (
-                                                <div className="flex items-center gap-1">
-                                                  <span>{tahapan.jenisFileIzin.length} tipe file diizinkan</span>
-                                                </div>
-                                              )}
-                                            </div>
-                                          </div>
-                                          
-                                          {tahapan.jenisFileIzin && tahapan.jenisFileIzin.length > 0 && (
-                                            <div className="flex flex-wrap gap-1 ml-4">
-                                              {tahapan.jenisFileIzin.slice(0, 4).map(type => (
-                                                <Badge key={type} variant="outline" className="text-xs">
-                                                  {type.toUpperCase()}
-                                                </Badge>
-                                              ))}
-                                              {tahapan.jenisFileIzin.length > 4 && (
-                                                <Badge variant="outline" className="text-xs">
-                                                  +{tahapan.jenisFileIzin.length - 4}
-                                                </Badge>
-                                              )}
+                                        <h6 className="font-semibold text-gray-900 mb-1 text-xs">{tahapan.nama}</h6>
+                                        <p className="text-xs text-gray-600 mb-2 line-clamp-2">{tahapan.deskripsi}</p>
+                                        
+                                        <div className="flex items-center gap-2 text-xs">
+                                          {tahapan.templateTahapan && (
+                                            <div className="flex items-center gap-1">
+                                              <FileText className="h-3 w-3 text-blue-600" />
+                                              <Button
+                                                variant="link"
+                                                size="sm" 
+                                                className="h-auto p-0 text-xs text-blue-600"
+                                                onClick={() => handlePreviewFile({
+                                                  nama: `Template_${jenisLaporan.nama}_${tahapan.nama}.pdf`,
+                                                  url: `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080'}/api/files/template/${tahapan.tahapanLaporanId}`
+                                                })}
+                                              >
+                                                Preview Template
+                                              </Button>
+                                              <Button
+                                                variant="link"
+                                                size="sm"
+                                                className="h-auto p-0 text-xs text-green-600"
+                                                onClick={() => handleDownloadFile({
+                                                  nama: `Template_${jenisLaporan.nama}_${tahapan.nama}.pdf`,
+                                                  url: `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080'}/api/files/template/${tahapan.tahapanLaporanId}`
+                                                })}
+                                              >
+                                                <Download className="h-3 w-3 mr-1" />
+                                                Download
+                                              </Button>
                                             </div>
                                           )}
                                         </div>
+                                        
+                                        {tahapan.jenisFileIzin && tahapan.jenisFileIzin.length > 0 && (
+                                          <div className="mt-2">
+                                            <div className="flex flex-wrap gap-1">
+                                              {tahapan.jenisFileIzin.slice(0, 3).map((type: any) => (
+                                                <Badge key={type} variant="outline" className="text-xs px-1 py-0">
+                                                  {type.toUpperCase()}
+                                                </Badge>
+                                              ))}
+                                              {tahapan.jenisFileIzin.length > 3 && (
+                                                <Badge variant="outline" className="text-xs px-1 py-0">
+                                                  +{tahapan.jenisFileIzin.length - 3}
+                                                </Badge>
+                                              )}
+                                            </div>
+                                          </div>
+                                        )}
                                       </div>
                                     </div>
-                                  </CardContent>
-                                </Card>
-                              ))}
-                            </div>
-                          </div>
-                        )}
+                                  </div>
+                                ))
+                              ) : (
+                                <div className="text-center py-4 text-gray-500">
+                                  <FileText className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                                  <p className="text-xs">Tidak ada tahapan</p>
+                                </div>
+                              )}
+                            </CardContent>
+                          </Card>
+                        ))}
                       </div>
                     </CardContent>
                   </Card>
@@ -1032,6 +1539,13 @@ export default function EditLaporanPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* File Preview Modal */}
+      <FilePreviewModal
+        file={previewFile}
+        isOpen={!!previewFile}
+        onClose={() => setPreviewFile(null)}
+      />
     </div>
   );
 }

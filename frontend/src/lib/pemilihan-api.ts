@@ -14,13 +14,18 @@ export interface PemilihanDTO {
   kecamatanNama?: string
   kelurahan?: string
   kelurahanNama?: string
+  rt?: string
+  rw?: string
+  latitude?: number
+  longitude?: number
+  alamatLokasi?: string
   wilayahTingkat?: string
   tanggalPembuatan?: string
   tanggalAktif?: string
   tanggalBerakhir?: string
   createdAt?: string
   updatedAt?: string
-  detailPemilihan?: DetailPemilihanDTO[]
+  detailLaporan?: DetailPemilihanDTO[]
   totalLaporan?: number
   alamatLengkap?: string
 }

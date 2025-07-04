@@ -2203,6 +2203,13 @@ export const jenisLaporanAPI = {
       body: JSON.stringify(filterRequest),
     }),
 
+  // Get all jenis laporan with tahapan and pagination
+  searchWithTahapan: (filterRequest: JenisLaporanFilterRequest): Promise<PagedResponse<JenisLaporan>> =>
+    apiCall<PagedResponse<JenisLaporan>>('/jenis-laporan/search-with-tahapan', {
+      method: 'POST',
+      body: JSON.stringify(filterRequest),
+    }),
+
   // Get all active jenis laporan for dropdown
   getActive: (): Promise<JenisLaporan[]> =>
     apiCall<JenisLaporan[]>('/jenis-laporan/active'),

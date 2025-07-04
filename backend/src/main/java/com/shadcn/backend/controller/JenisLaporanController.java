@@ -39,6 +39,18 @@ public class JenisLaporanController {
         }
     }
 
+    // Get all jenis laporan with tahapan details
+    @PostMapping("/search-with-tahapan")
+    public ResponseEntity<Page<JenisLaporanDto>> searchJenisLaporanWithTahapan(@RequestBody JenisLaporanFilterRequest filterRequest) {
+        try {
+            Page<JenisLaporanDto> jenisLaporanPage = jenisLaporanService.getAllJenisLaporanWithTahapan(filterRequest);
+            return ResponseEntity.ok(jenisLaporanPage);
+        } catch (Exception e) {
+            log.error("Error searching jenis laporan with tahapan", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
     // Get all active jenis laporan for dropdown
     @GetMapping("/active")
     public ResponseEntity<List<JenisLaporanDto>> getActiveJenisLaporan() {

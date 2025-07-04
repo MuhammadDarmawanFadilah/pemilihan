@@ -5,6 +5,7 @@ import com.shadcn.backend.model.DetailPemilihan;
 import com.shadcn.backend.model.Laporan;
 import com.shadcn.backend.dto.PemilihanDTO;
 import com.shadcn.backend.dto.CreatePemilihanRequest;
+import com.shadcn.backend.dto.DetailLaporanDTO;
 import com.shadcn.backend.repository.PemilihanRepository;
 import com.shadcn.backend.repository.DetailPemilihanRepository;
 import com.shadcn.backend.repository.LaporanRepository;
@@ -101,6 +102,45 @@ public class PemilihanService {
         if (existingPemilihan.isPresent()) {
             Pemilihan pemilihan = existingPemilihan.get();
             updatePemilihanFields(pemilihan, pemilihanDTO);
+            pemilihan = pemilihanRepository.save(pemilihan);
+            return convertToDTO(pemilihan);
+        }
+        return null;
+    }
+    
+    public PemilihanDTO updatePemilihan(Long id, CreatePemilihanRequest request) {
+        // Convert CreatePemilihanRequest to PemilihanDTO
+        PemilihanDTO pemilihanDTO = convertRequestToDTO(request);
+        
+        Optional<Pemilihan> existingPemilihan = pemilihanRepository.findById(id);
+        if (existingPemilihan.isPresent()) {
+            Pemilihan pemilihan = existingPemilihan.get();
+            updatePemilihanFields(pemilihan, pemilihanDTO);
+            
+            // Update detail laporan
+            if (request.getDetailLaporan() != null) {
+                // Delete existing detail pemilihan
+                detailPemilihanRepository.deleteByPemilihanPemilihanId(pemilihan.getPemilihanId());
+                
+                // Create new detail pemilihan
+                for (DetailLaporanDTO detailDto : request.getDetailLaporan()) {
+                    DetailPemilihan detail = new DetailPemilihan();
+                    detail.setPemilihan(pemilihan);
+                    
+                    // Find laporan by ID
+                    if (detailDto.getLaporanId() != null) {
+                        Laporan laporan = new Laporan();
+                        laporan.setLaporanId(detailDto.getLaporanId());
+                        detail.setLaporan(laporan);
+                    }
+                    
+                    detail.setUrutanTampil(1);
+                    detail.setPosisiLayout(1);
+                    
+                    detailPemilihanRepository.save(detail);
+                }
+            }
+            
             pemilihan = pemilihanRepository.save(pemilihan);
             return convertToDTO(pemilihan);
         }

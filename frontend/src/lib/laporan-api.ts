@@ -9,6 +9,24 @@ export interface Laporan {
   createdAt: string;
   updatedAt: string;
   tahapanList?: TahapanLaporanDetail[];
+  detailLaporanList?: DetailLaporanDTO[];
+}
+
+export interface DetailLaporanDTO {
+  detailLaporanId: number;
+  laporanId: number;
+  konten: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  tahapanLaporanId: number;
+  tahapanNama: string;
+  tahapanDeskripsi: string;
+  templateTahapan: string;
+  urutanTahapan: number;
+  jenisLaporanId: number;
+  jenisLaporanNama: string;
+  jenisFileIzin: string[];
 }
 
 export interface TahapanLaporanDetail {
@@ -19,6 +37,8 @@ export interface TahapanLaporanDetail {
   urutanTahapan: number;
   status: string;
   jenisFileIzin: string[];
+  jenisLaporanId: number;
+  jenisLaporanNama: string;
 }
 
 export interface LaporanRequest {
@@ -156,6 +176,21 @@ class LaporanAPI {
       method: 'PUT',
       headers: this.getAuthHeaders(),
       body: JSON.stringify(laporanRequest),
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Gagal mengupdate laporan');
+    }
+    return response.json();
+  }
+
+  // Update laporan with wizard (multiple jenis laporan)
+  async updateWizard(id: number, wizardRequest: LaporanWizardRequest): Promise<Laporan> {
+    const response = await fetch(`${API_BASE_URL}/api/laporan/${id}/wizard`, {
+      method: 'PUT',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(wizardRequest),
     });
     
     if (!response.ok) {

@@ -25,6 +25,10 @@ public class DetailLaporanDTO {
     private String templateTahapan;
     private Integer urutanTahapan;
     
+    // JenisLaporan fields (from TahapanLaporan)
+    private Long jenisLaporanId;
+    private String jenisLaporanNama;
+    
     // File and attachment fields
     private List<String> jenisFileIzin;
     private List<LampiranLaporanDto> lampiranList;

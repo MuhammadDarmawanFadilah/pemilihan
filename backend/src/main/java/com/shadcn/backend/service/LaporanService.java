@@ -693,6 +693,10 @@ public class LaporanService {
         dto.setTemplateTahapan(detail.getTahapanLaporan().getTemplateTahapan());
         dto.setUrutanTahapan(detail.getTahapanLaporan().getUrutanTahapan());
         
+        // Add JenisLaporan information from TahapanLaporan
+        dto.setJenisLaporanId(detail.getTahapanLaporan().getJenisLaporan().getJenisLaporanId());
+        dto.setJenisLaporanNama(detail.getTahapanLaporan().getJenisLaporan().getNama());
+        
         // Parse allowed file types
         List<String> allowedTypes = getAllowedFileTypes(detail.getTahapanLaporan());
         dto.setJenisFileIzin(allowedTypes);
