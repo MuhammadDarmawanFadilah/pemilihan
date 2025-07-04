@@ -37,7 +37,7 @@ import {
   Calendar,
   Loader2
 } from 'lucide-react';
-import { laporanAPI, LaporanRequest, LaporanWizardRequest, Laporan } from '@/lib/laporan-api';
+import { laporanAPI, LaporanRequest, Laporan } from '@/lib/laporan-api';
 import { jenisLaporanAPI, JenisLaporan, PagedResponse } from '@/lib/api';
 
 // Layout options untuk tampilan jenis laporan
@@ -57,7 +57,7 @@ interface LaporanFormData {
   nama: string;
   deskripsi: string;
   status: 'AKTIF' | 'TIDAK_AKTIF' | 'DRAFT';
-  selectedJenisLaporanIds: number[];
+  selectedJenisLaporanId?: number;
 }
 
 // Stepper Component
@@ -118,7 +118,7 @@ export default function EditLaporanPage() {
   const router = useRouter();
   const params = useParams();
   const laporanId = parseInt(params.id as string);
-  const [currentStep, setCurrentStep] = useState<number>(0);
+  const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   
@@ -129,18 +129,12 @@ export default function EditLaporanPage() {
   const [formData, setFormData] = useState<LaporanFormData>({
     nama: '',
     deskripsi: '',
-    status: 'AKTIF',
-    selectedJenisLaporanIds: []
+    status: 'AKTIF'
   });
   
-  // Jenis laporan state - changed to array for multi-select
+  // Jenis laporan state
   const [jenisLaporanList, setJenisLaporanList] = useState<JenisLaporanWithTahapan[]>([]);
-  const [selectedJenisLaporanList, setSelectedJenisLaporanList] = useState<JenisLaporanWithTahapan[]>([]);
-  // Helper function to compare arrays
-  const arraysEqual = (a: number[], b: number[]) => {
-    return a.length === b.length && a.sort().join(',') === b.sort().join(',');
-  };
-
+  const [selectedJenisLaporan, setSelectedJenisLaporan] = useState<JenisLaporanWithTahapan | null>(null);
   const [loading, setLoading] = useState(false);
   const [totalElements, setTotalElements] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
@@ -178,52 +172,18 @@ export default function EditLaporanPage() {
       
       // Set form data from existing laporan
       setFormData({
-        nama: laporan.namaLaporan || '',
-        deskripsi: laporan.deskripsi || '',
-        status: laporan.status || 'AKTIF',
-        selectedJenisLaporanIds: [] // Will be populated after loading jenis laporan details
+        nama: laporan.nama,
+        deskripsi: laporan.deskripsi,
+        status: laporan.status,
+        selectedJenisLaporanId: laporan.jenisLaporanId
       });
       
-      // Get all associated jenis laporan IDs
+      // Load the current jenis laporan details
       try {
-        const associatedJenisLaporanIds = await laporanAPI.getAssociatedJenisLaporanIds(laporanId);
-        console.log('Associated jenis laporan IDs:', associatedJenisLaporanIds);
-        
-        // Load details for all associated jenis laporan
-        const selectedJenisLaporanDetails = await Promise.all(
-          associatedJenisLaporanIds.map(async (id) => {
-            try {
-              return await jenisLaporanAPI.getWithTahapan(id);
-            } catch (error) {
-              console.error(`Error loading jenis laporan ${id}:`, error);
-              return null;
-            }
-          })
-        );
-        
-        // Filter out null values and set as selected
-        const validJenisLaporan = selectedJenisLaporanDetails.filter(jl => jl !== null);
-        setSelectedJenisLaporanList(validJenisLaporan);
-        
-        // Update form data with selected IDs
-        setFormData(prev => ({
-          ...prev,
-          selectedJenisLaporanIds: validJenisLaporan.map(jl => jl.jenisLaporanId)
-        }));
-        
+        const jenisLaporan = await jenisLaporanAPI.getWithTahapan(laporan.jenisLaporanId);
+        setSelectedJenisLaporan(jenisLaporan);
       } catch (error) {
-        console.error('Error loading associated jenis laporan:', error);
-        // Fallback: just load the primary jenis laporan
-        try {
-          const jenisLaporan = await jenisLaporanAPI.getWithTahapan(laporan.jenisLaporanId);
-          setSelectedJenisLaporanList([jenisLaporan]);
-          setFormData(prev => ({
-            ...prev,
-            selectedJenisLaporanIds: [laporan.jenisLaporanId]
-          }));
-        } catch (fallbackError) {
-          console.error('Error loading primary jenis laporan:', fallbackError);
-        }
+        console.error('Error loading jenis laporan details:', error);
       }
     } catch (error: any) {
       console.error('Error loading laporan:', error);
@@ -327,74 +287,54 @@ export default function EditLaporanPage() {
     router.push('/admin/laporan');
   };
   
-  // Jenis laporan selection - updated for multi-select
+  // Jenis laporan selection
   const handleSelectJenisLaporan = (jenisLaporan: JenisLaporanWithTahapan) => {
-    const isAlreadySelected = selectedJenisLaporanList.some(
-      selected => selected.jenisLaporanId === jenisLaporan.jenisLaporanId
-    );
-    
-    if (isAlreadySelected) {
-      // Remove from selection
-      const newSelection = selectedJenisLaporanList.filter(
-        selected => selected.jenisLaporanId !== jenisLaporan.jenisLaporanId
-      );
-      setSelectedJenisLaporanList(newSelection);
+    setSelectedJenisLaporan(jenisLaporan);
+    setFormData({
+      ...formData,
+      selectedJenisLaporanId: jenisLaporan.jenisLaporanId
+    });
+  };
+  
+  const handleUnselectJenisLaporan = () => {
+    // Reset to original jenis laporan if available
+    if (originalLaporan) {
+      setSelectedJenisLaporan(jenisLaporanList.find(jl => jl.jenisLaporanId === originalLaporan.jenisLaporanId) || null);
       setFormData({
         ...formData,
-        selectedJenisLaporanIds: newSelection.map(jl => jl.jenisLaporanId)
+        selectedJenisLaporanId: originalLaporan.jenisLaporanId
       });
     } else {
-      // Add to selection
-      const newSelection = [...selectedJenisLaporanList, jenisLaporan];
-      setSelectedJenisLaporanList(newSelection);
+      setSelectedJenisLaporan(null);
       setFormData({
         ...formData,
-        selectedJenisLaporanIds: newSelection.map(jl => jl.jenisLaporanId)
+        selectedJenisLaporanId: undefined
       });
     }
   };
   
-  const handleUnselectJenisLaporan = (jenisLaporanId: number) => {
-    const newSelection = selectedJenisLaporanList.filter(
-      selected => selected.jenisLaporanId !== jenisLaporanId
-    );
-    setSelectedJenisLaporanList(newSelection);
-    setFormData({
-      ...formData,
-      selectedJenisLaporanIds: newSelection.map(jl => jl.jenisLaporanId)
-    });
-  };
-  
-  const handleClearAllSelection = () => {
-    setSelectedJenisLaporanList([]);
-    setFormData({
-      ...formData,
-      selectedJenisLaporanIds: []
-    });
-  };
-  
   // Validation functions
   const validateStep1 = () => {
-    return formData.nama && formData.nama.trim() !== '' && formData.deskripsi && formData.deskripsi.trim() !== '';
+    return formData.nama.trim() !== '' && formData.deskripsi.trim() !== '';
   };
 
   const validateStep2 = () => {
-    return selectedJenisLaporanList.length > 0;
+    return selectedJenisLaporan !== null;
   };
   
-  // Submit function - now supporting multiple jenis laporan
+  // Submit function
   const handleSubmit = async () => {
     try {
       setIsSubmitting(true);
       
-      // Use wizard API for multiple jenis laporan support
-      const wizardRequest: LaporanWizardRequest = {
-        namaLaporan: formData.nama,
+      const requestData: LaporanRequest = {
+        nama: formData.nama,
         deskripsi: formData.deskripsi,
-        jenisLaporanIds: selectedJenisLaporanList.map(item => item.jenisLaporanId)
+        status: formData.status,
+        jenisLaporanId: formData.selectedJenisLaporanId!
       };
 
-      await laporanAPI.updateWizard(laporanId, wizardRequest);
+      await laporanAPI.update(laporanId, requestData);
       
       toast({
         title: "Sukses",
@@ -510,6 +450,17 @@ export default function EditLaporanPage() {
                   </SelectContent>
                 </Select>
               </div>
+              
+              {originalLaporan && (
+                <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <h4 className="font-medium text-blue-900 mb-2">Informasi Laporan Asli</h4>
+                  <div className="text-sm text-blue-700 space-y-1">
+                    <p><span className="font-medium">Jenis Laporan:</span> {originalLaporan.jenisLaporanNama}</p>
+                    <p><span className="font-medium">Dibuat:</span> {new Date(originalLaporan.createdAt).toLocaleDateString('id-ID')}</p>
+                    <p><span className="font-medium">Terakhir diubah:</span> {new Date(originalLaporan.updatedAt).toLocaleDateString('id-ID')}</p>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         );
@@ -631,60 +582,48 @@ export default function EditLaporanPage() {
                       layout === 4 ? 'grid-cols-4' :
                       'grid-cols-5'
                     }`}>
-                      {jenisLaporanList.map((jenisLaporan) => {
-                        const isSelected = selectedJenisLaporanList.some(
-                          selected => selected.jenisLaporanId === jenisLaporan.jenisLaporanId
-                        );
-                        const isOriginal = originalLaporan?.jenisLaporanId === jenisLaporan.jenisLaporanId;
-                        
-                        return (
-                          <Card 
-                            key={jenisLaporan.jenisLaporanId} 
-                            className={`cursor-pointer transition-all hover:shadow-md ${
-                              isSelected
-                                ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200' 
-                                : isOriginal
-                                  ? 'border-green-500 bg-green-50'
-                                  : 'border-gray-200 hover:border-gray-300'
-                            }`}
-                            onClick={() => handleSelectJenisLaporan(jenisLaporan)}
-                          >
-                            <CardContent className="p-4">
-                              <div className="space-y-3">
-                                <div className="flex items-start justify-between">
-                                  <h3 className="font-semibold text-sm">{jenisLaporan.nama}</h3>
-                                  <div className="flex items-center gap-1">
-                                    {isSelected && (
-                                      <div className="flex items-center gap-1">
-                                        <Check className="h-5 w-5 text-blue-600" />
-                                        <Badge className="bg-blue-600 text-white text-xs">
-                                          Dipilih
-                                        </Badge>
-                                      </div>
-                                    )}
-                                    {isOriginal && !isSelected && (
-                                      <div className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
-                                        Saat ini
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-                                
-                                <p className="text-xs text-gray-600 line-clamp-2">{jenisLaporan.deskripsi}</p>
-                                
-                                <div className="flex items-center justify-between">
-                                  <Badge className={getStatusColor(jenisLaporan.status)} variant="secondary">
-                                    {getStatusDisplay(jenisLaporan.status)}
-                                  </Badge>
-                                  <span className="text-xs text-gray-500">
-                                    {jenisLaporan.tahapanList?.length || 0} tahapan
-                                  </span>
+                      {jenisLaporanList.map((jenisLaporan) => (
+                        <Card 
+                          key={jenisLaporan.jenisLaporanId} 
+                          className={`cursor-pointer transition-all hover:shadow-md ${
+                            selectedJenisLaporan?.jenisLaporanId === jenisLaporan.jenisLaporanId 
+                              ? 'border-blue-500 bg-blue-50' 
+                              : originalLaporan?.jenisLaporanId === jenisLaporan.jenisLaporanId
+                                ? 'border-green-500 bg-green-50'
+                                : 'border-gray-200'
+                          }`}
+                          onClick={() => handleSelectJenisLaporan(jenisLaporan)}
+                        >
+                          <CardContent className="p-4">
+                            <div className="space-y-3">
+                              <div className="flex items-start justify-between">
+                                <h3 className="font-semibold text-sm">{jenisLaporan.nama}</h3>
+                                <div className="flex items-center gap-1">
+                                  {selectedJenisLaporan?.jenisLaporanId === jenisLaporan.jenisLaporanId && (
+                                    <Check className="h-5 w-5 text-blue-600" />
+                                  )}
+                                  {originalLaporan?.jenisLaporanId === jenisLaporan.jenisLaporanId && (
+                                    <div className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
+                                      Saat ini
+                                    </div>
+                                  )}
                                 </div>
                               </div>
-                            </CardContent>
-                          </Card>
-                        );
-                      })}
+                              
+                              <p className="text-xs text-gray-600 line-clamp-2">{jenisLaporan.deskripsi}</p>
+                              
+                              <div className="flex items-center justify-between">
+                                <Badge className={getStatusColor(jenisLaporan.status)} variant="secondary">
+                                  {getStatusDisplay(jenisLaporan.status)}
+                                </Badge>
+                                <span className="text-xs text-gray-500">
+                                  {jenisLaporan.tahapanList?.length || 0} tahapan
+                                </span>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
                     </div>
 
                     {/* Pagination */}
@@ -722,80 +661,77 @@ export default function EditLaporanPage() {
             </Card>
 
             {/* Selected Jenis Laporan */}
-            {selectedJenisLaporanList.length > 0 && (
-              <Card className="border-green-500 bg-green-50">
+            {selectedJenisLaporan && (
+              <Card className={`border-2 ${
+                originalLaporan?.jenisLaporanId === selectedJenisLaporan.jenisLaporanId 
+                  ? 'border-green-500 bg-green-50' 
+                  : 'border-blue-500 bg-blue-50'
+              }`}>
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
                     <span className="flex items-center gap-2">
-                      <Check className="h-5 w-5 text-green-600" />
-                      Jenis Laporan Terpilih ({selectedJenisLaporanList.length})
+                      <Check className={`h-5 w-5 ${
+                        originalLaporan?.jenisLaporanId === selectedJenisLaporan.jenisLaporanId 
+                          ? 'text-green-600' 
+                          : 'text-blue-600'
+                      }`} />
+                      {originalLaporan?.jenisLaporanId === selectedJenisLaporan.jenisLaporanId 
+                        ? 'Jenis Laporan Saat Ini' 
+                        : 'Jenis Laporan Baru Terpilih'
+                      }
                     </span>
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={handleClearAllSelection}
+                      onClick={handleUnselectJenisLaporan}
                       className="text-red-600 hover:text-red-700"
                     >
                       <X className="h-4 w-4" />
-                      Hapus Semua
                     </Button>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {/* Selected items */}
-                    <div className={`grid gap-3 ${
-                      layout === 1 ? 'grid-cols-1' :
-                      layout === 2 ? 'grid-cols-2' :
-                      layout === 3 ? 'grid-cols-3' :
-                      layout === 4 ? 'grid-cols-4' :
-                      'grid-cols-5'
-                    }`}>
-                      {selectedJenisLaporanList.map((jenisLaporan) => {
-                        const isOriginal = originalLaporan?.jenisLaporanId === jenisLaporan.jenisLaporanId;
-                        
-                        return (
-                          <Card 
-                            key={jenisLaporan.jenisLaporanId} 
-                            className={`border ${isOriginal ? 'border-green-200 bg-green-50' : 'border-blue-200 bg-blue-50'}`}
-                          >
-                            <CardContent className="p-3">
-                              <div className="space-y-2">
-                                <div className="flex items-start justify-between">
-                                  <h4 className="font-semibold text-sm text-gray-900">{jenisLaporan.nama}</h4>
-                                  <div className="flex items-center gap-1">
-                                    {isOriginal && (
-                                      <Badge variant="secondary" className="text-xs bg-green-100 text-green-800">
-                                        Saat ini
-                                      </Badge>
-                                    )}
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => handleUnselectJenisLaporan(jenisLaporan.jenisLaporanId)}
-                                      className="text-red-600 hover:text-red-700 h-6 w-6 p-0"
-                                    >
-                                      <X className="h-3 w-3" />
-                                    </Button>
-                                  </div>
-                                </div>
-                                
-                                <p className="text-xs text-gray-600 line-clamp-2">{jenisLaporan.deskripsi}</p>
-                                
-                                <div className="flex items-center justify-between">
-                                  <Badge className={getStatusColor(jenisLaporan.status)} variant="secondary">
-                                    {getStatusDisplay(jenisLaporan.status)}
-                                  </Badge>
-                                  <span className="text-xs text-gray-500">
-                                    {jenisLaporan.tahapanList?.length || 0} tahapan
-                                  </span>
-                                </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        );
-                      })}
+                    <div>
+                      <h3 className="font-semibold text-lg">{selectedJenisLaporan.nama}</h3>
+                      <p className="text-gray-600 mt-1">{selectedJenisLaporan.deskripsi}</p>
                     </div>
+                    
+                    <div className="flex items-center gap-4">
+                      <Badge className={getStatusColor(selectedJenisLaporan.status)}>
+                        {getStatusDisplay(selectedJenisLaporan.status)}
+                      </Badge>
+                      <span className="text-sm text-gray-600">
+                        {selectedJenisLaporan.tahapanList?.length || 0} tahapan
+                      </span>
+                    </div>
+                    
+                    {originalLaporan?.jenisLaporanId !== selectedJenisLaporan.jenisLaporanId && (
+                      <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <p className="text-sm text-yellow-800">
+                          <strong>Perhatian:</strong> Mengubah jenis laporan akan mengubah tahapan yang perlu dilalui.
+                        </p>
+                      </div>
+                    )}
+                    
+                    {selectedJenisLaporan.tahapanList && selectedJenisLaporan.tahapanList.length > 0 && (
+                      <div>
+                        <h4 className="font-medium text-gray-900 mb-2">Tahapan yang akan dilalui:</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                          {selectedJenisLaporan.tahapanList.map((tahapan) => (
+                            <div key={tahapan.tahapanLaporanId} className="flex items-center gap-2 p-2 bg-white rounded border">
+                              <span className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs">
+                                {tahapan.urutanTahapan}
+                              </span>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-gray-900 truncate">{tahapan.nama}</p>
+                                <p className="text-xs text-gray-500 truncate">{tahapan.deskripsi}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -827,7 +763,7 @@ export default function EditLaporanPage() {
                       <CardContent className="space-y-3">
                         <div>
                           <p className="text-sm text-gray-600">Nama Laporan</p>
-                          <p className="font-medium">{originalLaporan.namaLaporan}</p>
+                          <p className="font-medium">{originalLaporan.nama}</p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-600">Status</p>
@@ -859,13 +795,7 @@ export default function EditLaporanPage() {
                         </div>
                         <div>
                           <p className="text-sm text-gray-600">Jenis Laporan</p>
-                          <div className="space-y-1">
-                            {selectedJenisLaporanList.map((jenis, index) => (
-                              <p key={jenis.jenisLaporanId} className="font-medium">
-                                {index + 1}. {jenis.nama}
-                              </p>
-                            ))}
-                          </div>
+                          <p className="font-medium">{selectedJenisLaporan?.nama}</p>
                         </div>
                       </CardContent>
                     </Card>
@@ -877,7 +807,7 @@ export default function EditLaporanPage() {
                   <CardContent className="p-4">
                     <h4 className="font-semibold text-gray-900 mb-3">Ringkasan Perubahan</h4>
                     <div className="space-y-2 text-sm">
-                      {originalLaporan?.namaLaporan !== formData.nama && (
+                      {originalLaporan?.nama !== formData.nama && (
                         <div className="flex items-center gap-2">
                           <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
                           <span>Nama laporan akan diubah</span>
@@ -895,18 +825,16 @@ export default function EditLaporanPage() {
                           <span>Status laporan akan diubah</span>
                         </div>
                       )}
-                      {originalLaporan?.jenisLaporanId && !formData.selectedJenisLaporanIds.includes(originalLaporan.jenisLaporanId) && (
+                      {originalLaporan?.jenisLaporanId !== formData.selectedJenisLaporanId && (
                         <div className="flex items-center gap-2">
                           <div className="w-2 h-2 bg-red-500 rounded-full"></div>
                           <span className="text-red-700 font-medium">Jenis laporan akan diubah (tahapan akan berubah)</span>
                         </div>
                       )}
-                      {originalLaporan?.namaLaporan === formData.nama && 
+                      {originalLaporan?.nama === formData.nama && 
                        originalLaporan?.deskripsi === formData.deskripsi && 
                        originalLaporan?.status === formData.status && 
-                       originalLaporan?.jenisLaporanId && 
-                       formData.selectedJenisLaporanIds.length === 1 &&
-                       formData.selectedJenisLaporanIds.includes(originalLaporan.jenisLaporanId) && (
+                       originalLaporan?.jenisLaporanId === formData.selectedJenisLaporanId && (
                         <div className="flex items-center gap-2">
                           <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
                           <span className="text-gray-600">Tidak ada perubahan</span>
@@ -925,82 +853,78 @@ export default function EditLaporanPage() {
                 </Card>
 
                 {/* Jenis Laporan Details */}
-                {selectedJenisLaporanList.length > 0 && (
-                  <div className="space-y-6">
-                    {selectedJenisLaporanList.map((jenisLaporan) => (
-                      <Card key={jenisLaporan.jenisLaporanId}>
-                        <CardHeader>
-                          <CardTitle className="text-lg">Detail Jenis Laporan: {jenisLaporan.nama}</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="space-y-4">
-                            <div>
-                              <h4 className="font-semibold text-gray-900 mb-1">{jenisLaporan.nama}</h4>
-                              <p className="text-gray-600 text-sm">{jenisLaporan.deskripsi}</p>
-                            </div>
-                            
-                            {jenisLaporan.tahapanList && jenisLaporan.tahapanList.length > 0 && (
-                              <div>
-                                <h4 className="font-semibold text-gray-900 mb-3">Tahapan yang Akan Dilalui</h4>
-                                <div className="space-y-3">
-                                  {jenisLaporan.tahapanList.map((tahapan: any) => (
-                                    <Card key={tahapan.tahapanLaporanId} className="border border-gray-200">
-                                      <CardContent className="p-4">
-                                        <div className="flex items-start gap-4">
-                                          <div className="flex-shrink-0">
-                                            <div className="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-sm">
-                                              {tahapan.urutanTahapan}
-                                            </div>
-                                          </div>
-                                          <div className="flex-1 min-w-0">
-                                            <div className="flex items-start justify-between">
-                                              <div className="flex-1">
-                                                <h4 className="font-semibold text-gray-900 mb-1">{tahapan.nama}</h4>
-                                                <p className="text-sm text-gray-600 mb-3">{tahapan.deskripsi}</p>
-                                                
-                                                <div className="flex items-center gap-4 text-sm text-gray-500">
-                                                  {tahapan.templateTahapan && (
-                                                    <div className="flex items-center gap-1">
-                                                      <FileText className="h-4 w-4" />
-                                                      <span>Template tersedia</span>
-                                                    </div>
-                                                  )}
-                                                  {tahapan.jenisFileIzin && tahapan.jenisFileIzin.length > 0 && (
-                                                    <div className="flex items-center gap-1">
-                                                      <span>{tahapan.jenisFileIzin.length} tipe file diizinkan</span>
-                                                    </div>
-                                                  )}
+                {selectedJenisLaporan && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg">Detail Jenis Laporan Terpilih</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        <div>
+                          <h4 className="font-semibold text-gray-900 mb-1">{selectedJenisLaporan.nama}</h4>
+                          <p className="text-gray-600 text-sm">{selectedJenisLaporan.deskripsi}</p>
+                        </div>
+                        
+                        {selectedJenisLaporan.tahapanList && selectedJenisLaporan.tahapanList.length > 0 && (
+                          <div>
+                            <h4 className="font-semibold text-gray-900 mb-3">Tahapan yang Akan Dilalui</h4>
+                            <div className="space-y-3">
+                              {selectedJenisLaporan.tahapanList.map((tahapan) => (
+                                <Card key={tahapan.tahapanLaporanId} className="border border-gray-200">
+                                  <CardContent className="p-4">
+                                    <div className="flex items-start gap-4">
+                                      <div className="flex-shrink-0">
+                                        <div className="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-sm">
+                                          {tahapan.urutanTahapan}
+                                        </div>
+                                      </div>
+                                      <div className="flex-1 min-w-0">
+                                        <div className="flex items-start justify-between">
+                                          <div className="flex-1">
+                                            <h4 className="font-semibold text-gray-900 mb-1">{tahapan.nama}</h4>
+                                            <p className="text-sm text-gray-600 mb-3">{tahapan.deskripsi}</p>
+                                            
+                                            <div className="flex items-center gap-4 text-sm text-gray-500">
+                                              {tahapan.templateTahapan && (
+                                                <div className="flex items-center gap-1">
+                                                  <FileText className="h-4 w-4" />
+                                                  <span>Template tersedia</span>
                                                 </div>
-                                              </div>
-                                              
+                                              )}
                                               {tahapan.jenisFileIzin && tahapan.jenisFileIzin.length > 0 && (
-                                                <div className="flex flex-wrap gap-1 ml-4">
-                                                  {tahapan.jenisFileIzin.slice(0, 4).map((type: any) => (
-                                                    <Badge key={type} variant="outline" className="text-xs">
-                                                      {type.toUpperCase()}
-                                                    </Badge>
-                                                  ))}
-                                                  {tahapan.jenisFileIzin.length > 4 && (
-                                                    <Badge variant="outline" className="text-xs">
-                                                      +{tahapan.jenisFileIzin.length - 4}
-                                                    </Badge>
-                                                  )}
+                                                <div className="flex items-center gap-1">
+                                                  <span>{tahapan.jenisFileIzin.length} tipe file diizinkan</span>
                                                 </div>
                                               )}
                                             </div>
                                           </div>
+                                          
+                                          {tahapan.jenisFileIzin && tahapan.jenisFileIzin.length > 0 && (
+                                            <div className="flex flex-wrap gap-1 ml-4">
+                                              {tahapan.jenisFileIzin.slice(0, 4).map(type => (
+                                                <Badge key={type} variant="outline" className="text-xs">
+                                                  {type.toUpperCase()}
+                                                </Badge>
+                                              ))}
+                                              {tahapan.jenisFileIzin.length > 4 && (
+                                                <Badge variant="outline" className="text-xs">
+                                                  +{tahapan.jenisFileIzin.length - 4}
+                                                </Badge>
+                                              )}
+                                            </div>
+                                          )}
                                         </div>
-                                      </CardContent>
-                                    </Card>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
+                                      </div>
+                                    </div>
+                                  </CardContent>
+                                </Card>
+                              ))}
+                            </div>
                           </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
                 )}
               </CardContent>
             </Card>

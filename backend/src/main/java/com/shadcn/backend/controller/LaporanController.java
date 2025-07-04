@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -111,26 +110,6 @@ public class LaporanController {
         } catch (Exception e) {
             log.error("Error fetching laporan by ID", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-    }
-
-    // Get associated jenis laporan IDs for a laporan
-    @GetMapping("/{id}/jenis-laporan-ids")
-    public ResponseEntity<?> getAssociatedJenisLaporanIds(@PathVariable Long id) {
-        try {
-            List<Long> jenisLaporanIds = laporanService.getAssociatedJenisLaporanIds(id);
-            Map<String, Object> response = new HashMap<>();
-            response.put("jenisLaporanIds", jenisLaporanIds);
-            return ResponseEntity.ok(response);
-        } catch (RuntimeException e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("error", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
-        } catch (Exception e) {
-            log.error("Error fetching associated jenis laporan IDs", e);
-            Map<String, String> error = new HashMap<>();
-            error.put("error", "Terjadi kesalahan saat mengambil data jenis laporan");
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
     }
 
@@ -243,48 +222,6 @@ public class LaporanController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
         } catch (Exception e) {
             log.error("Error updating laporan", e);
-            Map<String, String> error = new HashMap<>();
-            error.put("error", "Terjadi kesalahan saat mengupdate laporan");
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
-        }
-    }
-
-    // Update laporan dengan wizard (support multiple jenis laporan)
-    @PutMapping("/{id}/wizard")
-    public ResponseEntity<?> updateLaporanWizard(
-            @PathVariable Long id,
-            @Valid @RequestBody LaporanWizardDto wizardDto,
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
-        try {
-            // Check authorization
-            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                Map<String, String> error = new HashMap<>();
-                error.put("error", "Anda harus login untuk mengupdate laporan");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
-            }
-
-            String token = authHeader.substring(7);
-            Long userId = authService.getUserIdFromToken(token);
-
-            if (userId == null) {
-                Map<String, String> error = new HashMap<>();
-                error.put("error", "Token tidak valid atau telah kedaluwarsa");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
-            }
-
-            wizardDto.setUserId(userId);
-            LaporanDto updatedLaporan = laporanService.updateLaporanWizard(id, wizardDto, userId);
-            return ResponseEntity.ok(updatedLaporan);
-        } catch (SecurityException e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("error", e.getMessage());
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
-        } catch (RuntimeException e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("error", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
-        } catch (Exception e) {
-            log.error("Error updating laporan with wizard", e);
             Map<String, String> error = new HashMap<>();
             error.put("error", "Terjadi kesalahan saat mengupdate laporan");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
@@ -415,7 +352,7 @@ public class LaporanController {
             }
 
             String konten = contentRequest.get("konten");
-            DetailLaporanDto updatedDetail = laporanService.updateDetailLaporan(detailId, konten, userId);
+            DetailLaporanDTO updatedDetail = laporanService.updateDetailLaporan(detailId, konten, userId);
             return ResponseEntity.ok(updatedDetail);
         } catch (SecurityException e) {
             Map<String, String> error = new HashMap<>();
@@ -455,7 +392,7 @@ public class LaporanController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
             }
 
-            DetailLaporanDto completedDetail = laporanService.completeDetailLaporan(detailId, userId);
+            DetailLaporanDTO completedDetail = laporanService.completeDetailLaporan(detailId, userId);
             return ResponseEntity.ok(completedDetail);
         } catch (SecurityException e) {
             Map<String, String> error = new HashMap<>();

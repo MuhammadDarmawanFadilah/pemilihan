@@ -2112,7 +2112,7 @@ export interface Laporan {
   namaPelapor: string;
   alamatPelapor: string;
   userId: number;
-  status: 'AKTIF' | 'TIDAK_AKTIF' | 'DRAFT';
+  status: 'DRAFT' | 'DALAM_PROSES' | 'SELESAI' | 'DITOLAK';
   jenisLaporanId: number;
   jenisLaporanNama: string;
   totalTahapan: number;
@@ -2175,7 +2175,7 @@ export interface LaporanFilterRequest {
   namaLaporan?: string;
   namaPelapor?: string;
   jenisLaporanId?: number;
-  status?: 'AKTIF' | 'TIDAK_AKTIF' | 'DRAFT';
+  status?: 'DRAFT' | 'DALAM_PROSES' | 'SELESAI' | 'DITOLAK';
   userId?: number;
 }
 
@@ -2189,8 +2189,9 @@ export interface JenisLaporanStats {
 export interface LaporanStats {
   total: number;
   draft: number;
-  aktif: number;
-  tidakAktif: number;
+  dalamProses: number;
+  selesai: number;
+  ditolak: number;
 }
 
 // Jenis Laporan API functions
@@ -2306,7 +2307,7 @@ export const laporanAPI = {
     }),
 
   // Update laporan status (admin only)
-  updateStatus: (id: number, status: 'AKTIF' | 'TIDAK_AKTIF' | 'DRAFT'): Promise<Laporan> =>
+  updateStatus: (id: number, status: 'DRAFT' | 'DALAM_PROSES' | 'SELESAI' | 'DITOLAK'): Promise<Laporan> =>
     apiCall<Laporan>(`/laporan/${id}/status`, {
       method: 'PUT',
       body: JSON.stringify({ status }),

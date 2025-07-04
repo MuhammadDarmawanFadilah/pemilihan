@@ -1,7 +1,7 @@
 // Laporan API Types and Functions
 export interface Laporan {
   laporanId: number;
-  namaLaporan: string;  // Changed from 'nama' to match backend
+  namaLaporan: string;  // Changed from 'nama' to match backend 'namaLaporan'
   deskripsi: string;
   status: 'AKTIF' | 'TIDAK_AKTIF' | 'DRAFT';
   jenisLaporanId: number;
@@ -22,7 +22,7 @@ export interface TahapanLaporanDetail {
 }
 
 export interface LaporanRequest {
-  namaLaporan: string;  // Changed from 'nama' to match backend
+  nama: string;
   deskripsi: string;
   status: 'AKTIF' | 'TIDAK_AKTIF' | 'DRAFT';
   jenisLaporanId: number;
@@ -39,7 +39,7 @@ export interface LaporanFilterRequest {
   size: number;
   sortBy: string;
   sortDirection: string;
-  nama?: string;
+  namaLaporan?: string;  // Changed from 'nama' to match backend
   status?: string;
   jenisLaporanNama?: string;
 }
@@ -110,17 +110,6 @@ class LaporanAPI {
     return response.json();
   }
 
-  // Get associated jenis laporan IDs for a laporan
-  async getAssociatedJenisLaporanIds(id: number): Promise<number[]> {
-    const response = await fetch(`${API_BASE_URL}/api/laporan/${id}/jenis-laporan-ids`);
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Gagal mengambil data jenis laporan');
-    }
-    const data = await response.json();
-    return data.jenisLaporanIds;
-  }
-
   // Get laporan with tahapan details
   async getWithTahapan(id: number): Promise<Laporan> {
     const response = await fetch(`${API_BASE_URL}/api/laporan/${id}/with-tahapan`);
@@ -176,26 +165,6 @@ class LaporanAPI {
     return response.json();
   }
 
-  // Update laporan with wizard (multiple jenis laporan)
-  async updateWizard(id: number, wizardRequest: LaporanWizardRequest): Promise<Laporan> {
-    const requestData = {
-      ...wizardRequest,
-      status: 'AKTIF' // Set default status for wizard update
-    };
-    
-    const response = await fetch(`${API_BASE_URL}/api/laporan/${id}/wizard`, {
-      method: 'PUT',
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify(requestData),
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Gagal mengupdate laporan');
-    }
-    return response.json();
-  }
-
   // Delete laporan (soft delete)
   async delete(id: number): Promise<void> {
     const response = await fetch(`${API_BASE_URL}/api/laporan/${id}`, {
@@ -225,8 +194,9 @@ class LaporanAPI {
   async getStats(): Promise<{
     total: number;
     draft: number;
-    aktif: number;
-    tidakAktif: number;
+    dalamProses: number;
+    selesai: number;
+    ditolak: number;
   }> {
     const response = await fetch(`${API_BASE_URL}/api/laporan/stats`, {
       headers: this.getAuthHeaders(),

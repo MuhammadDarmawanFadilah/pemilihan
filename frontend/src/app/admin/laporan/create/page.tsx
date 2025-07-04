@@ -408,8 +408,8 @@ export default function CreateLaporanPage() {
   const loadJenisLaporan = async () => {
     try {
       setLoading(true);
-      // Use search API for jenis laporan with pagination and filters
-      const response = await jenisLaporanAPI.search({
+      // Use search API with tahapan for jenis laporan with pagination and filters
+      const response = await jenisLaporanAPI.searchWithTahapan({
         page: filters.page,
         size: filters.size,
         sortBy: filters.sortBy,
@@ -418,20 +418,8 @@ export default function CreateLaporanPage() {
         status: 'AKTIF' // Only load active jenis laporan
       });
       
-      // Load tahapan details for each jenis laporan
-      const jenisLaporanWithTahapan = await Promise.all(
-        response.content.map(async (jl: JenisLaporan) => {
-          try {
-            const withTahapan = await jenisLaporanAPI.getWithTahapan(jl.jenisLaporanId);
-            return withTahapan;
-          } catch (error) {
-            console.error(`Error loading tahapan for jenis laporan ${jl.jenisLaporanId}:`, error);
-            return jl;
-          }
-        })
-      );
-      
-      setJenisLaporanList(jenisLaporanWithTahapan);
+      // Data already includes tahapan details from the backend
+      setJenisLaporanList(response.content);
       setTotalElements(response.totalElements);
       setTotalPages(response.totalPages);
     } catch (error: any) {
@@ -1159,6 +1147,41 @@ export default function CreateLaporanPage() {
                       <CardTitle className="text-lg">Detail Jenis Laporan Terpilih</CardTitle>
                     </CardHeader>
                     <CardContent>
+                      {/* Layout Options for Preview */}
+                      <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <div className="space-y-3">
+                          <Label className="text-base font-medium">Layout Tampilan Tahapan</Label>
+                          <p className="text-sm text-gray-600">Pilih tata letak untuk menampilkan tahapan dalam preview</p>
+                          <div className="grid grid-cols-5 gap-3">
+                            {LAYOUT_OPTIONS.map((option) => {
+                              const IconComponent = option.icon;
+                              return (
+                                <button
+                                  key={option.value}
+                                  onClick={() => setLayout(option.value as any)}
+                                  className={`
+                                    p-3 rounded-lg border-2 text-center transition-all
+                                    ${layout === option.value 
+                                      ? 'border-blue-500 bg-blue-50' 
+                                      : 'border-gray-200 hover:border-gray-300'
+                                    }
+                                  `}
+                                >
+                                  <IconComponent className={`h-6 w-6 mx-auto mb-2 ${
+                                    layout === option.value ? 'text-blue-600' : 'text-gray-400'
+                                  }`} />
+                                  <div className={`text-xs font-medium ${
+                                    layout === option.value ? 'text-blue-600' : 'text-gray-600'
+                                  }`}>
+                                    {option.label}
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                      
                       <div className="space-y-6">
                         {selectedJenisLaporanList.map((jenisLaporan, index) => (
                           <div key={jenisLaporan.jenisLaporanId} className="space-y-4">
@@ -1175,89 +1198,99 @@ export default function CreateLaporanPage() {
                             {jenisLaporan.tahapanList && jenisLaporan.tahapanList.length > 0 && (
                               <div className="ml-11">
                                 <h5 className="font-semibold text-gray-900 mb-3">Tahapan yang Akan Dilalui</h5>
-                                <div className="space-y-3">
+                                <div className={`grid gap-4 ${
+                                  layout === 1 ? 'grid-cols-1' :
+                                  layout === 2 ? 'grid-cols-1 lg:grid-cols-2' :
+                                  layout === 3 ? 'grid-cols-1 lg:grid-cols-2 xl:grid-cols-3' :
+                                  layout === 4 ? 'grid-cols-1 lg:grid-cols-2 xl:grid-cols-4' :
+                                  'grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5'
+                                }`}>
                                   {jenisLaporan.tahapanList.map((tahapan: any) => (
                                     <Card key={tahapan.tahapanLaporanId} className="border border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
-                                      <CardContent className="p-6">
-                                        <div className="flex items-start gap-4">
-                                          <div className="flex-shrink-0">
-                                            <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-600 text-white rounded-full flex items-center justify-center font-bold text-base shadow-lg">
+                                      <CardContent className="p-4">
+                                        <div className="space-y-3">
+                                          <div className="flex items-center gap-3">
+                                            <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-600 text-white rounded-full flex items-center justify-center font-bold text-sm">
                                               {tahapan.urutanTahapan}
                                             </div>
-                                          </div>
-                                          <div className="flex-1 min-w-0">
-                                            <div className="mb-4">
-                                              <h4 className="font-bold text-gray-900 text-lg mb-2">{tahapan.nama}</h4>
-                                              <p className="text-gray-700 leading-relaxed">{tahapan.deskripsi}</p>
+                                            <div className="flex-1 min-w-0">
+                                              <h4 className="font-bold text-gray-900 text-base mb-1 truncate">{tahapan.nama}</h4>
                                             </div>
-                                            
-                                            {/* Template Section */}
-                                            {tahapan.templateTahapan && (
-                                              <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                                                <div className="flex items-center justify-between mb-3">
-                                                  <div className="flex items-center gap-2">
-                                                    <FileText className="h-5 w-5 text-blue-600" />
-                                                    <span className="font-semibold text-blue-900">{getOriginalFileName(tahapan.templateTahapan)}</span>
-                                                  </div>
-                                                  <Badge variant="secondary" className="text-xs">
-                                                    {tahapan.templateTahapan.split('.').pop()?.toUpperCase()}
-                                                  </Badge>
+                                          </div>
+                                          
+                                          <p className="text-gray-700 text-sm leading-relaxed line-clamp-3">{tahapan.deskripsi}</p>
+                                          
+                                          {/* Template Section */}
+                                          {tahapan.templateTahapan && (
+                                            <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                                              <div className="flex items-center justify-between mb-2">
+                                                <div className="flex items-center gap-1">
+                                                  <FileText className="h-4 w-4 text-blue-600" />
+                                                  <span className="font-medium text-blue-900 text-xs truncate">{getOriginalFileName(tahapan.templateTahapan)}</span>
                                                 </div>
-                                                <div className="flex flex-wrap gap-2">
-                                                  {isImageOrVideo(tahapan.templateTahapan) && (
-                                                    <Button
-                                                      variant="outline"
-                                                      size="sm"
-                                                      onClick={() => handleTemplatePreview(tahapan.templateTahapan)}
-                                                      className="text-blue-600 border-blue-300 hover:bg-blue-100"
-                                                    >
-                                                      <Eye className="h-4 w-4 mr-2" />
-                                                      Preview
-                                                    </Button>
-                                                  )}
+                                                <Badge variant="secondary" className="text-xs">
+                                                  {tahapan.templateTahapan.split('.').pop()?.toUpperCase()}
+                                                </Badge>
+                                              </div>
+                                              <div className="flex flex-wrap gap-1">
+                                                {isImageOrVideo(tahapan.templateTahapan) && (
                                                   <Button
                                                     variant="outline"
                                                     size="sm"
-                                                    onClick={() => handleTemplateDownload(tahapan.templateTahapan)}
-                                                    className="text-green-600 border-green-300 hover:bg-green-100"
+                                                    onClick={() => handleTemplatePreview(tahapan.templateTahapan)}
+                                                    className="text-blue-600 border-blue-300 hover:bg-blue-100 h-7 text-xs"
                                                   >
-                                                    <Download className="h-4 w-4 mr-2" />
-                                                    Download
+                                                    <Eye className="h-3 w-3 mr-1" />
+                                                    Preview
                                                   </Button>
-                                                </div>
+                                                )}
+                                                <Button
+                                                  variant="outline"
+                                                  size="sm"
+                                                  onClick={() => handleTemplateDownload(tahapan.templateTahapan)}
+                                                  className="text-green-600 border-green-300 hover:bg-green-100 h-7 text-xs"
+                                                >
+                                                  <Download className="h-3 w-3 mr-1" />
+                                                  Download
+                                                </Button>
                                               </div>
-                                            )}
-                                            
-                                            {/* File Types Section */}
-                                            {tahapan.jenisFileIzin && tahapan.jenisFileIzin.length > 0 && (
-                                              <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                                                <div className="flex items-center gap-2 mb-2">
-                                                  <FileCheck className="h-4 w-4 text-gray-600" />
-                                                  <span className="font-medium text-gray-800">File Diizinkan:</span>
-                                                </div>
-                                                <div className="flex flex-wrap gap-1">
-                                                  {tahapan.jenisFileIzin.map((type: string, index: number) => (
-                                                    <Badge key={index} variant="outline" className="text-xs">
-                                                      {type.toUpperCase()}
-                                                    </Badge>
-                                                  ))}
-                                                </div>
-                                              </div>
-                                            )}
-                                            
-                                            {/* Status Info */}
-                                            <div className="mt-4 flex items-center gap-4 text-sm">
-                                              <div className="flex items-center gap-1 text-blue-600">
-                                                <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-                                                <span>Akan dibuat sebagai tahapan ke-{tahapan.urutanTahapan}</span>
-                                              </div>
-                                              {tahapan.templateTahapan && (
-                                                <div className="flex items-center gap-1 text-green-600">
-                                                  <div className="w-2 h-2 bg-green-600 rounded-full"></div>
-                                                  <span>{getOriginalFileName(tahapan.templateTahapan)}</span>
-                                                </div>
-                                              )}
                                             </div>
+                                          )}
+                                          
+                                          {/* File Types Section */}
+                                          {tahapan.jenisFileIzin && tahapan.jenisFileIzin.length > 0 && (
+                                            <div className="p-2 bg-gray-50 rounded-lg border border-gray-200">
+                                              <div className="flex items-center gap-1 mb-1">
+                                                <FileCheck className="h-3 w-3 text-gray-600" />
+                                                <span className="font-medium text-gray-800 text-xs">File Diizinkan:</span>
+                                              </div>
+                                              <div className="flex flex-wrap gap-1">
+                                                {tahapan.jenisFileIzin.slice(0, 3).map((type: string, index: number) => (
+                                                  <Badge key={index} variant="outline" className="text-xs h-5">
+                                                    {type.toUpperCase()}
+                                                  </Badge>
+                                                ))}
+                                                {tahapan.jenisFileIzin.length > 3 && (
+                                                  <Badge variant="outline" className="text-xs h-5">
+                                                    +{tahapan.jenisFileIzin.length - 3}
+                                                  </Badge>
+                                                )}
+                                              </div>
+                                            </div>
+                                          )}
+                                          
+                                          {/* Status Info */}
+                                          <div className="flex items-center gap-2 text-xs">
+                                            <div className="flex items-center gap-1 text-blue-600">
+                                              <div className="w-1.5 h-1.5 bg-blue-600 rounded-full"></div>
+                                              <span>Tahapan ke-{tahapan.urutanTahapan}</span>
+                                            </div>
+                                            {tahapan.templateTahapan && (
+                                              <div className="flex items-center gap-1 text-green-600">
+                                                <div className="w-1.5 h-1.5 bg-green-600 rounded-full"></div>
+                                                <span className="truncate">Template tersedia</span>
+                                              </div>
+                                            )}
                                           </div>
                                         </div>
                                       </CardContent>

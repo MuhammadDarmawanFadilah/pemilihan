@@ -10,6 +10,7 @@ public class CorsProperties {
     private String allowedOrigins = "http://localhost:3000";
     private String allowedMethods = "GET,POST,PUT,PATCH,DELETE,OPTIONS";
     private String allowedHeaders = "Content-Type,Authorization,X-Requested-With";
+    private boolean allowCredentials = true;
     
     public String getAllowedOrigins() {
         return allowedOrigins;
@@ -34,6 +35,15 @@ public class CorsProperties {
     public void setAllowedHeaders(String allowedHeaders) {
         this.allowedHeaders = allowedHeaders;
     }
+    
+    public boolean isAllowCredentials() {
+        return allowCredentials;
+    }
+    
+    public void setAllowCredentials(boolean allowCredentials) {
+        this.allowCredentials = allowCredentials;
+    }
+    
       public String[] getAllowedOriginsArray() {
         return allowedOrigins.split(",");
     }

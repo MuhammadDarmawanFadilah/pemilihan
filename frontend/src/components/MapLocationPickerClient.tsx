@@ -20,6 +20,7 @@ interface MapLocationPickerClientProps {
   selectedLocation: {lat: number; lng: number} | null;
   currentLocation: {lat: number; lng: number} | null;
   onMapClick: (lat: number, lng: number) => void;
+  height?: string; // Add height prop
 }
 
 // Custom marker icons
@@ -98,7 +99,8 @@ function MapController({ location }: { location: {lat: number; lng: number} | nu
 export default function MapLocationPickerClient({
   selectedLocation,
   currentLocation,
-  onMapClick
+  onMapClick,
+  height = "700px" // Default height
 }: MapLocationPickerClientProps) {
   const { theme } = useTheme();
   const mapRef = useRef<L.Map | null>(null);
@@ -119,21 +121,21 @@ export default function MapLocationPickerClient({
 
   const tileLayer = getTileLayer();
 
-  // Default center (Indonesia)
+  // Default center (Indonesia - wider view to show more of Indonesia)
   const defaultCenter: [number, number] = selectedLocation 
     ? [selectedLocation.lat, selectedLocation.lng]
     : currentLocation
     ? [currentLocation.lat, currentLocation.lng]
-    : [-6.2088, 106.8456]; // Jakarta
+    : [-2.5, 118.0]; // Center of Indonesia
 
-  const defaultZoom = selectedLocation || currentLocation ? 15 : 10;
+  const defaultZoom = selectedLocation || currentLocation ? 15 : 5; // Wider zoom to show Indonesia
 
   return (
     <div className="relative">
       <MapContainer
         center={defaultCenter}
         zoom={defaultZoom}
-        style={{ height: '400px', width: '100%' }}
+        style={{ height: height, width: '100%' }}
         className="rounded-lg"
         ref={mapRef}
       >

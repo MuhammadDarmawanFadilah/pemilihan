@@ -30,6 +30,7 @@ import {
   Building,
   CreditCard,
   MessageCircle, // Added for Komunikasi Kita
+  Vote, // Added for Pemilihan
 } from "lucide-react";
 import {
   Sidebar,
@@ -148,7 +149,7 @@ const AppSidebar = () => {
       url: "/notifikasi",
       icon: Bell,
     },
-  ];// Admin items (accessible to admin/moderator)
+  ];  // Admin items (accessible to admin/moderator)
   const adminItems = [
     {
       title: "Users",
@@ -170,6 +171,12 @@ const AppSidebar = () => {
       title: "Laporan",
       url: "/admin/laporan",
       icon: FolderOpen,
+    },
+    {
+      title: "Pemilihan",
+      url: "/admin/pemilihan",
+      icon: Vote,
+      badge: "New",
     },
     {
       title: "Berita Management",
@@ -201,7 +208,7 @@ const AppSidebar = () => {
       url: "/admin/birthday",
       icon: Gift,
     },
-  ];  // Master Data items (accessible to admin/moderator)
+  ];// Master Data items (accessible to admin/moderator)
   const masterDataItems = [
     {
       title: "Spesialisasi Kedokteran",

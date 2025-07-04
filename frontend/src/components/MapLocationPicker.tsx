@@ -14,13 +14,14 @@ interface MapLocationPickerProps {
   longitude?: number | string;
   onLocationChange: (lat: number | null, lng: number | null) => void;
   className?: string;
+  height?: string; // Add height prop
 }
 
 // Dynamically import the map component to avoid SSR issues
 const DynamicMapLocationPickerClient = dynamic(() => import('./MapLocationPickerClient').then(mod => ({ default: mod.default })), {
   ssr: false,
   loading: () => (
-    <div className="h-[400px] w-full">
+    <div className="h-[700px] w-full">
       <Skeleton className="h-full w-full rounded-lg" />
     </div>
   ),
@@ -30,7 +31,8 @@ export default function MapLocationPicker({
   latitude,
   longitude,
   onLocationChange,
-  className = ""
+  className = "",
+  height = "700px" // Default height
 }: MapLocationPickerProps) {
   const [currentLocation, setCurrentLocation] = useState<{lat: number; lng: number} | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<{lat: number; lng: number} | null>(null);
@@ -173,6 +175,7 @@ export default function MapLocationPicker({
               selectedLocation={selectedLocation}
               currentLocation={currentLocation}
               onMapClick={handleMapClick}
+              height={height}
             />
           </div>
 

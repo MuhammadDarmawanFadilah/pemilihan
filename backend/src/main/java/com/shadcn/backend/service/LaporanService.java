@@ -16,8 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -33,6 +32,88 @@ public class LaporanService {
     private final FileUploadService fileUploadService;
     private final ObjectMapper objectMapper;
     
+    // Get laporan with pagination and filters, including associated jenis laporan
+    public Page<Map<String, Object>> getAllLaporanWithJenisLaporan(LaporanFilterRequest filterRequest) {
+        Sort sort = Sort.by(
+            filterRequest.getSortDirection().equalsIgnoreCase("desc") 
+                ? Sort.Direction.DESC 
+                : Sort.Direction.ASC,
+            filterRequest.getSortBy()
+        );
+        
+        Pageable pageable = PageRequest.of(filterRequest.getPage(), filterRequest.getSize(), sort);
+        
+        // Convert status string to enum
+        Laporan.StatusLaporan statusEnum = null;
+        if (filterRequest.getStatus() != null && !filterRequest.getStatus().trim().isEmpty()) {
+            try {
+                statusEnum = Laporan.StatusLaporan.valueOf(filterRequest.getStatus().toUpperCase());
+            } catch (IllegalArgumentException e) {
+                // Invalid status, ignore the filter
+                statusEnum = null;
+            }
+        }
+        
+        Page<Laporan> laporanPage = laporanRepository.findWithFilters(
+            filterRequest.getNamaLaporan(),
+            filterRequest.getJenisLaporanId(),
+            statusEnum,
+            filterRequest.getUserId(),
+            pageable
+        );
+        
+        return laporanPage.map(laporan -> {
+            Map<String, Object> result = new HashMap<>();
+            
+            // Basic laporan info
+            LaporanDto dto = convertToDto(laporan);
+            result.put("laporan", dto);
+            
+            // Get all associated jenis laporan through tahapan
+            List<DetailLaporan> detailList = detailLaporanRepository
+                    .findByLaporanLaporanIdOrderByTahapanLaporanUrutanTahapanAsc(laporan.getLaporanId());
+            
+            Set<Long> jenisLaporanIds = detailList.stream()
+                    .map(detail -> detail.getTahapanLaporan().getJenisLaporan().getJenisLaporanId())
+                    .collect(Collectors.toSet());
+            
+            // Only fetch jenis laporan data if there are any
+            if (!jenisLaporanIds.isEmpty()) {
+                List<JenisLaporan> jenisLaporanList = jenisLaporanRepository.findAllById(jenisLaporanIds);
+                
+                // Convert to names for display (limit to first 3 for performance)
+                List<String> jenisLaporanNames = jenisLaporanList.stream()
+                        .limit(10) // Limit to reasonable number for backend processing
+                        .map(JenisLaporan::getNama)
+                        .collect(Collectors.toList());
+                
+                // Convert JenisLaporan entities to simple DTOs (limit to first 3)
+                List<Map<String, Object>> jenisLaporanDtos = jenisLaporanList.stream()
+                        .limit(3) // Only process first 3 for detailed data
+                        .map(jenisLaporan -> {
+                            Map<String, Object> jenisDto = new HashMap<>();
+                            jenisDto.put("jenisLaporanId", jenisLaporan.getJenisLaporanId());
+                            jenisDto.put("nama", jenisLaporan.getNama());
+                            jenisDto.put("deskripsi", jenisLaporan.getDeskripsi());
+                            jenisDto.put("status", jenisLaporan.getStatus());
+                            return jenisDto;
+                        })
+                        .collect(Collectors.toList());
+                
+                result.put("jenisLaporanNames", jenisLaporanNames);
+                result.put("jenisLaporanList", jenisLaporanDtos);
+                result.put("totalJenisLaporan", jenisLaporanList.size()); // Add total count
+            } else {
+                // Handle case where there are no jenis laporan
+                result.put("jenisLaporanNames", new ArrayList<>());
+                result.put("jenisLaporanList", new ArrayList<>());
+                result.put("totalJenisLaporan", 0);
+            }
+            
+            return result;
+        });
+    }
+
     // Get laporan with pagination and filters
     public Page<LaporanDto> getAllLaporan(LaporanFilterRequest filterRequest) {
         Sort sort = Sort.by(
@@ -276,6 +357,92 @@ public class LaporanService {
                 .collect(Collectors.toList());
     }
     
+    // Get laporan with associated jenis laporan details - optimized single call
+    public Map<String, Object> getLaporanWithJenisLaporan(Long laporanId, Long userId, boolean isAdmin) {
+        // Get the laporan first
+        Optional<LaporanDto> laporanOpt;
+        if (isAdmin) {
+            laporanOpt = getLaporanById(laporanId);
+        } else {
+            laporanOpt = getLaporanByIdForUser(laporanId, userId);
+        }
+        
+        if (laporanOpt.isEmpty()) {
+            throw new RuntimeException("Laporan tidak ditemukan");
+        }
+        
+        LaporanDto laporan = laporanOpt.get();
+        
+        // Get all detail laporan for this laporan
+        List<DetailLaporan> detailList = detailLaporanRepository
+                .findByLaporanLaporanIdOrderByTahapanLaporanUrutanTahapanAsc(laporanId);
+        
+        // Extract unique jenis laporan IDs and get their details with tahapan
+        Set<Long> jenisLaporanIds = detailList.stream()
+                .map(detail -> detail.getTahapanLaporan().getJenisLaporan().getJenisLaporanId())
+                .collect(Collectors.toSet());
+        
+        // Get jenis laporan details with tahapan
+        List<JenisLaporan> jenisLaporanList = jenisLaporanRepository.findAllById(jenisLaporanIds);
+        
+        // Convert to DTOs with tahapan details
+        List<Map<String, Object>> jenisLaporanWithTahapan = jenisLaporanList.stream()
+                .map(jenisLaporan -> {
+                    Map<String, Object> jenisLaporanDto = new HashMap<>();
+                    jenisLaporanDto.put("jenisLaporanId", jenisLaporan.getJenisLaporanId());
+                    jenisLaporanDto.put("nama", jenisLaporan.getNama());
+                    jenisLaporanDto.put("deskripsi", jenisLaporan.getDeskripsi());
+                    jenisLaporanDto.put("status", jenisLaporan.getStatus());
+                    jenisLaporanDto.put("createdAt", jenisLaporan.getCreatedAt());
+                    jenisLaporanDto.put("updatedAt", jenisLaporan.getUpdatedAt());
+                    
+                    // Get tahapan for this jenis laporan
+                    List<TahapanLaporan> tahapanList = tahapanLaporanRepository
+                            .findByJenisLaporanJenisLaporanIdOrderByUrutanTahapanAsc(jenisLaporan.getJenisLaporanId());
+                    
+                    List<Map<String, Object>> tahapanDtoList = tahapanList.stream()
+                            .map(tahapan -> {
+                                Map<String, Object> tahapanDto = new HashMap<>();
+                                tahapanDto.put("tahapanLaporanId", tahapan.getTahapanLaporanId());
+                                tahapanDto.put("nama", tahapan.getNama());
+                                tahapanDto.put("deskripsi", tahapan.getDeskripsi());
+                                tahapanDto.put("urutanTahapan", tahapan.getUrutanTahapan());
+                                tahapanDto.put("templateTahapan", tahapan.getTemplateTahapan());
+                                // Parse jenisFileIzin from JSON string to array
+                                try {
+                                    String jenisFileIzinStr = tahapan.getJenisFileIzin();
+                                    if (jenisFileIzinStr != null && !jenisFileIzinStr.isEmpty()) {
+                                        ObjectMapper objectMapper = new ObjectMapper();
+                                        List<String> jenisFileIzinList = objectMapper.readValue(jenisFileIzinStr, 
+                                                new TypeReference<List<String>>() {});
+                                        tahapanDto.put("jenisFileIzin", jenisFileIzinList);
+                                    } else {
+                                        tahapanDto.put("jenisFileIzin", new ArrayList<>());
+                                    }
+                                } catch (Exception e) {
+                                    // Fallback to empty array if parsing fails
+                                    tahapanDto.put("jenisFileIzin", new ArrayList<>());
+                                }
+                                tahapanDto.put("createdAt", tahapan.getCreatedAt());
+                                tahapanDto.put("updatedAt", tahapan.getUpdatedAt());
+                                return tahapanDto;
+                            })
+                            .collect(Collectors.toList());
+                    
+                    jenisLaporanDto.put("tahapanList", tahapanDtoList);
+                    return jenisLaporanDto;
+                })
+                .collect(Collectors.toList());
+        
+        // Prepare response
+        Map<String, Object> response = new HashMap<>();
+        response.put("laporan", laporan);
+        response.put("associatedJenisLaporan", jenisLaporanWithTahapan);
+        response.put("jenisLaporanIds", new ArrayList<>(jenisLaporanIds));
+        
+        return response;
+    }
+    
     // Delete laporan
     @Transactional
     public void deleteLaporan(Long id, Long userId) {
@@ -292,7 +459,7 @@ public class LaporanService {
     
     // Update detail laporan
     @Transactional
-    public DetailLaporanDto updateDetailLaporan(Long detailId, String konten, Long userId) {
+    public DetailLaporanDTO updateDetailLaporan(Long detailId, String konten, Long userId) {
         DetailLaporan detail = detailLaporanRepository.findById(detailId)
                 .orElseThrow(() -> new RuntimeException("Detail laporan tidak ditemukan"));
         
@@ -311,7 +478,7 @@ public class LaporanService {
     
     // Complete detail laporan
     @Transactional
-    public DetailLaporanDto completeDetailLaporan(Long detailId, Long userId) {
+    public DetailLaporanDTO completeDetailLaporan(Long detailId, Long userId) {
         DetailLaporan detail = detailLaporanRepository.findById(detailId)
                 .orElseThrow(() -> new RuntimeException("Detail laporan tidak ditemukan"));
         
@@ -415,7 +582,7 @@ public class LaporanService {
         }
     }
     
-    // Convert entity to DTO
+    // Convert entity to DTO with aggregated jenis laporan names
     private LaporanDto convertToDto(Laporan laporan) {
         LaporanDto dto = new LaporanDto();
         dto.setLaporanId(laporan.getLaporanId());
@@ -426,7 +593,30 @@ public class LaporanService {
         dto.setCreatedAt(laporan.getCreatedAt());
         dto.setUpdatedAt(laporan.getUpdatedAt());
         dto.setJenisLaporanId(laporan.getJenisLaporan().getJenisLaporanId());
-        dto.setJenisLaporanNama(laporan.getJenisLaporan().getNama());
+        
+        // Get all related jenis laporan through DetailLaporan -> TahapanLaporan -> JenisLaporan
+        List<DetailLaporan> detailList = detailLaporanRepository
+                .findByLaporanLaporanIdOrderByTahapanLaporanUrutanTahapanAsc(laporan.getLaporanId());
+        
+        if (!detailList.isEmpty()) {
+            // Collect unique jenis laporan names
+            Set<String> jenisLaporanNames = detailList.stream()
+                    .map(detail -> detail.getTahapanLaporan().getJenisLaporan().getNama())
+                    .collect(Collectors.toSet());
+            
+            // Join with comma, limit to 3 and add "dll" if more
+            List<String> namesList = new ArrayList<>(jenisLaporanNames);
+            String combinedNames;
+            if (namesList.size() > 3) {
+                combinedNames = String.join(", ", namesList.subList(0, 3)) + ", dll";
+            } else {
+                combinedNames = String.join(", ", namesList);
+            }
+            dto.setJenisLaporanNama(combinedNames);
+        } else {
+            // Fallback to direct relationship if no details
+            dto.setJenisLaporanNama(laporan.getJenisLaporan().getNama());
+        }
         
         // Calculate progress
         Object[] progress = detailLaporanRepository.getLaporanProgress(laporan.getLaporanId());
@@ -489,8 +679,8 @@ public class LaporanService {
         return dto;
     }
     
-    private DetailLaporanDto convertDetailToDto(DetailLaporan detail) {
-        DetailLaporanDto dto = new DetailLaporanDto();
+    private DetailLaporanDTO convertDetailToDto(DetailLaporan detail) {
+        DetailLaporanDTO dto = new DetailLaporanDTO();
         dto.setDetailLaporanId(detail.getDetailLaporanId());
         dto.setKonten(detail.getKonten());
         dto.setStatus(detail.getStatus());

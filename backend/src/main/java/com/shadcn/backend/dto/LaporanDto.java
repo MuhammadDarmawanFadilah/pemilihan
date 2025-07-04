@@ -35,7 +35,7 @@ public class LaporanDto {
     
     private String jenisLaporanNama;
     
-    private List<DetailLaporanDto> detailLaporanList;
+    private List<DetailLaporanDTO> detailLaporanList;
     
     private Integer progressPercentage;
     

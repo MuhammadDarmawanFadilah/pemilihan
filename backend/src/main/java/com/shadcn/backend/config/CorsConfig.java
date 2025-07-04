@@ -21,14 +21,14 @@ public class CorsConfig implements WebMvcConfigurer {
                 .allowedOriginPatterns(corsProperties.getAllowedOriginsArray())
                 .allowedMethods(corsProperties.getAllowedMethodsArray())
                 .allowedHeaders(corsProperties.getAllowedHeadersArray())
-                .allowCredentials(true);
+                .allowCredentials(corsProperties.isAllowCredentials());
     }    @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOriginPatterns(Arrays.asList(corsProperties.getAllowedOriginsArray()));
         configuration.setAllowedMethods(Arrays.asList(corsProperties.getAllowedMethodsArray()));
         configuration.setAllowedHeaders(Arrays.asList(corsProperties.getAllowedHeadersArray()));
-        configuration.setAllowCredentials(true);
+        configuration.setAllowCredentials(corsProperties.isAllowCredentials());
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
