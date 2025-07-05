@@ -306,29 +306,6 @@ export default function WilayahForm({ control, setValue, watch, disabled = false
         )}
       </h3>
 
-      {/* Alamat Lengkap */}
-      <FormField
-        control={control}
-        name="alamat"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel className="flex items-center gap-2">
-              <Home className="h-4 w-4" />
-              Alamat Lengkap
-            </FormLabel>
-            <FormControl>
-              <Textarea 
-                placeholder="Masukkan alamat lengkap (jalan, no rumah, RT/RW, dll)"
-                className="min-h-[80px]"
-                disabled={disabled}
-                {...field} 
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
       {/* Provinsi */}
       <FormField
         control={control}
@@ -494,33 +471,6 @@ export default function WilayahForm({ control, setValue, watch, disabled = false
         )}
       />
 
-      {/* Display lokasi summary */}
-      {(watchProvinsi || watchKota || watchKecamatan || watchKelurahan) && (
-        <div className="p-4 bg-muted rounded-lg">
-          <p className="text-sm font-medium text-muted-foreground mb-2">Lokasi yang dipilih:</p>
-          <div className="text-sm space-y-1">
-            {watchKelurahan && (
-              <p><span className="font-medium">Kelurahan/Desa:</span> {getSelectedName(watchKelurahan, villages)}</p>
-            )}
-            {watchKecamatan && (
-              <p><span className="font-medium">Kecamatan:</span> {getSelectedName(watchKecamatan, districts)}</p>
-            )}
-            {watchKota && (
-              <p><span className="font-medium">Kota/Kabupaten:</span> {getSelectedName(watchKota, regencies)}</p>
-            )}
-            {watchProvinsi && (
-              <p><span className="font-medium">Provinsi:</span> {getSelectedName(watchProvinsi, provinces)}</p>
-            )}
-          </div>
-          
-          {isPerformingLookup && (
-            <div className="mt-2 flex items-center gap-2 text-xs text-blue-600">
-              <Search className="h-3 w-3 animate-spin" />
-              <span>Sedang melakukan pencarian data wilayah...</span>
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 }

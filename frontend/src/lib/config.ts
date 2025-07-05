@@ -4,7 +4,8 @@
 export const config = {
   // API URLs
   apiUrl: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api',
-  baseUrl: process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:8080',
+  baseUrl: process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000',
+  backendUrl: process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080',
   
   // Auth Configuration
   authLoginEndpoint: process.env.NEXT_PUBLIC_AUTH_LOGIN_ENDPOINT || '/api/auth/login',
@@ -69,14 +70,16 @@ export const config = {
 
 // Helper functions for common URL patterns
 export const getApiUrl = (endpoint: string) => {
-  // Make sure endpoint always starts with /api
-  if (endpoint.startsWith('/api/')) {
-    return `${config.baseUrl}${endpoint}`;
-  } else if (endpoint.startsWith('/')) {
-    return `${config.baseUrl}/api${endpoint}`;
+  // Remove leading slash if present, and ensure endpoint doesn't duplicate /api
+  const cleanEndpoint = endpoint.startsWith('/') ? endpoint.substring(1) : endpoint;
+  
+  // If endpoint already includes 'api/', use it as is with backend URL
+  if (cleanEndpoint.startsWith('api/')) {
+    return `${config.backendUrl}/${cleanEndpoint}`;
   } else {
-    return `${config.baseUrl}/api/${endpoint}`;
+    // Otherwise, use the full apiUrl
+    return `${config.apiUrl}/${cleanEndpoint}`;
   }
 };
-export const getImageUrl = (filename: string) => `${config.baseUrl}${config.imageServeEndpoint}/${filename}`;
-export const getPlaceholderUrl = (size: string) => `${config.placeholderImageEndpoint}/${size}`;
+export const getImageUrl = (filename: string) => `${config.backendUrl}${config.imageServeEndpoint}/${filename}`;
+export const getPlaceholderUrl = (size: string) => `${config.backendUrl}${config.placeholderImageEndpoint}/${size}`;

@@ -152,10 +152,10 @@ const AppSidebar = () => {
   ];  // Admin items (accessible to admin/moderator)
   const adminItems = [
     {
-      title: "Users",
-      url: "/users",
+      title: "Pegawai",
+      url: "/admin/pegawai",
       icon: Users,
-      badge: "24",
+      badge: "New",
     },
     {
       title: "Roles",
