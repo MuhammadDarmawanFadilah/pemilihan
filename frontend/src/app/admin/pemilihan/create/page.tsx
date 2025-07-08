@@ -7,7 +7,7 @@ import {
   ArrowLeft, ArrowRight, Save, RefreshCw, Edit3, MapPin, 
   FolderOpen, Eye, FileText, Monitor, Tablet, LayoutGrid, 
   Grid3X3, Smartphone, Search, ChevronLeft, ChevronRight,
-  Plus, X, List
+  Plus, X, List, Calendar as CalendarIcon, Clock
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import { id } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast-simple";
 import { pemilihanApi, CreatePemilihanRequest, DetailLaporanDto } from "@/lib/pemilihan-api";
 import { laporanAPI, Laporan } from "@/lib/laporan-api";
@@ -84,6 +89,8 @@ interface PemilihanFormData {
   alamatLokasi?: string;
   latitude?: number;
   longitude?: number;
+  tanggalMulai?: Date;
+  tanggalSelesai?: Date;
   selectedLaporanIds: number[];
   detailLaporan: DetailLaporanDto[];
 }
@@ -110,6 +117,8 @@ export default function CreatePemilihanPage() {
       alamatLokasi: '',
       latitude: undefined,
       longitude: undefined,
+      tanggalMulai: undefined,
+      tanggalSelesai: undefined,
       selectedLaporanIds: [],
       detailLaporan: []
     }
@@ -130,6 +139,8 @@ export default function CreatePemilihanPage() {
     alamatLokasi: '',
     latitude: undefined,
     longitude: undefined,
+    tanggalMulai: undefined,
+    tanggalSelesai: undefined,
     selectedLaporanIds: [],
     detailLaporan: []
   });
@@ -402,8 +413,15 @@ export default function CreatePemilihanPage() {
 
   // Validation functions
   const validateStep1 = () => {
-    return formData.judulPemilihan.trim() !== '' && 
-           formData.deskripsi.trim() !== '';
+    const hasBasicInfo = formData.judulPemilihan.trim() !== '' && 
+                        formData.deskripsi.trim() !== '';
+    
+    const hasValidDates = formData.tanggalMulai && formData.tanggalSelesai;
+    
+    const hasValidDateRange = formData.tanggalMulai && formData.tanggalSelesai && 
+                             formData.tanggalMulai < formData.tanggalSelesai;
+    
+    return hasBasicInfo && hasValidDates && hasValidDateRange;
   };
 
   const validateStep2 = () => {
@@ -468,6 +486,8 @@ export default function CreatePemilihanPage() {
         alamatLokasi: currentFormData.alamatLokasi || formData.alamatLokasi || undefined,
         latitude: currentFormData.latitude || formData.latitude || undefined,
         longitude: currentFormData.longitude || formData.longitude || undefined,
+        tanggalAktif: formData.tanggalMulai ? formData.tanggalMulai.toISOString() : undefined,
+        tanggalBerakhir: formData.tanggalSelesai ? formData.tanggalSelesai.toISOString() : undefined,
         detailLaporan: detailLaporanData
       };
 
@@ -556,6 +576,8 @@ export default function CreatePemilihanPage() {
         alamatLokasi: value.alamatLokasi || '',
         latitude: value.latitude,
         longitude: value.longitude,
+        tanggalMulai: value.tanggalMulai,
+        tanggalSelesai: value.tanggalSelesai,
       }));
     });
     return () => subscription.unsubscribe();
@@ -638,6 +660,220 @@ export default function CreatePemilihanPage() {
                   </SelectContent>
                 </Select>
               </div>
+
+              <Form {...form}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Tanggal Mulai */}
+                  <FormField
+                    control={form.control}
+                    name="tanggalMulai"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>Tanggal Mulai *</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant="outline"
+                                className={cn(
+                                  "w-full pl-3 text-left font-normal",
+                                  !field.value && "text-muted-foreground"
+                                )}
+                              >
+                                {field.value ? (
+                                  format(field.value, "dd MMMM yyyy", { locale: id })
+                                ) : (
+                                  <span>Pilih tanggal mulai</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={field.value}
+                              onSelect={(date) => {
+                                field.onChange(date);
+                                setFormData(prev => ({ ...prev, tanggalMulai: date }));
+                              }}
+                              disabled={(date) =>
+                                date < new Date(new Date().setHours(0, 0, 0, 0))
+                              }
+                              initialFocus
+                              captionLayout="dropdown-buttons"
+                              fromYear={new Date().getFullYear()}
+                              toYear={new Date().getFullYear() + 10}
+                              classNames={{
+                                months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
+                                month: "space-y-4",
+                                caption: "flex justify-center pt-1 relative items-center",
+                                caption_label: "text-sm font-medium",
+                                caption_dropdowns: "flex justify-center gap-1",
+                                vhidden: "hidden",
+                                nav: "space-x-1 flex items-center",
+                                nav_button: cn(
+                                  "inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-7 w-7"
+                                ),
+                                nav_button_previous: "absolute left-1",
+                                nav_button_next: "absolute right-1",
+                                table: "w-full border-collapse space-y-1",
+                                head_row: "flex",
+                                head_cell: "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]",
+                                row: "flex w-full mt-2",
+                                cell: "h-9 w-9 text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+                                day: cn(
+                                  "h-9 w-9 p-0 font-normal aria-selected:opacity-100 hover:bg-accent hover:text-accent-foreground rounded-md"
+                                ),
+                                day_range_end: "day-range-end",
+                                day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
+                                day_today: "bg-accent text-accent-foreground",
+                                day_outside: "day-outside text-muted-foreground opacity-50 aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:opacity-30",
+                                day_disabled: "text-muted-foreground opacity-50",
+                                day_range_middle: "aria-selected:bg-accent aria-selected:text-accent-foreground",
+                                day_hidden: "invisible",
+                                dropdown: "absolute inset-0 w-full appearance-none opacity-0 z-10 cursor-pointer",
+                                dropdown_month: "relative inline-flex h-8 items-center justify-between rounded-md border border-input bg-background px-3 py-1 text-sm text-foreground ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 min-w-[120px] [&>select]:text-foreground [&>select]:bg-background",
+                                dropdown_year: "relative inline-flex h-8 items-center justify-between rounded-md border border-input bg-background px-3 py-1 text-sm text-foreground ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 min-w-[80px] [&>select]:text-foreground [&>select]:bg-background"
+                              }}
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Tanggal Selesai */}
+                  <FormField
+                    control={form.control}
+                    name="tanggalSelesai"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>Tanggal Selesai *</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant="outline"
+                                className={cn(
+                                  "w-full pl-3 text-left font-normal",
+                                  !field.value && "text-muted-foreground"
+                                )}
+                              >
+                                {field.value ? (
+                                  format(field.value, "dd MMMM yyyy", { locale: id })
+                                ) : (
+                                  <span>Pilih tanggal selesai</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={field.value}
+                              onSelect={(date) => {
+                                field.onChange(date);
+                                setFormData(prev => ({ ...prev, tanggalSelesai: date }));
+                              }}
+                              disabled={(date) => {
+                                const today = new Date();
+                                today.setHours(0, 0, 0, 0);
+                                const startDate = formData.tanggalMulai || form.watch('tanggalMulai');
+                                if (date < today) return true;
+                                if (startDate && date <= startDate) return true;
+                                return false;
+                              }}
+                              initialFocus
+                              captionLayout="dropdown-buttons"
+                              fromYear={new Date().getFullYear()}
+                              toYear={new Date().getFullYear() + 10}
+                              classNames={{
+                                months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
+                                month: "space-y-4",
+                                caption: "flex justify-center pt-1 relative items-center",
+                                caption_label: "text-sm font-medium",
+                                caption_dropdowns: "flex justify-center gap-1",
+                                vhidden: "hidden",
+                                nav: "space-x-1 flex items-center",
+                                nav_button: cn(
+                                  "inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-7 w-7"
+                                ),
+                                nav_button_previous: "absolute left-1",
+                                nav_button_next: "absolute right-1",
+                                table: "w-full border-collapse space-y-1",
+                                head_row: "flex",
+                                head_cell: "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]",
+                                row: "flex w-full mt-2",
+                                cell: "h-9 w-9 text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+                                day: cn(
+                                  "h-9 w-9 p-0 font-normal aria-selected:opacity-100 hover:bg-accent hover:text-accent-foreground rounded-md"
+                                ),
+                                day_range_end: "day-range-end",
+                                day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
+                                day_today: "bg-accent text-accent-foreground",
+                                day_outside: "day-outside text-muted-foreground opacity-50 aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:opacity-30",
+                                day_disabled: "text-muted-foreground opacity-50",
+                                day_range_middle: "aria-selected:bg-accent aria-selected:text-accent-foreground",
+                                day_hidden: "invisible",
+                                dropdown: "absolute inset-0 w-full appearance-none opacity-0 z-10 cursor-pointer",
+                                dropdown_month: "relative inline-flex h-8 items-center justify-between rounded-md border border-input bg-background px-3 py-1 text-sm text-foreground ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 min-w-[120px] [&>select]:text-foreground [&>select]:bg-background",
+                                dropdown_year: "relative inline-flex h-8 items-center justify-between rounded-md border border-input bg-background px-3 py-1 text-sm text-foreground ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 min-w-[80px] [&>select]:text-foreground [&>select]:bg-background"
+                              }}
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                {/* Validation Message */}
+                {formData.tanggalMulai && formData.tanggalSelesai && formData.tanggalMulai >= formData.tanggalSelesai && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-center gap-2">
+                    <X className="h-4 w-4 text-red-600" />
+                    <p className="text-sm text-red-700">Tanggal selesai harus lebih besar dari tanggal mulai</p>
+                  </div>
+                )}
+
+                {/* Period Summary */}
+                {formData.tanggalMulai && formData.tanggalSelesai && formData.tanggalMulai < formData.tanggalSelesai && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <CalendarIcon className="h-4 w-4 text-blue-600" />
+                      <h4 className="text-sm font-semibold text-blue-900">Ringkasan Periode</h4>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <p className="text-gray-600">Mulai:</p>
+                        <p className="font-medium text-gray-900">{formData.tanggalMulai.toLocaleDateString('id-ID', { 
+                          weekday: 'long', 
+                          year: 'numeric', 
+                          month: 'long', 
+                          day: 'numeric'
+                        })}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-600">Selesai:</p>
+                        <p className="font-medium text-gray-900">{formData.tanggalSelesai.toLocaleDateString('id-ID', { 
+                          weekday: 'long', 
+                          year: 'numeric', 
+                          month: 'long', 
+                          day: 'numeric'
+                        })}</p>
+                      </div>
+                    </div>
+                    <div className="mt-2 pt-2 border-t border-blue-200">
+                      <p className="text-xs text-blue-700">
+                        Durasi: {Math.ceil((formData.tanggalSelesai.getTime() - formData.tanggalMulai.getTime()) / (1000 * 60 * 60 * 24))} hari
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </Form>
             </CardContent>
           </Card>
         );
@@ -1264,6 +1500,41 @@ export default function CreatePemilihanPage() {
                         <p className="text-sm text-gray-600 mb-1">Deskripsi</p>
                         <p className="font-medium">{formData.deskripsi}</p>
                       </div>
+                      {(formData.tanggalMulai || formData.tanggalSelesai) && (
+                        <div className="pt-4 border-t">
+                          <p className="text-sm text-gray-600 mb-2">Periode Pemilihan</p>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {formData.tanggalMulai && (
+                              <div>
+                                <p className="text-xs text-gray-500">Tanggal Mulai</p>
+                                <p className="font-medium">
+                                  {new Date(formData.tanggalMulai).toLocaleDateString('id-ID', {
+                                    year: 'numeric',
+                                    month: 'long',
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })}
+                                </p>
+                              </div>
+                            )}
+                            {formData.tanggalSelesai && (
+                              <div>
+                                <p className="text-xs text-gray-500">Tanggal Selesai</p>
+                                <p className="font-medium">
+                                  {new Date(formData.tanggalSelesai).toLocaleDateString('id-ID', {
+                                    year: 'numeric',
+                                    month: 'long',
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
 

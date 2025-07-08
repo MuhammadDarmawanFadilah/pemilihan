@@ -158,6 +158,11 @@ const AppSidebar = () => {
       badge: "New",
     },
     {
+      title: "Lokasi Pegawai",
+      url: "/admin/pegawai/lokasi",
+      icon: MapPin,
+    },
+    {
       title: "Roles",
       url: "/roles",
       icon: Shield,
@@ -177,6 +182,11 @@ const AppSidebar = () => {
       url: "/admin/pemilihan",
       icon: Vote,
       badge: "New",
+    },
+    {
+      title: "Lokasi Pemilihan",
+      url: "/admin/pemilihan/lokasi",
+      icon: MapPin,
     },
     {
       title: "Berita Management",

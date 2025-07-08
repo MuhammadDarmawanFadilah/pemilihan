@@ -18,6 +18,8 @@ interface Pegawai {
   email: string;
   fullName: string;
   phoneNumber: string;
+  nip?: string;
+  pendidikan?: string;
   jabatan: string;
   status: string;
   createdAt: string;
@@ -215,6 +217,18 @@ export default function PegawaiDetailPage() {
                         <p className="font-medium">{pegawai.phoneNumber}</p>
                       </div>
                     </div>
+                    {pegawai.nip && (
+                      <div>
+                        <p className="text-sm text-gray-600 mb-1">NIP</p>
+                        <p className="font-medium text-blue-600">{pegawai.nip}</p>
+                      </div>
+                    )}
+                    {pegawai.pendidikan && (
+                      <div>
+                        <p className="text-sm text-gray-600 mb-1">Pendidikan</p>
+                        <p className="font-medium text-green-600">{pegawai.pendidikan}</p>
+                      </div>
+                    )}
                     <div>
                       <p className="text-sm text-gray-600 mb-1">Jabatan</p>
                       <Badge className="bg-blue-100 text-blue-800 border-blue-300">

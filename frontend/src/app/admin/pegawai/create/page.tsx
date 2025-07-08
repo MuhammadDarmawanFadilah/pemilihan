@@ -44,7 +44,7 @@ const STEPS = [
     title: 'Data Pribadi',
     description: 'Informasi akun dan pribadi',
     icon: User,
-    fields: ['username', 'password', 'fullName', 'email', 'phoneNumber', 'jabatan', 'status']
+    fields: ['username', 'password', 'fullName', 'email', 'phoneNumber', 'nip', 'pendidikan', 'jabatan', 'status']
   },
   {
     id: 'location',
@@ -76,6 +76,8 @@ interface PegawaiFormData {
   fullName: string;
   email: string;
   phoneNumber: string;
+  nip: string;
+  pendidikan: string;
   jabatan: string;
   status: 'AKTIF' | 'TIDAK_AKTIF' | 'SUSPEND';
   alamat?: string;
@@ -187,6 +189,8 @@ export default function CreatePegawaiPage() {
     fullName: '',
     email: '',
     phoneNumber: '',
+    nip: '',
+    pendidikan: '',
     jabatan: '',
     status: 'AKTIF',
     alamat: '',
@@ -465,6 +469,8 @@ export default function CreatePegawaiPage() {
     if (!formData.fullName.trim()) mandatoryErrors.push("Nama lengkap harus diisi");
     if (!formData.email.trim()) mandatoryErrors.push("Email harus diisi");
     if (!formData.phoneNumber.trim()) mandatoryErrors.push("Nomor telepon harus diisi");
+    if (!formData.nip.trim()) mandatoryErrors.push("NIP harus diisi");
+    if (!formData.pendidikan.trim()) mandatoryErrors.push("Pendidikan harus diisi");
     if (!formData.jabatan.trim()) mandatoryErrors.push("Jabatan harus diisi");
     if (!formData.status.trim()) mandatoryErrors.push("Status harus diisi");
     
@@ -696,6 +702,54 @@ export default function CreatePegawaiPage() {
                     value={formData.phoneNumber}
                     onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
                     placeholder="Masukkan nomor HP/WA"
+                    className="h-12"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="nip">NIP *</Label>
+                  <Input
+                    id="nip"
+                    value={formData.nip}
+                    onChange={(e) => setFormData({ ...formData, nip: e.target.value })}
+                    placeholder="Masukkan NIP"
+                    className="h-12"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="pendidikan">Pendidikan *</Label>
+                  <Input
+                    id="pendidikan"
+                    value={formData.pendidikan}
+                    onChange={(e) => setFormData({ ...formData, pendidikan: e.target.value })}
+                    placeholder="Masukkan pendidikan terakhir"
+                    className="h-12"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="nip">NIP *</Label>
+                  <Input
+                    id="nip"
+                    value={formData.nip}
+                    onChange={(e) => setFormData({ ...formData, nip: e.target.value })}
+                    placeholder="Masukkan NIP"
+                    className="h-12"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="pendidikan">Pendidikan *</Label>
+                  <Input
+                    id="pendidikan"
+                    value={formData.pendidikan}
+                    onChange={(e) => setFormData({ ...formData, pendidikan: e.target.value })}
+                    placeholder="Masukkan pendidikan terakhir"
                     className="h-12"
                   />
                 </div>
@@ -1355,6 +1409,14 @@ export default function CreatePegawaiPage() {
                     <div>
                       <p className="text-sm text-gray-600">No HP/WA</p>
                       <p className="font-medium">{formData.phoneNumber}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">NIP</p>
+                      <p className="font-medium">{formData.nip}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Pendidikan</p>
+                      <p className="font-medium">{formData.pendidikan}</p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-600">Jabatan</p>

@@ -23,6 +23,8 @@ interface Pegawai {
   email: string;
   fullName: string;
   phoneNumber: string;
+  nip?: string;
+  pendidikan?: string;
   jabatan: string;
   status: string;
   createdAt: string;
@@ -475,7 +477,7 @@ export default function PegawaiPage() {
                           Informasi Pegawai
                         </SortableHeader>
                       </TableHead>
-                      <TableHead className="w-[180px]">Kontak</TableHead>
+                      <TableHead className="w-[180px]">Kontak & Data</TableHead>
                       <TableHead className="w-[120px]">
                         <SortableHeader
                           sortKey="jabatan"
@@ -495,7 +497,6 @@ export default function PegawaiPage() {
                         </SortableHeader>
                       </TableHead>
                       <TableHead className="w-[200px]">Lokasi Tugas</TableHead>
-                      <TableHead className="w-[120px]">Tanggung Jawab</TableHead>
                       <TableHead className="w-[100px]">
                         <SortableHeader
                           sortKey="createdAt"
@@ -511,13 +512,13 @@ export default function PegawaiPage() {
                   <TableBody>
                     {loading ? (
                       <TableRow>
-                        <TableCell colSpan={8} className="text-center py-8">
+                        <TableCell colSpan={7} className="text-center py-8">
                           <LoadingSpinner />
                         </TableCell>
                       </TableRow>
                     ) : pegawaiList.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={8} className="text-center py-8">
+                        <TableCell colSpan={7} className="text-center py-8">
                           <div className="flex flex-col items-center gap-2">
                             <Users className="h-8 w-8 text-muted-foreground" />
                             <span className="text-muted-foreground">
@@ -569,6 +570,16 @@ export default function PegawaiPage() {
                             <div className="space-y-1">
                               <div className="text-sm font-medium text-gray-900 dark:text-white">{pegawai.email}</div>
                               <div className="text-sm text-gray-500 dark:text-gray-400">{pegawai.phoneNumber}</div>
+                              {pegawai.nip && (
+                                <div className="text-xs text-blue-600 dark:text-blue-400">
+                                  <span className="font-medium">NIP:</span> {pegawai.nip}
+                                </div>
+                              )}
+                              {pegawai.pendidikan && (
+                                <div className="text-xs text-green-600 dark:text-green-400">
+                                  <span className="font-medium">Pendidikan:</span> {pegawai.pendidikan}
+                                </div>
+                              )}
                             </div>
                           </TableCell>
                           <TableCell className="py-4">
@@ -614,17 +625,6 @@ export default function PegawaiPage() {
                                 <span className="text-sm">Belum diatur</span>
                               </div>
                             )}
-                          </TableCell>
-                          <TableCell className="py-4">
-                            <div className="flex items-center gap-2">
-                              <Vote className="h-4 w-4 text-blue-500 flex-shrink-0" />
-                              <div className="text-sm">
-                                <div className="font-semibold text-gray-900 dark:text-white">{pegawai.totalTps || 0} TPS</div>
-                                <div className="text-xs text-gray-500 dark:text-gray-400">
-                                  {pegawai.totalPemilihan || 0} Pemilihan
-                                </div>
-                              </div>
-                            </div>
                           </TableCell>
                           <TableCell className="py-4">
                             <div className="text-sm text-gray-600 dark:text-gray-400">

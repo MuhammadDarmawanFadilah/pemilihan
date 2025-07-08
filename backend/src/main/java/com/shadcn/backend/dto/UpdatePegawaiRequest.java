@@ -33,6 +33,12 @@ public class UpdatePegawaiRequest {
     @Size(max = 20, message = "Nomor telepon maksimal 20 karakter")
     private String phoneNumber;
     
+    @Size(max = 50, message = "NIP maksimal 50 karakter")
+    private String nip;
+    
+    @Size(max = 100, message = "Pendidikan maksimal 100 karakter")
+    private String pendidikan;
+    
     @NotBlank(message = "Jabatan tidak boleh kosong")
     @Size(max = 100, message = "Jabatan maksimal 100 karakter")
     private String jabatan;
@@ -70,6 +76,5 @@ public class UpdatePegawaiRequest {
     // Pemilihan assignment
     private List<Long> selectedPemilihanIds;
     
-    @Min(value = 0, message = "Total TPS tidak boleh negatif")
-    private Integer totalTps;
+    // Note: totalTps is automatically calculated based on selectedPemilihanIds
 }

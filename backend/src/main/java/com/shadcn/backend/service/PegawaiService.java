@@ -127,6 +127,8 @@ public class PegawaiService {
                 .fullName(request.getFullName())
                 .email(request.getEmail())
                 .phoneNumber(request.getPhoneNumber())
+                .nip(request.getNip())
+                .pendidikan(request.getPendidikan())
                 .jabatan(request.getJabatan())
                 .status(request.getStatus() != null ? 
                     Pegawai.PegawaiStatus.valueOf(request.getStatus()) : 
@@ -140,16 +142,18 @@ public class PegawaiService {
                 .latitude(request.getLatitude())
                 .longitude(request.getLongitude())
                 .photoUrl(request.getPhotoUrl())
-                .totalTps(request.getTotalTps())
                 .build();
 
-        // Add pemilihan if provided
+        // Add pemilihan if provided - totalTps will be calculated automatically
         if (request.getSelectedPemilihanIds() != null && !request.getSelectedPemilihanIds().isEmpty()) {
             Set<Pemilihan> pemilihanSet = request.getSelectedPemilihanIds().stream()
                     .map(id -> pemilihanRepository.findById(id)
                             .orElseThrow(() -> new RuntimeException("Pemilihan not found: " + id)))
                     .collect(Collectors.toSet());
             pegawai.setPemilihanList(pemilihanSet);
+        } else {
+            // No pemilihan assigned, set totalTps to 0
+            pegawai.setTotalTps(0);
         }
 
         Pegawai savedPegawai = pegawaiRepository.save(pegawai);
@@ -187,6 +191,12 @@ public class PegawaiService {
         if (request.getPhoneNumber() != null) {
             pegawai.setPhoneNumber(request.getPhoneNumber());
         }
+        if (request.getNip() != null) {
+            pegawai.setNip(request.getNip());
+        }
+        if (request.getPendidikan() != null) {
+            pegawai.setPendidikan(request.getPendidikan());
+        }
         if (request.getJabatan() != null) {
             pegawai.setJabatan(request.getJabatan());
         }
@@ -217,9 +227,6 @@ public class PegawaiService {
         if (request.getLongitude() != null) {
             pegawai.setLongitude(request.getLongitude());
         }
-        if (request.getTotalTps() != null) {
-            pegawai.setTotalTps(request.getTotalTps());
-        }
         if (request.getPhotoUrl() != null) {
             pegawai.setPhotoUrl(request.getPhotoUrl());
         }
@@ -229,7 +236,7 @@ public class PegawaiService {
             pegawai.setPassword(passwordEncoder.encode(request.getPassword()));
         }
 
-        // Update pemilihan if provided
+        // Update pemilihan if provided - totalTps will be calculated automatically
         if (request.getSelectedPemilihanIds() != null) {
             Set<Pemilihan> pemilihanSet = request.getSelectedPemilihanIds().stream()
                     .map(pemilihanId -> pemilihanRepository.findById(pemilihanId)
@@ -279,6 +286,7 @@ public class PegawaiService {
                 .orElseThrow(() -> new RuntimeException("Pemilihan not found with id: " + pemilihanId));
         
         pegawai.addPemilihan(pemilihan);
+        // totalTps is automatically updated in addPemilihan method
         Pegawai savedPegawai = pegawaiRepository.save(pegawai);
         
         log.info("Pemilihan assigned successfully");
@@ -295,6 +303,7 @@ public class PegawaiService {
                 .orElseThrow(() -> new RuntimeException("Pemilihan not found with id: " + pemilihanId));
         
         pegawai.removePemilihan(pemilihan);
+        // totalTps is automatically updated in removePemilihan method
         Pegawai savedPegawai = pegawaiRepository.save(pegawai);
         
         log.info("Pemilihan removed successfully");
@@ -307,6 +316,23 @@ public class PegawaiService {
 
     public Long getTotalActivePegawai() {
         return pegawaiRepository.countByStatus(Pegawai.PegawaiStatus.AKTIF);
+    }
+
+    @Transactional
+    public void recalculateAllTotalTps() {
+        log.info("Recalculating totalTps for all pegawai");
+        List<Pegawai> allPegawai = pegawaiRepository.findAll();
+        for (Pegawai pegawai : allPegawai) {
+            Integer calculatedTotalTps = pegawai.getPemilihanList() != null ? pegawai.getPemilihanList().size() : 0;
+            Integer currentTotalTps = pegawai.getTotalTps() != null ? pegawai.getTotalTps() : 0;
+            if (!calculatedTotalTps.equals(currentTotalTps)) {
+                log.info("Updating totalTps for pegawai {} from {} to {}", 
+                    pegawai.getId(), currentTotalTps, calculatedTotalTps);
+                pegawai.setTotalTps(calculatedTotalTps);
+                pegawaiRepository.save(pegawai);
+            }
+        }
+        log.info("Completed recalculating totalTps for all pegawai");
     }
 
     public boolean existsByUsername(String username) {
@@ -380,5 +406,64 @@ public class PegawaiService {
         }
         
         return response;
+    }
+
+    public List<PegawaiResponse> getPegawaiWithLocationData(
+            String search, String nama, String provinsi, String kota, 
+            String kecamatan, String jabatan, String status) {
+        log.info("Fetching pegawai with location data - search: {}", search);
+        
+        return pegawaiRepository.findAll().stream()
+                .filter(pegawai -> pegawai.getLatitude() != null && pegawai.getLongitude() != null && pegawai.getAlamat() != null)
+                .filter(pegawai -> {
+                    if (search != null && !search.trim().isEmpty()) {
+                        String searchLower = search.trim().toLowerCase();
+                        return pegawai.getFullName().toLowerCase().contains(searchLower) ||
+                               pegawai.getUsername().toLowerCase().contains(searchLower) ||
+                               pegawai.getEmail().toLowerCase().contains(searchLower);
+                    }
+                    return true;
+                })
+                .filter(pegawai -> {
+                    if (nama != null && !nama.trim().isEmpty()) {
+                        return pegawai.getFullName().toLowerCase().contains(nama.trim().toLowerCase());
+                    }
+                    return true;
+                })
+                .filter(pegawai -> {
+                    if (provinsi != null && !provinsi.trim().isEmpty()) {
+                        String provinsiNama = wilayahCacheService.getNamaByKode(pegawai.getProvinsi());
+                        return provinsiNama != null && provinsiNama.toLowerCase().contains(provinsi.trim().toLowerCase());
+                    }
+                    return true;
+                })
+                .filter(pegawai -> {
+                    if (kota != null && !kota.trim().isEmpty()) {
+                        String kotaNama = wilayahCacheService.getNamaByKode(pegawai.getKota());
+                        return kotaNama != null && kotaNama.toLowerCase().contains(kota.trim().toLowerCase());
+                    }
+                    return true;
+                })
+                .filter(pegawai -> {
+                    if (kecamatan != null && !kecamatan.trim().isEmpty()) {
+                        String kecamatanNama = wilayahCacheService.getNamaByKode(pegawai.getKecamatan());
+                        return kecamatanNama != null && kecamatanNama.toLowerCase().contains(kecamatan.trim().toLowerCase());
+                    }
+                    return true;
+                })
+                .filter(pegawai -> {
+                    if (jabatan != null && !jabatan.trim().isEmpty()) {
+                        return pegawai.getJabatan().toLowerCase().contains(jabatan.trim().toLowerCase());
+                    }
+                    return true;
+                })
+                .filter(pegawai -> {
+                    if (status != null && !status.trim().isEmpty()) {
+                        return pegawai.getStatus().name().equalsIgnoreCase(status.trim());
+                    }
+                    return true;
+                })
+                .map(this::createPegawaiResponseWithLocationNames)
+                .collect(Collectors.toList());
     }
 }

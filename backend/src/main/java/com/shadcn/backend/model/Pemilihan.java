@@ -43,6 +43,10 @@ public class Pemilihan {
     @Column(columnDefinition = "TEXT")
     private String deskripsiPemilihan;
     
+    // Periode pemilihan
+    private LocalDateTime tanggalMulai;
+    private LocalDateTime tanggalSelesai;
+    
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TingkatPemilihan tingkatPemilihan;

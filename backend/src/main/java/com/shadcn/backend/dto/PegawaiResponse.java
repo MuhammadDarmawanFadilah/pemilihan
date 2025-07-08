@@ -22,6 +22,8 @@ public class PegawaiResponse {
     private String fullName;
     private String email;
     private String phoneNumber;
+    private String nip;
+    private String pendidikan;
     private String jabatan;
     private String status;
     
@@ -77,6 +79,8 @@ public class PegawaiResponse {
         this.fullName = pegawai.getFullName();
         this.email = pegawai.getEmail();
         this.phoneNumber = pegawai.getPhoneNumber();
+        this.nip = pegawai.getNip();
+        this.pendidikan = pegawai.getPendidikan();
         this.jabatan = pegawai.getJabatan();
         this.status = pegawai.getStatus().name();
         

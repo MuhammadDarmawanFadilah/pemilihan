@@ -9,6 +9,7 @@ import com.shadcn.backend.dto.DetailLaporanDTO;
 import com.shadcn.backend.repository.PemilihanRepository;
 import com.shadcn.backend.repository.DetailPemilihanRepository;
 import com.shadcn.backend.repository.LaporanRepository;
+import com.shadcn.backend.repository.PegawaiRepository;
 import com.shadcn.backend.service.WilayahService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -32,6 +34,9 @@ public class PemilihanService {
     
     @Autowired
     private LaporanRepository laporanRepository;
+    
+    @Autowired
+    private PegawaiRepository pegawaiRepository;
     
     @Autowired
     private WilayahService wilayahService;
@@ -296,6 +301,10 @@ public class PemilihanService {
         pemilihan.setDeskripsiPemilihan(dto.getDeskripsi());
         pemilihan.setTahun(dto.getTahun() != null ? dto.getTahun() : java.time.LocalDate.now().getYear());
         
+        // Set periode pemilihan
+        pemilihan.setTanggalMulai(dto.getTanggalMulai());
+        pemilihan.setTanggalSelesai(dto.getTanggalSelesai());
+        
         // Set status pemilihan
         if (dto.getStatus() != null) {
             pemilihan.setStatus(Pemilihan.StatusPemilihan.valueOf(dto.getStatus()));
@@ -315,6 +324,10 @@ public class PemilihanService {
         pemilihan.setNamaPemilihan(dto.getJudulPemilihan());
         pemilihan.setDeskripsiPemilihan(dto.getDeskripsi());
         pemilihan.setTahun(dto.getTahun() != null ? dto.getTahun() : java.time.LocalDate.now().getYear());
+        
+        // Set periode pemilihan
+        pemilihan.setTanggalMulai(dto.getTanggalMulai());
+        pemilihan.setTanggalSelesai(dto.getTanggalSelesai());
         
         // Set tingkat pemilihan based on DTO
         if (dto.getTingkatPemilihan() != null) {
@@ -366,6 +379,10 @@ public class PemilihanService {
         dto.setJudulPemilihan(pemilihan.getNamaPemilihan());
         dto.setDeskripsi(pemilihan.getDeskripsiPemilihan());
         dto.setTahun(pemilihan.getTahun());
+        dto.setTanggalMulai(pemilihan.getTanggalMulai());
+        dto.setTanggalSelesai(pemilihan.getTanggalSelesai());
+        dto.setTanggalAktif(pemilihan.getTanggalMulai());
+        dto.setTanggalBerakhir(pemilihan.getTanggalSelesai());
         dto.setTingkatPemilihan(pemilihan.getTingkatPemilihan().name().toLowerCase());
         dto.setStatus(pemilihan.getStatus().name());
         
@@ -458,6 +475,31 @@ public class PemilihanService {
         dto.setLongitude(request.getLongitude());
         dto.setStatus(request.getStatus());
         dto.setTingkatPemilihan(request.getTingkatPemilihan());
+        
+        // Convert date strings to LocalDateTime
+        if (request.getTanggalAktif() != null && !request.getTanggalAktif().isEmpty()) {
+            try {
+                if (request.getTanggalAktif().contains("T")) {
+                    dto.setTanggalMulai(LocalDateTime.parse(request.getTanggalAktif().substring(0, 19)));
+                } else {
+                    dto.setTanggalMulai(LocalDateTime.parse(request.getTanggalAktif()));
+                }
+            } catch (Exception e) {
+                System.err.println("Error parsing tanggalAktif: " + e.getMessage() + " - value: " + request.getTanggalAktif());
+            }
+        }
+        
+        if (request.getTanggalBerakhir() != null && !request.getTanggalBerakhir().isEmpty()) {
+            try {
+                if (request.getTanggalBerakhir().contains("T")) {
+                    dto.setTanggalSelesai(LocalDateTime.parse(request.getTanggalBerakhir().substring(0, 19)));
+                } else {
+                    dto.setTanggalSelesai(LocalDateTime.parse(request.getTanggalBerakhir()));
+                }
+            } catch (Exception e) {
+                System.err.println("Error parsing tanggalBerakhir: " + e.getMessage() + " - value: " + request.getTanggalBerakhir());
+            }
+        }
         
         // Convert DetailLaporanDto to DetailPemilihanDTO
         if (request.getDetailLaporan() != null && !request.getDetailLaporan().isEmpty()) {
@@ -566,5 +608,90 @@ public class PemilihanService {
             default:
                 return "";
         }
+    }
+
+    public List<PemilihanDTO> getPemilihanWithLocationData(
+            String search, String nama, String provinsi, String kota, 
+            String kecamatan, String tingkat, String status) {
+        
+        return pemilihanRepository.findAll().stream()
+                .filter(pemilihan -> pemilihan.getLatitude() != null && pemilihan.getLongitude() != null)
+                .filter(pemilihan -> {
+                    if (search != null && !search.trim().isEmpty()) {
+                        String searchLower = search.trim().toLowerCase();
+                        return pemilihan.getNamaPemilihan().toLowerCase().contains(searchLower);
+                    }
+                    return true;
+                })
+                .filter(pemilihan -> {
+                    if (nama != null && !nama.trim().isEmpty()) {
+                        return pemilihan.getNamaPemilihan().toLowerCase().contains(nama.trim().toLowerCase());
+                    }
+                    return true;
+                })
+                .filter(pemilihan -> {
+                    if (provinsi != null && !provinsi.trim().isEmpty()) {
+                        return pemilihan.getProvinsiNama() != null && 
+                               pemilihan.getProvinsiNama().toLowerCase().contains(provinsi.trim().toLowerCase());
+                    }
+                    return true;
+                })
+                .filter(pemilihan -> {
+                    if (kota != null && !kota.trim().isEmpty()) {
+                        return pemilihan.getKotaNama() != null && 
+                               pemilihan.getKotaNama().toLowerCase().contains(kota.trim().toLowerCase());
+                    }
+                    return true;
+                })
+                .filter(pemilihan -> {
+                    if (kecamatan != null && !kecamatan.trim().isEmpty()) {
+                        return pemilihan.getKecamatanNama() != null && 
+                               pemilihan.getKecamatanNama().toLowerCase().contains(kecamatan.trim().toLowerCase());
+                    }
+                    return true;
+                })
+                .filter(pemilihan -> {
+                    if (tingkat != null && !tingkat.trim().isEmpty()) {
+                        return pemilihan.getTingkatPemilihan() != null && 
+                               pemilihan.getTingkatPemilihan().name().equalsIgnoreCase(tingkat.trim());
+                    }
+                    return true;
+                })
+                .filter(pemilihan -> {
+                    if (status != null && !status.trim().isEmpty()) {
+                        return pemilihan.getStatus().name().equalsIgnoreCase(status.trim());
+                    }
+                    return true;
+                })
+                .map(this::convertToDTOWithStats)
+                .collect(Collectors.toList());
+    }
+    
+    private PemilihanDTO convertToDTOWithStats(Pemilihan pemilihan) {
+        PemilihanDTO dto = convertToDTO(pemilihan);
+        
+        // Calculate additional statistics
+        // Get total pegawai using this pemilihan
+        long totalPegawai = pegawaiRepository.countByPemilihanId(pemilihan.getPemilihanId());
+        dto.setTotalPegawai((int) totalPegawai);
+        
+        // Get total jenis laporan from DetailPemilihan
+        List<DetailPemilihan> detailPemilihanList = detailPemilihanRepository.findByPemilihanIdWithLaporanOrderByUrutan(pemilihan.getPemilihanId());
+        if (detailPemilihanList != null && !detailPemilihanList.isEmpty()) {
+            // Count unique jenis laporan
+            Set<Long> uniqueJenisLaporan = detailPemilihanList.stream()
+                .filter(detail -> detail.getLaporan() != null && detail.getLaporan().getJenisLaporan() != null)
+                .map(detail -> detail.getLaporan().getJenisLaporan().getJenisLaporanId())
+                .collect(Collectors.toSet());
+            dto.setTotalJenisLaporan(uniqueJenisLaporan.size());
+            
+            // Count total tahapan (same as total laporan)
+            dto.setTotalTahapan(detailPemilihanList.size());
+        } else {
+            dto.setTotalJenisLaporan(0);
+            dto.setTotalTahapan(0);
+        }
+        
+        return dto;
     }
 }

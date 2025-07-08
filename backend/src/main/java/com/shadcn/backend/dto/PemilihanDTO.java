@@ -15,6 +15,10 @@ public class PemilihanDTO {
     private String judulPemilihan;
     private String deskripsi;
     private Integer tahun;
+    private LocalDateTime tanggalMulai;
+    private LocalDateTime tanggalSelesai;
+    private LocalDateTime tanggalAktif;
+    private LocalDateTime tanggalBerakhir;
     private String tingkatPemilihan;
     private String status;
     private String provinsi;
@@ -38,8 +42,20 @@ public class PemilihanDTO {
     
     // Data tambahan untuk frontend
     private Integer totalLaporan;
+    private Integer totalPegawai;
+    private Integer totalJenisLaporan;
+    private Integer totalTahapan;
     private String alamatLengkap;
     private String wilayahTingkat; // Nama wilayah berdasarkan tingkat pemilihan
+    
+    // Alias getters for frontend compatibility
+    public LocalDateTime getTanggalAktif() {
+        return this.tanggalMulai;
+    }
+    
+    public LocalDateTime getTanggalBerakhir() {
+        return this.tanggalSelesai;
+    }
     
     @Data
     @NoArgsConstructor

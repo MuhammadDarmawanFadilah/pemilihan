@@ -285,4 +285,40 @@ public class PegawaiController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
+
+    @PostMapping("/recalculate-tps")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Map<String, String>> recalculateTotalTps() {
+        try {
+            pegawaiService.recalculateAllTotalTps();
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Total TPS berhasil dihitung ulang untuk semua pegawai");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Error recalculating total TPS: {}", e.getMessage());
+            Map<String, String> response = new HashMap<>();
+            response.put("error", "Gagal menghitung ulang total TPS");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    @GetMapping("/map-locations")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MODERATOR')")
+    public ResponseEntity<List<PegawaiResponse>> getPegawaiMapLocations(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String nama,
+            @RequestParam(required = false) String provinsi,
+            @RequestParam(required = false) String kota,
+            @RequestParam(required = false) String kecamatan,
+            @RequestParam(required = false) String jabatan,
+            @RequestParam(required = false) String status) {
+        try {
+            List<PegawaiResponse> pegawaiList = pegawaiService.getPegawaiWithLocationData(
+                search, nama, provinsi, kota, kecamatan, jabatan, status);
+            return ResponseEntity.ok(pegawaiList);
+        } catch (Exception e) {
+            log.error("Error getting pegawai map locations: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
 }

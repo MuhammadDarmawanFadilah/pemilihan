@@ -65,6 +65,9 @@ public interface PegawaiRepository extends JpaRepository<Pegawai, Long> {
     @Query("SELECT p FROM Pegawai p JOIN p.pemilihanList pm WHERE pm.pemilihanId = :pemilihanId")
     List<Pegawai> findByPemilihanId(@Param("pemilihanId") Long pemilihanId);
     
+    @Query("SELECT COUNT(p) FROM Pegawai p JOIN p.pemilihanList pm WHERE pm.pemilihanId = :pemilihanId")
+    long countByPemilihanId(@Param("pemilihanId") Long pemilihanId);
+    
     // Advanced filtering query
     @Query("SELECT p FROM Pegawai p WHERE " +
            "(:search IS NULL OR :search = '' OR " +

@@ -556,14 +556,15 @@ export default function PemilihanPage() {
                   <TableHead className="font-semibold text-gray-700 py-4">Wilayah</TableHead>
                   <TableHead className="font-semibold text-gray-700 py-4">Status</TableHead>
                   <TableHead className="font-semibold text-gray-700 py-4">Total Laporan</TableHead>
-                  <TableHead className="font-semibold text-gray-700 py-4">Tanggal Dibuat</TableHead>
+                  <TableHead className="font-semibold text-gray-700 py-4">Tanggal Mulai</TableHead>
+                  <TableHead className="font-semibold text-gray-700 py-4">Tanggal Akhir</TableHead>
                   <TableHead className="font-semibold text-gray-700 py-4 w-[100px] text-center">Aksi</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-12">
+                    <TableCell colSpan={8} className="text-center py-12">
                       <div className="flex flex-col items-center justify-center">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4"></div>
                         <span className="text-gray-600 font-medium">Memuat data...</span>
@@ -573,7 +574,7 @@ export default function PemilihanPage() {
                   </TableRow>
                 ) : pemilihan.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-12">
+                    <TableCell colSpan={8} className="text-center py-12">
                       <div className="flex flex-col items-center justify-center">
                         <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
                           <Search className="w-8 h-8 text-gray-400" />
@@ -629,7 +630,16 @@ export default function PemilihanPage() {
                       </TableCell>
                       <TableCell className="py-4">
                         <span className="text-gray-600 font-medium">
-                          {item.createdAt ? new Date(item.createdAt).toLocaleDateString('id-ID', {
+                          {(item.tanggalMulai || item.tanggalAktif) ? new Date(item.tanggalMulai || item.tanggalAktif!).toLocaleDateString('id-ID', {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric'
+                          }) : '-'}
+                        </span>
+                      </TableCell>
+                      <TableCell className="py-4">
+                        <span className="text-gray-600 font-medium">
+                          {(item.tanggalSelesai || item.tanggalBerakhir) ? new Date(item.tanggalSelesai || item.tanggalBerakhir!).toLocaleDateString('id-ID', {
                             day: '2-digit',
                             month: 'short',
                             year: 'numeric'

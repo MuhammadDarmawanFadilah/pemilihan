@@ -179,6 +179,24 @@ public class PemilihanController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
+
+    @GetMapping("/map-locations")
+    public ResponseEntity<List<PemilihanDTO>> getPemilihanMapLocations(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String nama,
+            @RequestParam(required = false) String provinsi,
+            @RequestParam(required = false) String kota,
+            @RequestParam(required = false) String kecamatan,
+            @RequestParam(required = false) String tingkat,
+            @RequestParam(required = false) String status) {
+        try {
+            List<PemilihanDTO> pemilihanList = pemilihanService.getPemilihanWithLocationData(
+                search, nama, provinsi, kota, kecamatan, tingkat, status);
+            return ResponseEntity.ok(pemilihanList);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
     
     @GetMapping("/statistics")
     public ResponseEntity<java.util.Map<String, Object>> getStatistics(

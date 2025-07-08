@@ -44,6 +44,12 @@ public class Pegawai implements UserDetails {
     @Column(name = "phone_number")
     private String phoneNumber;
     
+    @Column(name = "nip")
+    private String nip;
+    
+    @Column(name = "pendidikan")
+    private String pendidikan;
+    
     @Column(nullable = false)
     private String jabatan;
     
@@ -152,17 +158,29 @@ public class Pegawai implements UserDetails {
             pemilihanList = new HashSet<>();
         }
         pemilihanList.add(pemilihan);
+        // Automatically update totalTps
+        this.totalTps = pemilihanList.size();
     }
     
     public void removePemilihan(Pemilihan pemilihan) {
         if (pemilihanList != null) {
             pemilihanList.remove(pemilihan);
+            // Automatically update totalTps
+            this.totalTps = pemilihanList.size();
         }
     }
     
     public void clearPemilihan() {
         if (pemilihanList != null) {
             pemilihanList.clear();
+            // Automatically update totalTps
+            this.totalTps = 0;
         }
+    }
+    
+    public void setPemilihanList(Set<Pemilihan> pemilihanList) {
+        this.pemilihanList = pemilihanList;
+        // Automatically update totalTps when pemilihanList is set
+        this.totalTps = pemilihanList != null ? pemilihanList.size() : 0;
     }
 }

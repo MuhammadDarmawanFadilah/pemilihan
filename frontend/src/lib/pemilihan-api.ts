@@ -23,6 +23,8 @@ export interface PemilihanDTO {
   tanggalPembuatan?: string
   tanggalAktif?: string
   tanggalBerakhir?: string
+  tanggalMulai?: string
+  tanggalSelesai?: string
   createdAt?: string
   updatedAt?: string
   detailLaporan?: DetailPemilihanDTO[]
