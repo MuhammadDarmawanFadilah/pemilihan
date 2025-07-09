@@ -38,6 +38,9 @@ public class JenisLaporan {
     @Column(columnDefinition = "TEXT")
     private String deskripsi;
     
+    @Column(nullable = false)
+    private Integer urutan = 0;
+    
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private StatusJenisLaporan status = StatusJenisLaporan.AKTIF;

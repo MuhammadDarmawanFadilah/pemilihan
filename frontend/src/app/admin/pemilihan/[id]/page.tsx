@@ -15,6 +15,12 @@ export default function PemilihanDetailPage() {
   const router = useRouter();
   const [pemilihan, setPemilihan] = useState<PemilihanDTO | null>(null);
   const [loading, setLoading] = useState(true);
+  const [wilayahNames, setWilayahNames] = useState({
+    provinsiNama: '',
+    kotaNama: '',
+    kecamatanNama: '',
+    kelurahanNama: ''
+  });
   const { toast } = useToast();
 
   const id = params?.id as string;
@@ -30,6 +36,11 @@ export default function PemilihanDetailPage() {
     try {
       const response = await pemilihanApi.getById(parseInt(id));
       setPemilihan(response.data);
+      
+      // Load wilayah names if we have the data
+      if (response.data) {
+        await loadWilayahNames(response.data);
+      }
     } catch (error: any) {
       console.error("Error loading pemilihan:", error);
       toast({
@@ -39,6 +50,50 @@ export default function PemilihanDetailPage() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadWilayahNames = async (pemilihanData: PemilihanDTO) => {
+    try {
+      const { cachedWilayahAPI } = await import('@/lib/wilayah-api');
+      
+      // Load provinsi name
+      if (pemilihanData.provinsi) {
+        const provinces = await cachedWilayahAPI.getProvinces();
+        const province = provinces.find((p: any) => p.code === pemilihanData.provinsi);
+        if (province) {
+          setWilayahNames(prev => ({ ...prev, provinsiNama: province.name }));
+        }
+      }
+      
+      // Load kota name
+      if (pemilihanData.kota && pemilihanData.provinsi) {
+        const regencies = await cachedWilayahAPI.getRegencies(pemilihanData.provinsi);
+        const regency = regencies.find((r: any) => r.code === pemilihanData.kota);
+        if (regency) {
+          setWilayahNames(prev => ({ ...prev, kotaNama: regency.name }));
+        }
+      }
+      
+      // Load kecamatan name
+      if (pemilihanData.kecamatan && pemilihanData.kota) {
+        const districts = await cachedWilayahAPI.getDistricts(pemilihanData.kota);
+        const district = districts.find((d: any) => d.code === pemilihanData.kecamatan);
+        if (district) {
+          setWilayahNames(prev => ({ ...prev, kecamatanNama: district.name }));
+        }
+      }
+      
+      // Load kelurahan name
+      if (pemilihanData.kelurahan && pemilihanData.kecamatan) {
+        const villages = await cachedWilayahAPI.getVillages(pemilihanData.kecamatan);
+        const village = villages.find((v: any) => v.code === pemilihanData.kelurahan);
+        if (village) {
+          setWilayahNames(prev => ({ ...prev, kelurahanNama: village.name }));
+        }
+      }
+    } catch (error) {
+      console.error('Error loading wilayah names:', error);
     }
   };
 
@@ -177,8 +232,8 @@ export default function PemilihanDetailPage() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Template Layout</p>
-                <p className="text-2xl font-bold text-gray-900">{pemilihan.templateLayout || 3}</p>
+                <p className="text-sm text-gray-600">Tingkat Pemilihan</p>
+                <p className="text-2xl font-bold text-gray-900">{pemilihan.tingkatPemilihan || '-'}</p>
               </div>
               <MapPin className="h-8 w-8 text-purple-500" />
             </div>
@@ -189,8 +244,8 @@ export default function PemilihanDetailPage() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Jumlah Posisi</p>
-                <p className="text-2xl font-bold text-gray-900">{pemilihan.jumlahPosisi || 0}</p>
+                <p className="text-sm text-gray-600">Total Laporan</p>
+                <p className="text-2xl font-bold text-gray-900">{pemilihan.totalLaporan || 0}</p>
               </div>
               <Calendar className="h-8 w-8 text-orange-500" />
             </div>
@@ -227,16 +282,16 @@ export default function PemilihanDetailPage() {
                 </div>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-600">Template Layout</label>
-                <p className="text-gray-900">{pemilihan.templateLayout || "3"} per baris</p>
+                <label className="text-sm font-medium text-gray-600">Tingkat Pemilihan</label>
+                <p className="text-gray-900 capitalize">{pemilihan.tingkatPemilihan || '-'}</p>
               </div>
             </div>
             
             <Separator />
             
             <div>
-              <label className="text-sm font-medium text-gray-600">Jumlah Posisi</label>
-              <p className="text-gray-900">{pemilihan.jumlahPosisi || 0} posisi</p>
+              <label className="text-sm font-medium text-gray-600">Total Laporan</label>
+              <p className="text-gray-900">{pemilihan.totalLaporan || 0} laporan</p>
             </div>
           </CardContent>
         </Card>
@@ -249,32 +304,32 @@ export default function PemilihanDetailPage() {
           <CardContent className="space-y-4">
             <div>
               <label className="text-sm font-medium text-gray-600">Provinsi</label>
-              <p className="text-gray-900 font-semibold">{pemilihan.provinsi}</p>
+              <p className="text-gray-900 font-semibold">{wilayahNames.provinsiNama || pemilihan.provinsi || '-'}</p>
             </div>
             
             <Separator />
             
             <div>
               <label className="text-sm font-medium text-gray-600">Kota/Kabupaten</label>
-              <p className="text-gray-900">{pemilihan.kota}</p>
+              <p className="text-gray-900">{wilayahNames.kotaNama || pemilihan.kota || '-'}</p>
             </div>
             
-            {pemilihan.kecamatan && (
+            {(pemilihan.kecamatan || wilayahNames.kecamatanNama) && (
               <>
                 <Separator />
                 <div>
                   <label className="text-sm font-medium text-gray-600">Kecamatan</label>
-                  <p className="text-gray-900">{pemilihan.kecamatan}</p>
+                  <p className="text-gray-900">{wilayahNames.kecamatanNama || pemilihan.kecamatan}</p>
                 </div>
               </>
             )}
             
-            {pemilihan.kelurahan && (
+            {(pemilihan.kelurahan || wilayahNames.kelurahanNama) && (
               <>
                 <Separator />
                 <div>
-                  <label className="text-sm font-medium text-gray-600">Kelurahan</label>
-                  <p className="text-gray-900">{pemilihan.kelurahan}</p>
+                  <label className="text-sm font-medium text-gray-600">Kelurahan/Desa</label>
+                  <p className="text-gray-900">{wilayahNames.kelurahanNama || pemilihan.kelurahan}</p>
                 </div>
               </>
             )}
@@ -288,69 +343,19 @@ export default function PemilihanDetailPage() {
                 </div>
               </>
             )}
+            
+            {(pemilihan.latitude && pemilihan.longitude) && (
+              <>
+                <Separator />
+                <div>
+                  <label className="text-sm font-medium text-gray-600">Koordinat</label>
+                  <p className="text-gray-900">{pemilihan.latitude.toFixed(6)}, {pemilihan.longitude.toFixed(6)}</p>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>
-
-      {/* Detail Pemilihan (Laporan) */}
-      {pemilihan.detailPemilihan && pemilihan.detailPemilihan.length > 0 && (
-        <Card className="mt-8">
-          <CardHeader>
-            <CardTitle>Laporan dalam Pemilihan ({pemilihan.detailPemilihan.length})</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {pemilihan.detailPemilihan.map((detail, index) => (
-                <Card key={detail.detailPemilihanId || index} className="border-l-4 border-l-blue-500">
-                  <CardContent className="p-4">
-                    <div className="space-y-3">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-gray-900 mb-1">
-                            {detail.namaCandidat}
-                          </h4>
-                          <p className="text-sm text-gray-600">
-                            {detail.jenisLaporan || "Tanpa jenis"}
-                          </p>
-                        </div>
-                        <div className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-sm">
-                          {detail.urutanTampil}
-                        </div>
-                      </div>
-                      
-                      {detail.partai && (
-                        <div>
-                          <p className="text-xs text-gray-500">Partai</p>
-                          <p className="text-sm font-medium">{detail.partai}</p>
-                        </div>
-                      )}
-                      
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-xs text-gray-500">Posisi Layout</p>
-                          <p className="text-sm font-medium">{detail.posisiLayout}</p>
-                        </div>
-                        {detail.status && (
-                          <Badge variant="outline" className="text-xs">
-                            {detail.status}
-                          </Badge>
-                        )}
-                      </div>
-                      
-                      {detail.keterangan && (
-                        <div>
-                          <p className="text-xs text-gray-500">Keterangan</p>
-                          <p className="text-sm">{detail.keterangan}</p>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Informasi Tanggal */}
       <Card className="mt-8">
@@ -358,7 +363,7 @@ export default function PemilihanDetailPage() {
           <CardTitle>Informasi Tanggal</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {pemilihan.tanggalPembuatan && (
               <div>
                 <label className="text-sm font-medium text-gray-600">Tanggal Pembuatan</label>
@@ -366,17 +371,17 @@ export default function PemilihanDetailPage() {
               </div>
             )}
             
-            {pemilihan.tanggalAktif && (
+            {(pemilihan.tanggalAktif || pemilihan.tanggalMulai) && (
               <div>
-                <label className="text-sm font-medium text-gray-600">Tanggal Aktif</label>
-                <p className="text-gray-900">{formatDate(pemilihan.tanggalAktif)}</p>
+                <label className="text-sm font-medium text-gray-600">Tanggal Mulai</label>
+                <p className="text-gray-900">{formatDate(pemilihan.tanggalAktif || pemilihan.tanggalMulai!)}</p>
               </div>
             )}
             
-            {pemilihan.tanggalBerakhir && (
+            {(pemilihan.tanggalBerakhir || pemilihan.tanggalSelesai) && (
               <div>
-                <label className="text-sm font-medium text-gray-600">Tanggal Berakhir</label>
-                <p className="text-gray-900">{formatDate(pemilihan.tanggalBerakhir)}</p>
+                <label className="text-sm font-medium text-gray-600">Tanggal Selesai</label>
+                <p className="text-gray-900">{formatDate(pemilihan.tanggalBerakhir || pemilihan.tanggalSelesai!)}</p>
               </div>
             )}
             
@@ -384,6 +389,13 @@ export default function PemilihanDetailPage() {
               <div>
                 <label className="text-sm font-medium text-gray-600">Dibuat Pada</label>
                 <p className="text-gray-900">{formatDate(pemilihan.createdAt)}</p>
+              </div>
+            )}
+
+            {pemilihan.updatedAt && (
+              <div>
+                <label className="text-sm font-medium text-gray-600">Diperbarui Pada</label>
+                <p className="text-gray-900">{formatDate(pemilihan.updatedAt)}</p>
               </div>
             )}
           </div>

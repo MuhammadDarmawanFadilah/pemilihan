@@ -199,6 +199,25 @@ public class JenisLaporanService {
         jenisLaporanRepository.deleteById(id);
     }
     
+    // Toggle status jenis laporan
+    @Transactional
+    public JenisLaporanDto toggleJenisLaporanStatus(Long id) {
+        JenisLaporan jenisLaporan = jenisLaporanRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Jenis laporan tidak ditemukan"));
+        
+        // Toggle status between AKTIF and TIDAK_AKTIF
+        if (jenisLaporan.getStatus() == JenisLaporan.StatusJenisLaporan.AKTIF) {
+            jenisLaporan.setStatus(JenisLaporan.StatusJenisLaporan.TIDAK_AKTIF);
+        } else {
+            jenisLaporan.setStatus(JenisLaporan.StatusJenisLaporan.AKTIF);
+        }
+        
+        jenisLaporan.setUpdatedAt(LocalDateTime.now());
+        JenisLaporan savedJenisLaporan = jenisLaporanRepository.save(jenisLaporan);
+        
+        return convertToDto(savedJenisLaporan);
+    }
+    
     // Create tahapan for jenis laporan
     @Transactional
     public TahapanLaporanDto createTahapanForJenisLaporan(Long jenisLaporanId, TahapanLaporanDto tahapanDto) {

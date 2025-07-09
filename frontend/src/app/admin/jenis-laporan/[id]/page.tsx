@@ -16,7 +16,10 @@ import {
   Loader,
   Clock,
   User,
-  Calendar
+  Calendar,
+  Download,
+  Eye,
+  File
 } from 'lucide-react';
 import {
   AlertDialog,
@@ -29,6 +32,9 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { jenisLaporanAPI, JenisLaporan } from '@/lib/api';
+
+// Environment variables
+const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080';
 
 // Status color mapping
 const getStatusColor = (status: string) => {
@@ -71,7 +77,7 @@ export default function JenisLaporanDetailPage() {
     const loadJenisLaporan = async () => {
       try {
         setLoading(true);
-        const data = await jenisLaporanAPI.getById(parseInt(id));
+        const data = await jenisLaporanAPI.getWithTahapan(parseInt(id));
         setJenisLaporan(data);
       } catch (error) {
         console.error('Error loading jenis laporan:', error);
@@ -118,6 +124,124 @@ export default function JenisLaporanDetailPage() {
         variant: "destructive",
       });
     }
+  };
+
+  // Helper functions for file handling
+  const getFileIcon = (fileName: string) => {
+    const extension = fileName.split('.').pop()?.toLowerCase();
+    switch (extension) {
+      case 'pdf':
+        return <File className="h-4 w-4 text-red-600" />;
+      case 'doc':
+      case 'docx':
+        return <File className="h-4 w-4 text-blue-600" />;
+      case 'xlsx':
+      case 'xls':
+      case 'csv':
+        return <File className="h-4 w-4 text-green-600" />;
+      case 'jpg':
+      case 'jpeg':
+      case 'png':
+      case 'gif':
+        return <File className="h-4 w-4 text-purple-600" />;
+      default:
+        return <File className="h-4 w-4 text-gray-600" />;
+    }
+  };
+
+  const getDisplayName = (fileName: string) => {
+    // Check if it's a temp file or permanent file
+    const isTempFile = /^\d{8}_\d{6}_/.test(fileName);
+    
+    if (isTempFile) {
+      // Extract original name from temp file format: YYYYMMDD_HHMMSS_UUID_originalName.ext
+      const parts = fileName.split('_');
+      if (parts.length >= 3) {
+        return parts.slice(2).join('_'); // Join back the original name parts
+      }
+    } else {
+      // For permanent files, remove the documents/ prefix and extract original name
+      const cleanFileName = fileName.replace('documents/', '');
+      const parts = cleanFileName.split('_');
+      if (parts.length >= 3) {
+        return parts.slice(2).join('_'); // Join back the original name parts
+      }
+      return cleanFileName; // Fallback to filename without prefix
+    }
+    return fileName; // Fallback to server filename
+  };
+
+  const handleFileDownload = (fileName: string) => {
+    if (!fileName) return;
+    
+    // Check if it's a temp file or permanent file
+    const isTempFile = /^\d{8}_\d{6}_/.test(fileName);
+    
+    let downloadUrl;
+    if (isTempFile) {
+      // Use temp file download endpoint
+      downloadUrl = `${API_BASE_URL}/api/temp-files/download/${fileName}`;
+    } else {
+      // Use permanent file download endpoint - assume documents subdirectory
+      const cleanFileName = fileName.replace('documents/', ''); // Remove prefix if exists
+      downloadUrl = `${API_BASE_URL}/api/files/download/documents/${cleanFileName}`;
+    }
+    
+    // Force download for server files using fetch and blob
+    fetch(downloadUrl)
+      .then(response => {
+        if (!response.ok) throw new Error('Download failed');
+        return response.blob();
+      })
+      .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = getDisplayName(fileName);
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        
+        toast({
+          title: "Download berhasil",
+          description: `File ${getDisplayName(fileName)} berhasil didownload`,
+        });
+      })
+      .catch(error => {
+        console.error('Download error:', error);
+        toast({
+          title: "Download gagal",
+          description: "Gagal mendownload file",
+          variant: "destructive",
+        });
+      });
+  };
+
+  const canPreview = (fileName: string) => {
+    const extension = fileName.split('.').pop()?.toLowerCase();
+    return ['jpg', 'jpeg', 'png', 'gif', 'mp4', 'avi', 'mov'].includes(extension || '');
+  };
+
+  const handleFilePreview = (fileName: string) => {
+    if (!fileName) return;
+    
+    // Check if it's a temp file or permanent file
+    const isTempFile = /^\d{8}_\d{6}_/.test(fileName);
+    
+    let previewUrl;
+    if (isTempFile) {
+      // Use temp file preview endpoint
+      previewUrl = `${API_BASE_URL}/api/temp-files/preview/${fileName}`;
+    } else {
+      // Use permanent file preview endpoint - assume documents subdirectory
+      const cleanFileName = fileName.replace('documents/', ''); // Remove prefix if exists
+      previewUrl = `${API_BASE_URL}/api/files/preview/documents/${cleanFileName}`;
+    }
+    
+    // Open preview in new tab
+    window.open(previewUrl, '_blank');
   };
 
   if (loading) {
@@ -317,13 +441,43 @@ export default function JenisLaporanDetailPage() {
 
                                 {/* Template */}
                                 {tahapan.templateTahapan && (
-                                  <div className="bg-blue-50 p-4 rounded-lg">
-                                    <Label className="text-sm font-medium text-blue-800 mb-1 block">
+                                  <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+                                    <Label className="text-sm font-medium text-blue-800 mb-2 block">
                                       Template Tersedia:
                                     </Label>
-                                    <p className="text-sm text-blue-700">
-                                      📄 {tahapan.templateTahapan}
-                                    </p>
+                                    <div className="flex items-center justify-between bg-white p-3 rounded border">
+                                      <div className="flex items-center gap-3">
+                                        {getFileIcon(tahapan.templateTahapan)}
+                                        <div>
+                                          <p className="text-sm font-medium text-gray-900">
+                                            {getDisplayName(tahapan.templateTahapan)}
+                                          </p>
+                                          <p className="text-xs text-gray-500">Template tahapan laporan</p>
+                                        </div>
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        {canPreview(tahapan.templateTahapan) && (
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => handleFilePreview(tahapan.templateTahapan)}
+                                            className="flex items-center gap-1"
+                                          >
+                                            <Eye className="h-3 w-3" />
+                                            Preview
+                                          </Button>
+                                        )}
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() => handleFileDownload(tahapan.templateTahapan)}
+                                          className="flex items-center gap-1"
+                                        >
+                                          <Download className="h-3 w-3" />
+                                          Download
+                                        </Button>
+                                      </div>
+                                    </div>
                                   </div>
                                 )}
                               </CardContent>

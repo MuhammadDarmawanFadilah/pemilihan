@@ -149,6 +149,17 @@ const AppSidebar = () => {
       url: "/notifikasi",
       icon: Bell,
     },
+    {
+      title: "Laporan Pengawas",
+      url: "/laporan-pengawas",
+      icon: Vote,
+      badge: "New",
+    },
+    {
+      title: "Laporan Saya",
+      url: "/laporan-saya",
+      icon: FileText,
+    },
   ];  // Admin items (accessible to admin/moderator)
   const adminItems = [
     {

@@ -142,7 +142,7 @@ export default function AdminJenisLaporanPage() {
         filters.status = selectedStatus as any;
       }
 
-      const response = await jenisLaporanAPI.search(filters);
+      const response = await jenisLaporanAPI.searchWithTahapan(filters);
       setJenisLaporan(response.content);
       setTotalElements(response.totalElements);
       setTotalPages(response.totalPages);

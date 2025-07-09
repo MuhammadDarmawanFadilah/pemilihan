@@ -3,6 +3,7 @@ package com.shadcn.backend.controller;
 import com.shadcn.backend.dto.JenisLaporanDto;
 import com.shadcn.backend.dto.JenisLaporanFilterRequest;
 import com.shadcn.backend.dto.TahapanLaporanDto;
+import com.shadcn.backend.model.JenisLaporan;
 import com.shadcn.backend.service.JenisLaporanService;
 import com.shadcn.backend.service.TahapanLaporanService;
 import jakarta.validation.Valid;
@@ -26,6 +27,38 @@ public class JenisLaporanController {
 
     private final JenisLaporanService jenisLaporanService;
     private final TahapanLaporanService tahapanLaporanService;
+
+    // Get all jenis laporan with pagination and filters using GET method
+    @GetMapping
+    public ResponseEntity<Page<JenisLaporanDto>> getAllJenisLaporan(
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size,
+            @RequestParam(value = "sortBy", defaultValue = "createdAt") String sortBy,
+            @RequestParam(value = "sortDirection", defaultValue = "desc") String sortDirection,
+            @RequestParam(value = "nama", required = false) String nama,
+            @RequestParam(value = "status", required = false) String status) {
+        try {
+            JenisLaporanFilterRequest filterRequest = new JenisLaporanFilterRequest();
+            filterRequest.setPage(page);
+            filterRequest.setSize(size);
+            filterRequest.setSortBy(sortBy);
+            filterRequest.setSortDirection(sortDirection);
+            filterRequest.setNama(nama);
+            if (status != null && !status.isEmpty()) {
+                try {
+                    filterRequest.setStatus(JenisLaporan.StatusJenisLaporan.valueOf(status.toUpperCase()));
+                } catch (IllegalArgumentException e) {
+                    // Ignore invalid status values
+                }
+            }
+            
+            Page<JenisLaporanDto> jenisLaporanPage = jenisLaporanService.getAllJenisLaporan(filterRequest);
+            return ResponseEntity.ok(jenisLaporanPage);
+        } catch (Exception e) {
+            log.error("Error fetching jenis laporan", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
 
     // Get all jenis laporan with pagination and filters
     @PostMapping("/search")
@@ -229,6 +262,24 @@ public class JenisLaporanController {
         } catch (Exception e) {
             log.error("Error getting next urutan", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    // Toggle status of jenis laporan  
+    @PatchMapping("/{id}/toggle-status")
+    public ResponseEntity<?> toggleJenisLaporanStatus(@PathVariable Long id) {
+        try {
+            JenisLaporanDto updatedJenisLaporan = jenisLaporanService.toggleJenisLaporanStatus(id);
+            return ResponseEntity.ok(updatedJenisLaporan);
+        } catch (RuntimeException e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+        } catch (Exception e) {
+            log.error("Error toggling jenis laporan status", e);
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Terjadi kesalahan saat mengubah status jenis laporan");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
     }
 

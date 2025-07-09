@@ -130,6 +130,18 @@ class LaporanAPI {
     return response.json();
   }
 
+  // Get laporan by pemilihan ID
+  async getByPemilihanId(pemilihanId: number): Promise<Laporan[]> {
+    const response = await fetch(`${API_BASE_URL}/api/laporan/pemilihan/${pemilihanId}`, {
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Gagal mengambil laporan untuk pemilihan ini');
+    }
+    return response.json();
+  }
+
   // Get laporan with tahapan details
   async getWithTahapan(id: number): Promise<Laporan> {
     const response = await fetch(`${API_BASE_URL}/api/laporan/${id}/with-tahapan`);

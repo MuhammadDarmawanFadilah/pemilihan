@@ -50,7 +50,9 @@ import {
   Smartphone,
   Tablet,
   Maximize2,
-  ExternalLink
+  ExternalLink,
+  Video,
+  Archive
 } from 'lucide-react';
 import { jenisLaporanAPI, JenisLaporanRequest } from '@/lib/api';
 
@@ -778,10 +780,140 @@ function FileUploadComponent({
   );
 }
 
+// Helper functions for file handling in preview
+const getDisplayName = (fileName: string) => {
+  if (typeof fileName === 'string') {
+    // Check if it's a temp file or permanent file
+    const isTempFile = /^\d{8}_\d{6}_/.test(fileName);
+    
+    if (isTempFile) {
+      // Extract original name from temp file format: YYYYMMDD_HHMMSS_UUID_originalName.ext
+      const parts = fileName.split('_');
+      if (parts.length >= 3) {
+        return parts.slice(2).join('_'); // Join back the original name parts
+      }
+    } else {
+      // For permanent files, remove the documents/ prefix and extract original name
+      const cleanFileName = fileName.replace('documents/', '');
+      const parts = cleanFileName.split('_');
+      if (parts.length >= 3) {
+        return parts.slice(2).join('_'); // Join back the original name parts
+      }
+      return cleanFileName; // Fallback to filename without prefix
+    }
+    return fileName; // Fallback to server filename
+  }
+  return fileName;
+};
+
+const canPreviewFile = (fileName: string) => {
+  const extension = fileName.split('.').pop()?.toLowerCase();
+  return ['jpg', 'jpeg', 'png', 'gif', 'mp4', 'avi', 'mov'].includes(extension || '');
+};
+
+const handleFileDownload = (fileName: string) => {
+  if (!fileName) return;
+  
+  // Check if it's a temp file or permanent file
+  const isTempFile = /^\d{8}_\d{6}_/.test(fileName);
+  
+  let downloadUrl;
+  if (isTempFile) {
+    // Use temp file download endpoint
+    downloadUrl = `${API_BASE_URL}${TEMP_FILE_DOWNLOAD_ENDPOINT}/${fileName}`;
+  } else {
+    // Use permanent file download endpoint - assume documents subdirectory
+    const cleanFileName = fileName.replace('documents/', ''); // Remove prefix if exists
+    downloadUrl = `${API_BASE_URL}/api/files/download/documents/${cleanFileName}`;
+  }
+  
+  // Force download for server files using fetch and blob
+  fetch(downloadUrl)
+    .then(response => {
+      if (!response.ok) throw new Error('Download failed');
+      return response.blob();
+    })
+    .then(blob => {
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = getDisplayName(fileName);
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast({
+        title: "Download berhasil",
+        description: `File ${getDisplayName(fileName)} berhasil didownload`,
+      });
+    })
+    .catch(error => {
+      console.error('Download error:', error);
+      toast({
+        title: "Download gagal",
+        description: "Gagal mendownload file",
+        variant: "destructive",
+      });
+    });
+};
+
+const handleFilePreview = (fileName: string) => {
+  if (!fileName) return;
+  
+  // Check if it's a temp file or permanent file
+  const isTempFile = /^\d{8}_\d{6}_/.test(fileName);
+  
+  let previewUrl;
+  if (isTempFile) {
+    // Use temp file preview endpoint
+    previewUrl = `${API_BASE_URL}${TEMP_FILE_PREVIEW_ENDPOINT}/${fileName}`;
+  } else {
+    // Use permanent file preview endpoint - assume documents subdirectory
+    const cleanFileName = fileName.replace('documents/', ''); // Remove prefix if exists
+    previewUrl = `${API_BASE_URL}/api/files/preview/documents/${cleanFileName}`;
+  }
+  
+  // Open preview in new tab
+  window.open(previewUrl, '_blank');
+};
+
+const getFileIconPreview = (fileName: string) => {
+  const extension = fileName.split('.').pop()?.toLowerCase();
+  switch (extension) {
+    case 'pdf':
+      return <FileText className="h-4 w-4 text-red-600" />;
+    case 'doc':
+    case 'docx':
+      return <FileText className="h-4 w-4 text-blue-600" />;
+    case 'xlsx':
+    case 'xls':
+    case 'csv':
+      return <File className="h-4 w-4 text-green-600" />;
+    case 'jpg':
+    case 'jpeg':
+    case 'png':
+    case 'gif':
+      return <ImageIcon className="h-4 w-4 text-purple-600" />;
+    case 'mp4':
+    case 'avi':
+    case 'mov':
+      return <Video className="h-4 w-4 text-orange-600" />;
+    case 'zip':
+    case 'rar':
+      return <Archive className="h-4 w-4 text-yellow-600" />;
+    default:
+      return <File className="h-4 w-4 text-gray-600" />;
+  }
+};
+
 export default function CreateJenisLaporanPage() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [previewFile, setPreviewFile] = useState<string | null>(null);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   
   const [formData, setFormData] = useState<JenisLaporanFormData>({
     nama: '',
@@ -790,6 +922,13 @@ export default function CreateJenisLaporanPage() {
     tahapanList: [],
     layout: 1
   });
+
+  // Handle modal preview for preview step
+  const handleModalPreview = (fileName: string) => {
+    if (!fileName) return;
+    setPreviewFile(fileName);
+    setIsPreviewModalOpen(true);
+  };
 
   // Navigation functions
   const nextStep = () => {
@@ -1600,18 +1739,56 @@ export default function CreateJenisLaporanPage() {
                                       <p className="text-sm text-gray-600 mb-3">{tahapan.deskripsi}</p>
                                       
                                       <div className="flex items-center gap-4 text-sm text-gray-500">
-                                        {tahapan.templateFileName && (
-                                          <div className="flex items-center gap-1">
-                                            <File className="h-4 w-4" />
-                                            <span>Template tersedia</span>
-                                          </div>
-                                        )}
                                         {tahapan.jenisFileIzin && tahapan.jenisFileIzin.length > 0 && (
                                           <div className="flex items-center gap-1">
                                             <span>{tahapan.jenisFileIzin.length} tipe file</span>
                                           </div>
                                         )}
                                       </div>
+
+                                      {/* Template File */}
+                                      {tahapan.templateFileName && (
+                                        <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                                          <Label className="text-sm font-medium text-blue-800 mb-2 block">
+                                            Template Tersedia:
+                                          </Label>
+                                          <div className="flex items-center justify-between bg-white p-3 rounded border">
+                                            <div className="flex items-center gap-3">
+                                              {getFileIconPreview(getDisplayName(tahapan.templateFileName))}
+                                              <div>
+                                                <p className="text-sm font-medium text-gray-900">
+                                                  {getDisplayName(tahapan.templateFileName)}
+                                                </p>
+                                                <p className="text-xs text-gray-500">Template tahapan laporan</p>
+                                              </div>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                              {canPreviewFile(getDisplayName(tahapan.templateFileName)) && (
+                                                <Button
+                                                  type="button"
+                                                  variant="outline"
+                                                  size="sm"
+                                                  onClick={() => tahapan.templateFileName && handleModalPreview(tahapan.templateFileName)}
+                                                  className="flex items-center gap-1"
+                                                >
+                                                  <Eye className="h-3 w-3" />
+                                                  Preview
+                                                </Button>
+                                              )}
+                                              <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => tahapan.templateFileName && handleFileDownload(tahapan.templateFileName)}
+                                                className="flex items-center gap-1"
+                                              >
+                                                <Download className="h-3 w-3" />
+                                                Download
+                                              </Button>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      )}
                                     </div>
                                     
                                     {tahapan.jenisFileIzin && tahapan.jenisFileIzin.length > 0 && (
@@ -1743,6 +1920,16 @@ export default function CreateJenisLaporanPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Preview Modal */}
+        <FilePreviewModal
+          file={previewFile}
+          isOpen={isPreviewModalOpen}
+          onClose={() => {
+            setIsPreviewModalOpen(false);
+            setPreviewFile(null);
+          }}
+        />
       </div>
     </div>
   );

@@ -60,7 +60,8 @@ import {
   Clock,
   AlertCircle,
   SortAsc,
-  SortDesc
+  SortDesc,
+  User
 } from 'lucide-react';
 import { laporanAPI, Laporan, LaporanFilterRequest, LaporanPageResponse } from '@/lib/laporan-api';
 
@@ -72,10 +73,9 @@ export default function LaporanListPage() {
   const [loading, setLoading] = useState(false);
   const [stats, setStats] = useState({
     total: 0,
-    draft: 0,
-    dalamProses: 0,
-    selesai: 0,
-    ditolak: 0
+    aktif: 0,
+    tidakAktif: 0,
+    draft: 0
   });
   
   // Pagination state
@@ -88,7 +88,7 @@ export default function LaporanListPage() {
     size: 10,
     sortBy: 'updatedAt',
     sortDirection: 'desc',
-    nama: '',
+    namaLaporan: '',
     status: 'ALL',
     jenisLaporanNama: ''
   });
@@ -101,9 +101,10 @@ export default function LaporanListPage() {
     loadLaporanData();
   }, [filters]);
   
+  // Update stats when laporan list changes
   useEffect(() => {
     loadStats();
-  }, []);
+  }, [laporanList]);
   
   const loadLaporanData = async () => {
     try {
@@ -126,10 +127,20 @@ export default function LaporanListPage() {
   
   const loadStats = async () => {
     try {
-      const statsData = await laporanAPI.getStats();
-      setStats(statsData);
+      // Calculate stats from loaded data instead of separate API call
+      const total = laporanList.length;
+      const aktif = laporanList.filter(l => l.status === 'AKTIF').length;
+      const tidakAktif = laporanList.filter(l => l.status === 'TIDAK_AKTIF').length;
+      const draft = laporanList.filter(l => l.status === 'DRAFT').length;
+      
+      setStats({
+        total,
+        aktif,
+        tidakAktif,
+        draft
+      });
     } catch (error: any) {
-      console.error('Error loading stats:', error);
+      console.error('Error calculating stats:', error);
     }
   };
   
@@ -152,7 +163,7 @@ export default function LaporanListPage() {
       size: filters.size,
       sortBy: 'updatedAt',
       sortDirection: 'desc',
-      nama: '',
+      namaLaporan: '',
       status: 'ALL',
       jenisLaporanNama: ''
     });
@@ -275,7 +286,7 @@ export default function LaporanListPage() {
       </div>
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -292,8 +303,8 @@ export default function LaporanListPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Selesai</p>
-                <p className="text-2xl font-bold text-green-600">{stats.selesai}</p>
+                <p className="text-sm font-medium text-muted-foreground">Aktif</p>
+                <p className="text-2xl font-bold text-green-600">{stats.aktif}</p>
               </div>
               <CheckCircle className="h-8 w-8 text-green-600" />
             </div>
@@ -316,10 +327,10 @@ export default function LaporanListPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Dalam Proses</p>
-                <p className="text-2xl font-bold text-blue-600">{stats.dalamProses}</p>
+                <p className="text-sm font-medium text-muted-foreground">Tidak Aktif</p>
+                <p className="text-2xl font-bold text-red-600">{stats.tidakAktif}</p>
               </div>
-              <Clock className="h-8 w-8 text-blue-600" />
+              <XCircle className="h-8 w-8 text-red-600" />
             </div>
           </CardContent>
         </Card>
@@ -328,10 +339,10 @@ export default function LaporanListPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Ditolak</p>
-                <p className="text-2xl font-bold text-red-600">{stats.ditolak}</p>
+                <p className="text-sm font-medium text-muted-foreground">Jenis Laporan Unik</p>
+                <p className="text-2xl font-bold text-purple-600">{[...new Set(laporanList.map(l => l.jenisLaporanId))].length}</p>
               </div>
-              <XCircle className="h-8 w-8 text-red-600" />
+              <FileText className="h-8 w-8 text-purple-600" />
             </div>
           </CardContent>
         </Card>
@@ -348,12 +359,12 @@ export default function LaporanListPage() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div>
-              <Label htmlFor="nama">Nama Laporan</Label>
+              <Label htmlFor="namaLaporan">Nama Laporan</Label>
               <Input
-                id="nama"
+                id="namaLaporan"
                 placeholder="Cari nama laporan..."
-                value={filters.nama}
-                onChange={(e) => handleFilterChange('nama', e.target.value)}
+                value={filters.namaLaporan}
+                onChange={(e) => handleFilterChange('namaLaporan', e.target.value)}
                 className="mt-1"
               />
             </div>
@@ -377,10 +388,9 @@ export default function LaporanListPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="ALL">Semua Status</SelectItem>
+                  <SelectItem value="AKTIF">Aktif</SelectItem>
+                  <SelectItem value="TIDAK_AKTIF">Tidak Aktif</SelectItem>
                   <SelectItem value="DRAFT">Draft</SelectItem>
-                  <SelectItem value="DALAM_PROSES">Dalam Proses</SelectItem>
-                  <SelectItem value="SELESAI">Selesai</SelectItem>
-                  <SelectItem value="DITOLAK">Ditolak</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -457,31 +467,17 @@ export default function LaporanListPage() {
                   <TableRow>
                     <TableHead 
                       className="cursor-pointer hover:bg-gray-50"
-                      onClick={() => handleSort('nama')}
+                      onClick={() => handleSort('namaLaporan')}
                     >
                       <div className="flex items-center gap-2">
                         Nama Laporan
-                        {getSortIcon('nama')}
+                        {getSortIcon('namaLaporan')}
                       </div>
                     </TableHead>
-                    <TableHead 
-                      className="cursor-pointer hover:bg-gray-50"
-                      onClick={() => handleSort('jenisLaporanNama')}
-                    >
-                      <div className="flex items-center gap-2">
-                        Jenis Laporan
-                        {getSortIcon('jenisLaporanNama')}
-                      </div>
-                    </TableHead>
-                    <TableHead 
-                      className="cursor-pointer hover:bg-gray-50"
-                      onClick={() => handleSort('status')}
-                    >
-                      <div className="flex items-center gap-2">
-                        Status
-                        {getSortIcon('status')}
-                      </div>
-                    </TableHead>
+                    <TableHead>Jenis Laporan</TableHead>
+                    <TableHead>Detail Laporan</TableHead>
+                    <TableHead>Tahapan</TableHead>
+                    <TableHead>Status</TableHead>
                     <TableHead 
                       className="cursor-pointer hover:bg-gray-50"
                       onClick={() => handleSort('createdAt')}
@@ -508,14 +504,34 @@ export default function LaporanListPage() {
                     <TableRow key={laporan.laporanId}>
                       <TableCell>
                         <div>
-                          <p className="font-medium">{laporan.nama}</p>
+                          <p className="font-medium">{laporan.namaLaporan}</p>
                           <p className="text-sm text-gray-500 line-clamp-1">{laporan.deskripsi}</p>
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <FileText className="h-4 w-4 text-gray-400" />
-                          {laporan.jenisLaporanNama}
+                          <span className="text-sm">{laporan.jenisLaporanNama}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <User className="h-4 w-4 text-gray-400" />
+                          <span className="text-sm text-gray-600">
+                            {laporan.detailLaporanList && laporan.detailLaporanList.length > 0 
+                              ? `${laporan.detailLaporanList.length} detail` 
+                              : 'Belum ada detail'}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-gray-400" />
+                          <span className="text-sm text-gray-600">
+                            {laporan.tahapanList && laporan.tahapanList.length > 0 
+                              ? `${laporan.tahapanList.length} tahapan` 
+                              : 'Belum ada tahapan'}
+                          </span>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -573,7 +589,7 @@ export default function LaporanListPage() {
                                 <AlertDialogHeader>
                                   <AlertDialogTitle>Konfirmasi Penghapusan</AlertDialogTitle>
                                   <AlertDialogDescription>
-                                    Apakah Anda yakin ingin menghapus laporan "{laporan.nama}"? 
+                                    Apakah Anda yakin ingin menghapus laporan "{laporan.namaLaporan}"? 
                                     Tindakan ini tidak dapat dibatalkan.
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>

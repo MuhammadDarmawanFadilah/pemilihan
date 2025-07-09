@@ -3,15 +3,17 @@
 ## Development Guidelines
 
 **Code Implementation Only:**
-- NEVER provide explanations, descriptions, or comments
-- ONLY provide direct code implementation
-- NO text descriptions before or after code
+- ABSOLUTELY NO explanations, descriptions, comments, or documentation text
+- ONLY provide raw code implementation without any surrounding text
+- NEVER use markdown code blocks unless explicitly requested
+- NO introductory text like "Here's the implementation" or "I'll update the file"
+- NO explanatory text after code changes
 - NO running applications - user handles execution
 - NO file backups - edit files directly
 - For files >500 lines, split into 2 files maintaining same functionality
 - NO hardcoding values - always use configuration files or environment variables
 - When creating frontend features, corresponding backend API endpoints must also be implemented
-- ONLY inform when task is completed with simple "Selesai" message
+- ONLY respond with "Selesai" when task is completed - nothing else
 
 **Configuration Management:**
 - Never hardcode URLs, ports, or environment-specific values

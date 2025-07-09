@@ -29,6 +29,7 @@ public class LaporanService {
     private final TahapanLaporanRepository tahapanLaporanRepository;
     private final DetailLaporanRepository detailLaporanRepository;
     private final LampiranLaporanRepository lampiranLaporanRepository;
+    private final DetailPemilihanRepository detailPemilihanRepository;
     private final FileUploadService fileUploadService;
     private final ObjectMapper objectMapper;
     
@@ -746,6 +747,39 @@ public class LaporanService {
         if (size < 1024 * 1024) return String.format("%.1f KB", size / 1024.0);
         if (size < 1024 * 1024 * 1024) return String.format("%.1f MB", size / (1024.0 * 1024));
         return String.format("%.1f GB", size / (1024.0 * 1024 * 1024));
+    }
+    
+    // Get laporan by pemilihan ID
+    public List<LaporanDto> getLaporanByPemilihanId(Long pemilihanId) {
+        // Get detail pemilihan for this pemilihan ID
+        List<DetailPemilihan> detailPemilihanList = detailPemilihanRepository
+                .findByPemilihanIdWithLaporanOrderByUrutan(pemilihanId);
+        
+        // Extract unique laporan IDs and create mapping
+        Map<Long, Long> laporanIdToPemilihanIdMap = detailPemilihanList.stream()
+                .collect(Collectors.toMap(
+                    detail -> detail.getLaporan().getLaporanId(),
+                    detail -> detail.getPemilihan().getPemilihanId(),
+                    (existing, replacement) -> existing // Keep first occurrence
+                ));
+        
+        Set<Long> laporanIds = laporanIdToPemilihanIdMap.keySet();
+        
+        // Get all laporan by IDs
+        List<Laporan> laporanList = laporanRepository.findAllById(laporanIds);
+        
+        // Convert to DTO and set pemilihanId
+        return laporanList.stream()
+                .map(laporan -> {
+                    LaporanDto dto = convertToDto(laporan);
+                    dto.setPemilihanId(laporanIdToPemilihanIdMap.get(laporan.getLaporanId()));
+                    return dto;
+                })
+                .sorted((a, b) -> {
+                    // Sort by nama laporan for consistent ordering
+                    return a.getNamaLaporan().compareToIgnoreCase(b.getNamaLaporan());
+                })
+                .collect(Collectors.toList());
     }
     
     // Statistics class

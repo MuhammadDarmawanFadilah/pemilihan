@@ -42,4 +42,7 @@ public class LaporanDto {
     private Integer totalTahapan;
     
     private Integer tahapanSelesai;
+    
+    // Field untuk menyimpan ID pemilihan yang terkait
+    private Long pemilihanId;
 }

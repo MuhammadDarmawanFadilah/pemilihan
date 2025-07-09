@@ -5,13 +5,6 @@ import { Plus, Search, MoreHorizontal, Edit, Trash2, Eye, Filter, X } from "luci
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Table,
   TableBody,
   TableCell,
@@ -68,10 +61,16 @@ export default function PemilihanPage() {
   });
   
   // Filter states
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("ALL");
-  const [tingkatFilter, setTingkatFilter] = useState<string>("ALL");
+  const [namaFilter, setNamaFilter] = useState("");
+  const [provinsiFilter, setProvinsiFilter] = useState("");
+  const [kotaFilter, setKotaFilter] = useState("");
+  const [kecamatanFilter, setKecamatanFilter] = useState("");
+  const [selectedTingkat, setSelectedTingkat] = useState("all");
+  const [selectedStatus, setSelectedStatus] = useState("all");
   const [showFilters, setShowFilters] = useState(false);
+  
+  // Legacy search query for backward compatibility
+  const [searchQuery, setSearchQuery] = useState("");
   
   // Pagination states
   const [currentPage, setCurrentPage] = useState(0);
@@ -86,21 +85,48 @@ export default function PemilihanPage() {
 
   useEffect(() => {
     loadData();
-  }, [currentPage, pageSize, searchQuery, statusFilter, tingkatFilter]);
+  }, [currentPage, pageSize]);
 
-  const loadData = async () => {
+  const loadData = async (overrideFilters?: {
+    namaFilter?: string;
+    provinsiFilter?: string;
+    kotaFilter?: string;
+    kecamatanFilter?: string;
+    selectedTingkat?: string;
+    selectedStatus?: string;
+  }) => {
     setLoading(true);
     try {
+      // Use override filters if provided, otherwise use current state
+      const filters = overrideFilters || {
+        namaFilter,
+        provinsiFilter,
+        kotaFilter,
+        kecamatanFilter,
+        selectedTingkat,
+        selectedStatus
+      };
+      
       // Convert filter values for API call
-      const apiStatusFilter = statusFilter === "ALL" ? "" : statusFilter;
-      const apiTingkatFilter = tingkatFilter === "ALL" ? "" : tingkatFilter;
+      const apiStatusFilter = filters.selectedStatus === "all" ? "" : (filters.selectedStatus || "");
+      const apiTingkatFilter = filters.selectedTingkat === "all" ? "" : (filters.selectedTingkat || "");
+      
+      // Combine filters into search query for backward compatibility
+      const combinedSearch = [filters.namaFilter, filters.provinsiFilter, filters.kotaFilter, filters.kecamatanFilter]
+        .filter(f => f && f.trim())
+        .join(" ");
       
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
       console.log("API URL:", apiUrl);
-      console.log("Filters:", { searchQuery, statusFilter, tingkatFilter, apiStatusFilter, apiTingkatFilter });
+      console.log("Filters:", { 
+        ...filters,
+        combinedSearch, 
+        apiStatusFilter, 
+        apiTingkatFilter 
+      });
       
       // Load pemilihan with pagination
-      const pemilihanUrl = `${apiUrl}/pemilihan/search-paged?keyword=${encodeURIComponent(searchQuery)}&tingkat=${encodeURIComponent(apiTingkatFilter)}&status=${encodeURIComponent(apiStatusFilter)}&page=${currentPage}&size=${pageSize}`;
+      const pemilihanUrl = `${apiUrl}/pemilihan/search-paged?keyword=${encodeURIComponent(combinedSearch)}&tingkat=${encodeURIComponent(apiTingkatFilter)}&status=${encodeURIComponent(apiStatusFilter)}&page=${currentPage}&size=${pageSize}`;
       console.log("Pemilihan URL:", pemilihanUrl);
       
       const pemilihanResponse = await fetch(pemilihanUrl, {
@@ -123,7 +149,7 @@ export default function PemilihanPage() {
       setHasPrevious(pemilihanData.hasPrevious);
       
       // Load statistics
-      const statsUrl = `${apiUrl}/pemilihan/statistics?keyword=${encodeURIComponent(searchQuery)}&tingkat=${encodeURIComponent(apiTingkatFilter)}&status=${encodeURIComponent(apiStatusFilter)}`;
+      const statsUrl = `${apiUrl}/pemilihan/statistics?keyword=${encodeURIComponent(combinedSearch)}&tingkat=${encodeURIComponent(apiTingkatFilter)}&status=${encodeURIComponent(apiStatusFilter)}`;
       console.log("Stats URL:", statsUrl);
       
       const statsResponse = await fetch(statsUrl, {
@@ -154,13 +180,28 @@ export default function PemilihanPage() {
 
   const handleSearch = () => {
     setCurrentPage(0); // Reset to first page
+    loadData(); // Load data with current filters
   };
 
   const handleClearFilters = () => {
+    setNamaFilter("");
+    setProvinsiFilter("");
+    setKotaFilter("");
+    setKecamatanFilter("");
+    setSelectedTingkat("all");
+    setSelectedStatus("all");
     setSearchQuery("");
-    setStatusFilter("ALL");
-    setTingkatFilter("ALL");
     setCurrentPage(0);
+    
+    // Load data with cleared filters immediately
+    loadData({
+      namaFilter: "",
+      provinsiFilter: "",
+      kotaFilter: "",
+      kecamatanFilter: "",
+      selectedTingkat: "all",
+      selectedStatus: "all"
+    });
   };
 
   const handleDelete = async (id: number) => {
@@ -418,91 +459,152 @@ export default function PemilihanPage() {
           
           <div className="p-6">
             <div className="space-y-6">
-              {/* Main Search Bar */}
-              <div className="flex gap-4">
-                <div className="flex-1 relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                  <Input
-                    placeholder="Cari berdasarkan nama pemilihan, deskripsi, atau wilayah..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                    className="pl-11 py-3 text-base border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                  />
-                </div>
-                <Button 
-                  onClick={handleSearch} 
-                  className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 px-8 py-3 shadow-sm"
-                >
-                  <Search className="mr-2 h-4 w-4" />
-                  Cari
-                </Button>
-              </div>
-
               {/* Advanced Filters */}
               {showFilters && (
                 <div className="bg-gray-50/50 rounded-lg p-6 border border-gray-200/50">
-                  <div className="grid gap-6 md:grid-cols-3">
+                  <div className="grid gap-6 md:grid-cols-4">
                     <div className="space-y-2">
-                      <label className="text-sm font-semibold text-gray-700">Status Pemilihan</label>
-                      <Select value={statusFilter} onValueChange={setStatusFilter}>
-                        <SelectTrigger className="bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500">
-                          <SelectValue placeholder="Pilih status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="ALL">🔍 Semua Status</SelectItem>
-                          <SelectItem value="AKTIF">✅ Aktif</SelectItem>
-                          <SelectItem value="TIDAK_AKTIF">❌ Tidak Aktif</SelectItem>
-                          <SelectItem value="DRAFT">📝 Draft</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <label className="text-sm font-semibold text-gray-700">Filter Nama Pemilihan</label>
+                      <Input
+                        placeholder="Cari nama pemilihan..."
+                        value={namaFilter}
+                        onChange={(e) => setNamaFilter(e.target.value)}
+                        className="bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                      />
                     </div>
-                    
+
                     <div className="space-y-2">
-                      <label className="text-sm font-semibold text-gray-700">Tingkat Wilayah</label>
-                      <Select value={tingkatFilter} onValueChange={setTingkatFilter}>
-                        <SelectTrigger className="bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500">
-                          <SelectValue placeholder="Pilih tingkat" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="ALL">🌐 Semua Tingkat</SelectItem>
-                          <SelectItem value="provinsi">🏛️ Provinsi</SelectItem>
-                          <SelectItem value="kota">🏙️ Kota/Kabupaten</SelectItem>
-                          <SelectItem value="kecamatan">🏘️ Kecamatan</SelectItem>
-                          <SelectItem value="kelurahan">🏠 Kelurahan/Desa</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <label className="text-sm font-semibold text-gray-700">Filter Provinsi</label>
+                      <Input
+                        placeholder="Cari provinsi..."
+                        value={provinsiFilter}
+                        onChange={(e) => setProvinsiFilter(e.target.value)}
+                        className="bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                      />
                     </div>
-                    
-                    <div className="flex items-end">
-                      <Button 
-                        variant="outline" 
-                        onClick={handleClearFilters} 
-                        className="w-full border-gray-300 hover:bg-gray-50"
-                      >
-                        <X className="mr-2 h-4 w-4" />
-                        Bersihkan Filter
-                      </Button>
+
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold text-gray-700">Filter Kota/Kabupaten</label>
+                      <Input
+                        placeholder="Cari kota/kabupaten..."
+                        value={kotaFilter}
+                        onChange={(e) => setKotaFilter(e.target.value)}
+                        className="bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold text-gray-700">Filter Kecamatan</label>
+                      <Input
+                        placeholder="Cari kecamatan..."
+                        value={kecamatanFilter}
+                        onChange={(e) => setKecamatanFilter(e.target.value)}
+                        className="bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                      />
                     </div>
                   </div>
                   
-                  {(searchQuery || statusFilter !== "ALL" || tingkatFilter !== "ALL") && (
+                  <div className="grid gap-6 md:grid-cols-4 mt-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold text-gray-700">Tingkat Pemilihan</label>
+                      <select
+                        value={selectedTingkat}
+                        onChange={(e) => setSelectedTingkat(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                      >
+                        <option value="all">🌐 Semua Tingkat</option>
+                        <option value="provinsi">🏛️ Provinsi</option>
+                        <option value="kota">🏙️ Kota/Kabupaten</option>
+                        <option value="kecamatan">🏘️ Kecamatan</option>
+                        <option value="kelurahan">🏠 Kelurahan/Desa</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold text-gray-700">Status Pemilihan</label>
+                      <select
+                        value={selectedStatus}
+                        onChange={(e) => setSelectedStatus(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                      >
+                        <option value="all">🔍 Semua Status</option>
+                        <option value="AKTIF">✅ Aktif</option>
+                        <option value="TIDAK_AKTIF">❌ Tidak Aktif</option>
+                        <option value="DRAFT">📝 Draft</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold text-gray-700">Items per Halaman</label>
+                      <select
+                        value={pageSize}
+                        onChange={(e) => {
+                          setPageSize(parseInt(e.target.value));
+                          setCurrentPage(0);
+                        }}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                      >
+                        <option value={5}>5 per halaman</option>
+                        <option value={10}>10 per halaman</option>
+                        <option value={25}>25 per halaman</option>
+                        <option value={50}>50 per halaman</option>
+                        <option value={100}>100 per halaman</option>
+                        <option value={1000}>1000 per halaman</option>
+                      </select>
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-center items-center gap-4 mt-6">
+                    <Button 
+                      onClick={handleSearch} 
+                      className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-sm px-8 py-2"
+                    >
+                      <Search className="mr-2 h-4 w-4" />
+                      Cari Data
+                    </Button>
+                    
+                    <Button 
+                      variant="outline" 
+                      onClick={handleClearFilters} 
+                      className="border-gray-300 hover:bg-gray-50 px-8 py-2"
+                    >
+                      <X className="mr-2 h-4 w-4" />
+                      Reset Filter
+                    </Button>
+                  </div>
+                  
+                  {(namaFilter || provinsiFilter || kotaFilter || kecamatanFilter || selectedStatus !== "all" || selectedTingkat !== "all") && (
                     <div className="mt-4 pt-4 border-t border-gray-200">
                       <div className="flex flex-wrap gap-2">
                         <span className="text-sm font-medium text-gray-600">Filter aktif:</span>
-                        {searchQuery && (
+                        {namaFilter && (
                           <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                            Pencarian: "{searchQuery}"
+                            Nama: "{namaFilter}"
                           </span>
                         )}
-                        {statusFilter !== "ALL" && (
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                            Status: {statusFilter}
-                          </span>
-                        )}
-                        {tingkatFilter !== "ALL" && (
+                        {provinsiFilter && (
                           <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                            Tingkat: {tingkatFilter}
+                            Provinsi: "{provinsiFilter}"
+                          </span>
+                        )}
+                        {kotaFilter && (
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                            Kota: "{kotaFilter}"
+                          </span>
+                        )}
+                        {kecamatanFilter && (
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-teal-100 text-teal-800">
+                            Kecamatan: "{kecamatanFilter}"
+                          </span>
+                        )}
+                        {selectedStatus !== "all" && (
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            Status: {selectedStatus}
+                          </span>
+                        )}
+                        {selectedTingkat !== "all" && (
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                            Tingkat: {selectedTingkat}
                           </span>
                         )}
                       </div>
@@ -526,22 +628,21 @@ export default function PemilihanPage() {
               </div>
               <div className="flex items-center gap-3">
                 <span className="text-sm text-gray-600">Tampilkan:</span>
-                <Select value={pageSize.toString()} onValueChange={(value) => {
-                  setPageSize(parseInt(value));
-                  setCurrentPage(0);
-                }}>
-                  <SelectTrigger className="w-20 bg-gray-50">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="5">5</SelectItem>
-                    <SelectItem value="10">10</SelectItem>
-                    <SelectItem value="25">25</SelectItem>
-                    <SelectItem value="50">50</SelectItem>
-                    <SelectItem value="100">100</SelectItem>
-                    <SelectItem value="1000">1000</SelectItem>
-                  </SelectContent>
-                </Select>
+                <select
+                  value={pageSize}
+                  onChange={(e) => {
+                    setPageSize(parseInt(e.target.value));
+                    setCurrentPage(0);
+                  }}
+                  className="w-20 px-2 py-1 border border-gray-300 rounded-md bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value={5}>5</option>
+                  <option value={10}>10</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                  <option value={1000}>1000</option>
+                </select>
                 <span className="text-sm text-gray-600">data per halaman</span>
               </div>
             </div>
