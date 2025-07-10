@@ -23,10 +23,13 @@ import { useToast } from "@/hooks/use-toast";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { getApiUrl } from "@/lib/config";
+import { getWilayahName } from "@/lib/wilayah-api";
 import WilayahFormConditional from "@/components/WilayahFormConditional";
 import WilayahForm from "@/components/WilayahForm";
 import MapLocationPicker from "@/components/MapLocationPicker";
 import PhotoUpload from "@/components/PhotoUpload";
+import { EducationSearchDropdown } from "@/components/EducationSearchDropdown";
+import { JabatanSearchDropdown } from "@/components/JabatanSearchDropdown";
 
 // Layout options untuk tampilan pemilihan
 const LAYOUT_OPTIONS = [
@@ -44,7 +47,7 @@ const STEPS = [
     title: 'Data Pribadi',
     description: 'Informasi akun dan pribadi',
     icon: User,
-    fields: ['username', 'password', 'fullName', 'email', 'phoneNumber', 'nip', 'pendidikan', 'jabatan', 'status']
+    fields: ['username', 'password', 'fullName', 'email', 'phoneNumber', 'nip', 'pendidikan', 'role', 'jabatan', 'status']
   },
   {
     id: 'location',
@@ -78,6 +81,7 @@ interface PegawaiFormData {
   phoneNumber: string;
   nip: string;
   pendidikan: string;
+  role: string;
   jabatan: string;
   status: 'AKTIF' | 'TIDAK_AKTIF' | 'SUSPEND';
   alamat?: string;
@@ -191,6 +195,7 @@ export default function CreatePegawaiPage() {
     phoneNumber: '',
     nip: '',
     pendidikan: '',
+    role: '',
     jabatan: '',
     status: 'AKTIF',
     alamat: '',
@@ -218,6 +223,14 @@ export default function CreatePegawaiPage() {
   // Roles state
   const [availableRoles, setAvailableRoles] = useState<Role[]>([]);
   const [rolesLoading, setRolesLoading] = useState(false);
+  
+  // Location names state for review step
+  const [locationNames, setLocationNames] = useState({
+    provinsiName: '',
+    kotaName: '',
+    kecamatanName: '',
+    kelurahanName: ''
+  });
   
   // Filter state untuk pemilihan - with separate search input
   const [filters, setFilters] = useState({
@@ -272,6 +285,34 @@ export default function CreatePegawaiPage() {
   useEffect(() => {
     loadRoles();
   }, []);
+
+  // Function to fetch location names
+  const fetchLocationNames = async () => {
+    try {
+      const names = await Promise.all([
+        formData.provinsi ? getWilayahName(formData.provinsi) : Promise.resolve(''),
+        formData.kota ? getWilayahName(formData.kota) : Promise.resolve(''),
+        formData.kecamatan ? getWilayahName(formData.kecamatan) : Promise.resolve(''),
+        formData.kelurahan ? getWilayahName(formData.kelurahan) : Promise.resolve('')
+      ]);
+      
+      setLocationNames({
+        provinsiName: names[0],
+        kotaName: names[1],
+        kecamatanName: names[2],
+        kelurahanName: names[3]
+      });
+    } catch (error) {
+      console.error('Error fetching location names:', error);
+      // Fallback to codes if API fails
+      setLocationNames({
+        provinsiName: formData.provinsi || '',
+        kotaName: formData.kota || '',
+        kecamatanName: formData.kecamatan || '',
+        kelurahanName: formData.kelurahan || ''
+      });
+    }
+  };
 
   // Load pemilihan data when step changes to 2
   useEffect(() => {
@@ -386,7 +427,13 @@ export default function CreatePegawaiPage() {
       }
       
       if (canProceed) {
-        setCurrentStep(currentStep + 1);
+        const newStep = currentStep + 1;
+        setCurrentStep(newStep);
+        
+        // Fetch location names when moving to review step
+        if (newStep === 3) {
+          await fetchLocationNames();
+        }
       }
     }
   };
@@ -457,6 +504,23 @@ export default function CreatePegawaiPage() {
     });
   };
 
+  const handleSelectAllFromCurrentPage = () => {
+    // Get all pemilihan from current page that are not already selected
+    const currentSelection = Array.isArray(selectedPemilihanList) ? selectedPemilihanList : [];
+    const newSelections = pemilihanList.filter(pemilihan => {
+      const pemilihanKey = pemilihan.pemilihanId || pemilihan.id;
+      return !currentSelection.some(selected => (selected.pemilihanId || selected.id) === pemilihanKey);
+    });
+    
+    // Add new selections to existing selection
+    const updatedSelection = [...currentSelection, ...newSelections];
+    setSelectedPemilihanList(updatedSelection);
+    setFormData(prev => ({
+      ...prev,
+      selectedPemilihanIds: updatedSelection.map(p => p.pemilihanId || p.id).filter(id => id !== undefined) as number[]
+    }));
+  };
+
   // Validation functions
   const validateStep1 = async () => {
     setValidating(true);
@@ -469,8 +533,9 @@ export default function CreatePegawaiPage() {
     if (!formData.fullName.trim()) mandatoryErrors.push("Nama lengkap harus diisi");
     if (!formData.email.trim()) mandatoryErrors.push("Email harus diisi");
     if (!formData.phoneNumber.trim()) mandatoryErrors.push("Nomor telepon harus diisi");
-    if (!formData.nip.trim()) mandatoryErrors.push("NIP harus diisi");
+    if (!formData.nip.trim()) mandatoryErrors.push("NIK harus diisi");
     if (!formData.pendidikan.trim()) mandatoryErrors.push("Pendidikan harus diisi");
+    if (!formData.role.trim()) mandatoryErrors.push("Role harus diisi");
     if (!formData.jabatan.trim()) mandatoryErrors.push("Jabatan harus diisi");
     if (!formData.status.trim()) mandatoryErrors.push("Status harus diisi");
     
@@ -499,7 +564,8 @@ export default function CreatePegawaiPage() {
       const checkData = {
         username: formData.username.trim(),
         email: formData.email.trim(),
-        phoneNumber: formData.phoneNumber.trim()
+        phoneNumber: formData.phoneNumber.trim(),
+        nip: formData.nip.trim()
       };
       
       const response = await fetch(getApiUrl('/api/pegawai/check-duplicate'), {
@@ -520,6 +586,9 @@ export default function CreatePegawaiPage() {
         }
         if (result.phoneExists) {
           duplicateErrors.push("Nomor telepon sudah terdaftar");
+        }
+        if (result.nipExists) {
+          duplicateErrors.push("NIK sudah terdaftar");
         }
         
         if (duplicateErrors.length > 0) {
@@ -646,6 +715,39 @@ export default function CreatePegawaiPage() {
                 />
               </div>
               
+              <div className="space-y-2">
+                <Label htmlFor="nip">NIK *</Label>
+                <Input
+                  id="nip"
+                  value={formData.nip}
+                  onChange={(e) => {
+                    const nikValue = e.target.value;
+                    setFormData({ 
+                      ...formData, 
+                      nip: nikValue,
+                      // Auto-fill username with NIK value if username is empty or same as previous NIK
+                      username: !formData.username || formData.username === formData.nip ? nikValue : formData.username
+                    });
+                  }}
+                  placeholder="Masukkan NIK"
+                  className="h-12"
+                />
+                <p className="text-sm text-gray-500">
+                  NIK akan otomatis mengisi username, namun username bisa diubah manual
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="fullName">Nama Lengkap *</Label>
+                <Input
+                  id="fullName"
+                  value={formData.fullName}
+                  onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                  placeholder="Masukkan nama lengkap"
+                  className="h-12"
+                />
+              </div>
+              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="username">Username *</Label>
@@ -656,6 +758,9 @@ export default function CreatePegawaiPage() {
                     placeholder="Masukkan username"
                     className="h-12"
                   />
+                  <p className="text-sm text-gray-500">
+                    Username otomatis terisi dari NIK, dapat diubah manual
+                  </p>
                 </div>
                 
                 <div className="space-y-2">
@@ -669,17 +774,6 @@ export default function CreatePegawaiPage() {
                     className="h-12"
                   />
                 </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="fullName">Nama Lengkap *</Label>
-                <Input
-                  id="fullName"
-                  value={formData.fullName}
-                  onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                  placeholder="Masukkan nama lengkap"
-                  className="h-12"
-                />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -709,62 +803,26 @@ export default function CreatePegawaiPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="nip">NIP *</Label>
-                  <Input
-                    id="nip"
-                    value={formData.nip}
-                    onChange={(e) => setFormData({ ...formData, nip: e.target.value })}
-                    placeholder="Masukkan NIP"
-                    className="h-12"
+                  <Label htmlFor="pendidikan">Pendidikan *</Label>
+                  <EducationSearchDropdown
+                    value={formData.pendidikan}
+                    onValueChange={(value) => setFormData({ ...formData, pendidikan: value })}
+                    placeholder="Pilih pendidikan terakhir"
                   />
+                  <p className="text-sm text-gray-500">
+                    Pilih jenjang pendidikan terakhir yang ditempuh
+                  </p>
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="pendidikan">Pendidikan *</Label>
-                  <Input
-                    id="pendidikan"
-                    value={formData.pendidikan}
-                    onChange={(e) => setFormData({ ...formData, pendidikan: e.target.value })}
-                    placeholder="Masukkan pendidikan terakhir"
-                    className="h-12"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="nip">NIP *</Label>
-                  <Input
-                    id="nip"
-                    value={formData.nip}
-                    onChange={(e) => setFormData({ ...formData, nip: e.target.value })}
-                    placeholder="Masukkan NIP"
-                    className="h-12"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="pendidikan">Pendidikan *</Label>
-                  <Input
-                    id="pendidikan"
-                    value={formData.pendidikan}
-                    onChange={(e) => setFormData({ ...formData, pendidikan: e.target.value })}
-                    placeholder="Masukkan pendidikan terakhir"
-                    className="h-12"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="jabatan">Role/Jabatan *</Label>
+                  <Label htmlFor="role">Role *</Label>
                   <Select 
-                    value={formData.jabatan} 
-                    onValueChange={(value) => setFormData({ ...formData, jabatan: value })}
+                    value={formData.role} 
+                    onValueChange={(value) => setFormData({ ...formData, role: value })}
                     disabled={rolesLoading}
                   >
                     <SelectTrigger className="h-12">
-                      <SelectValue placeholder={rolesLoading ? "Memuat roles..." : "Pilih role/jabatan"} />
+                      <SelectValue placeholder={rolesLoading ? "Memuat roles..." : "Pilih role"} />
                     </SelectTrigger>
                     <SelectContent>
                       {availableRoles.map((role) => (
@@ -793,25 +851,37 @@ export default function CreatePegawaiPage() {
                     Role menentukan hak akses pengguna dalam sistem
                   </p>
                 </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="status">Status *</Label>
-                  <Select 
-                    value={formData.status} 
-                    onValueChange={(value: 'AKTIF' | 'TIDAK_AKTIF' | 'SUSPEND') => 
-                      setFormData({ ...formData, status: value })
-                    }
-                  >
-                    <SelectTrigger className="h-12">
-                      <SelectValue placeholder="Pilih status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="AKTIF">Aktif</SelectItem>
-                      <SelectItem value="TIDAK_AKTIF">Tidak Aktif</SelectItem>
-                      <SelectItem value="SUSPEND">Suspend</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="jabatan">Jabatan *</Label>
+                <JabatanSearchDropdown
+                  value={formData.jabatan}
+                  onValueChange={(value) => setFormData({ ...formData, jabatan: value })}
+                  placeholder="Pilih jabatan"
+                />
+                <p className="text-sm text-gray-500">
+                  Pilih jabatan sesuai dengan posisi di organisasi
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="status">Status *</Label>
+                <Select 
+                  value={formData.status} 
+                  onValueChange={(value: 'AKTIF' | 'TIDAK_AKTIF' | 'SUSPEND') => 
+                    setFormData({ ...formData, status: value })
+                  }
+                >
+                  <SelectTrigger className="h-12">
+                    <SelectValue placeholder="Pilih status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="AKTIF">Aktif</SelectItem>
+                    <SelectItem value="TIDAK_AKTIF">Tidak Aktif</SelectItem>
+                    <SelectItem value="SUSPEND">Suspend</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </CardContent>
           </Card>
@@ -1054,6 +1124,15 @@ export default function CreatePegawaiPage() {
                           <Button onClick={handleSearch} className="flex items-center gap-2 h-11">
                             <Search className="h-4 w-4" />
                             Cari & Filter
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            onClick={handleSelectAllFromCurrentPage} 
+                            className="flex items-center gap-2 h-11"
+                            disabled={loading || pemilihanList.length === 0}
+                          >
+                            <CheckCircle className="h-4 w-4" />
+                            Pilih Semua Halaman
                           </Button>
                           <Button variant="outline" onClick={clearFilters} className="h-11 px-4">
                             <RefreshCw className="h-4 w-4" />
@@ -1411,12 +1490,16 @@ export default function CreatePegawaiPage() {
                       <p className="font-medium">{formData.phoneNumber}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">NIP</p>
+                      <p className="text-sm text-gray-600">NIK</p>
                       <p className="font-medium">{formData.nip}</p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-600">Pendidikan</p>
                       <p className="font-medium">{formData.pendidikan}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Role</p>
+                      <p className="font-medium">{formData.role}</p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-600">Jabatan</p>
@@ -1442,19 +1525,19 @@ export default function CreatePegawaiPage() {
                     </div>
                     <div>
                       <p className="text-sm text-gray-600">Provinsi</p>
-                      <p className="font-medium">{formData.provinsi || 'Tidak dipilih'}</p>
+                      <p className="font-medium">{locationNames.provinsiName || 'Tidak dipilih'}</p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-600">Kota</p>
-                      <p className="font-medium">{formData.kota || 'Tidak dipilih'}</p>
+                      <p className="font-medium">{locationNames.kotaName || 'Tidak dipilih'}</p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-600">Kecamatan</p>
-                      <p className="font-medium">{formData.kecamatan || 'Tidak dipilih'}</p>
+                      <p className="font-medium">{locationNames.kecamatanName || 'Tidak dipilih'}</p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-600">Kelurahan</p>
-                      <p className="font-medium">{formData.kelurahan || 'Tidak dipilih'}</p>
+                      <p className="font-medium">{locationNames.kelurahanName || 'Tidak dipilih'}</p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-600">Kode Pos</p>

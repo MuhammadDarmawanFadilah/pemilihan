@@ -2,11 +2,13 @@ package com.shadcn.backend.service;
 
 import com.shadcn.backend.model.Pegawai;
 import com.shadcn.backend.model.Pemilihan;
+import com.shadcn.backend.model.Jabatan;
 import com.shadcn.backend.dto.PegawaiRequest;
 import com.shadcn.backend.dto.UpdatePegawaiRequest;
 import com.shadcn.backend.dto.PegawaiResponse;
 import com.shadcn.backend.repository.PegawaiRepository;
 import com.shadcn.backend.repository.PemilihanRepository;
+import com.shadcn.backend.repository.JabatanRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -33,6 +35,7 @@ public class PegawaiService {
 
     private final PegawaiRepository pegawaiRepository;
     private final PemilihanRepository pemilihanRepository;
+    private final JabatanRepository jabatanRepository;
     private final PasswordEncoder passwordEncoder;
     private final WilayahCacheService wilayahCacheService;
 
@@ -121,6 +124,13 @@ public class PegawaiService {
             throw new RuntimeException("Email already exists: " + request.getEmail());
         }
 
+        // Find jabatan if provided
+        Jabatan jabatanEntity = null;
+        if (request.getJabatan() != null && !request.getJabatan().trim().isEmpty()) {
+            jabatanEntity = jabatanRepository.findByNamaIgnoreCase(request.getJabatan())
+                .orElseThrow(() -> new RuntimeException("Jabatan not found: " + request.getJabatan()));
+        }
+
         Pegawai pegawai = Pegawai.builder()
                 .username(request.getUsername())
                 .password(passwordEncoder.encode(request.getPassword()))
@@ -129,7 +139,8 @@ public class PegawaiService {
                 .phoneNumber(request.getPhoneNumber())
                 .nip(request.getNip())
                 .pendidikan(request.getPendidikan())
-                .jabatan(request.getJabatan())
+                .role(request.getRole())
+                .jabatan(jabatanEntity)
                 .status(request.getStatus() != null ? 
                     Pegawai.PegawaiStatus.valueOf(request.getStatus()) : 
                     Pegawai.PegawaiStatus.AKTIF)
@@ -197,8 +208,13 @@ public class PegawaiService {
         if (request.getPendidikan() != null) {
             pegawai.setPendidikan(request.getPendidikan());
         }
+        if (request.getRole() != null) {
+            pegawai.setRole(request.getRole());
+        }
         if (request.getJabatan() != null) {
-            pegawai.setJabatan(request.getJabatan());
+            Jabatan jabatanEntity = jabatanRepository.findByNamaIgnoreCase(request.getJabatan())
+                .orElseThrow(() -> new RuntimeException("Jabatan not found: " + request.getJabatan()));
+            pegawai.setJabatan(jabatanEntity);
         }
         if (request.getStatus() != null) {
             pegawai.setStatus(Pegawai.PegawaiStatus.valueOf(request.getStatus()));
@@ -271,7 +287,7 @@ public class PegawaiService {
 
     public List<PegawaiResponse> getPegawaiByJabatan(String jabatan) {
         log.info("Fetching pegawai by jabatan: {}", jabatan);
-        return pegawaiRepository.findByJabatan(jabatan).stream()
+        return pegawaiRepository.findByJabatan_Nama(jabatan).stream()
                 .map(this::createPegawaiResponseWithLocationNames)
                 .collect(Collectors.toList());
     }
@@ -343,9 +359,9 @@ public class PegawaiService {
         return pegawaiRepository.existsByEmail(email);
     }
 
-    public Map<String, Boolean> checkDuplicateData(String username, String email, String phoneNumber, Integer excludeId) {
-        log.info("Checking duplicate data for username: {}, email: {}, phone: {}, excludeId: {}", 
-                username, email, phoneNumber, excludeId);
+    public Map<String, Boolean> checkDuplicateData(String username, String email, String phoneNumber, String nip, Integer excludeId) {
+        log.info("Checking duplicate data for username: {}, email: {}, phone: {}, nip: {}, excludeId: {}", 
+                username, email, phoneNumber, nip, excludeId);
         
         Map<String, Boolean> result = new HashMap<>();
         Long excludeIdLong = excludeId != null ? excludeId.longValue() : null;
@@ -380,9 +396,20 @@ public class PegawaiService {
             }
         }
         
+        // Check NIP
+        boolean nipExists = false;
+        if (nip != null && !nip.trim().isEmpty()) {
+            if (excludeIdLong != null) {
+                nipExists = pegawaiRepository.existsByNipAndIdNot(nip.trim(), excludeIdLong);
+            } else {
+                nipExists = pegawaiRepository.existsByNip(nip.trim());
+            }
+        }
+        
         result.put("usernameExists", usernameExists);
         result.put("emailExists", emailExists);
         result.put("phoneExists", phoneExists);
+        result.put("nipExists", nipExists);
         
         log.info("Duplicate check result: {}", result);
         return result;
@@ -453,7 +480,8 @@ public class PegawaiService {
                 })
                 .filter(pegawai -> {
                     if (jabatan != null && !jabatan.trim().isEmpty()) {
-                        return pegawai.getJabatan().toLowerCase().contains(jabatan.trim().toLowerCase());
+                        return pegawai.getJabatan() != null && 
+                               pegawai.getJabatan().getNama().toLowerCase().contains(jabatan.trim().toLowerCase());
                     }
                     return true;
                 })

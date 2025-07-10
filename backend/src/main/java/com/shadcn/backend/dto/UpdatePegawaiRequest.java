@@ -39,6 +39,10 @@ public class UpdatePegawaiRequest {
     @Size(max = 100, message = "Pendidikan maksimal 100 karakter")
     private String pendidikan;
     
+    @NotBlank(message = "Role tidak boleh kosong")
+    @Size(max = 100, message = "Role maksimal 100 karakter")
+    private String role;
+    
     @NotBlank(message = "Jabatan tidak boleh kosong")
     @Size(max = 100, message = "Jabatan maksimal 100 karakter")
     private String jabatan;

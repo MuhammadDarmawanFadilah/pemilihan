@@ -24,7 +24,9 @@ public class PegawaiResponse {
     private String phoneNumber;
     private String nip;
     private String pendidikan;
+    private String role;
     private String jabatan;
+    private String namaJabatan;
     private String status;
     
     // Location information
@@ -81,7 +83,9 @@ public class PegawaiResponse {
         this.phoneNumber = pegawai.getPhoneNumber();
         this.nip = pegawai.getNip();
         this.pendidikan = pegawai.getPendidikan();
-        this.jabatan = pegawai.getJabatan();
+        this.role = pegawai.getRole();
+        this.jabatan = pegawai.getJabatan() != null ? pegawai.getJabatan().getNama() : null;
+        this.namaJabatan = pegawai.getNamaJabatan();
         this.status = pegawai.getStatus().name();
         
         this.alamat = pegawai.getAlamat();

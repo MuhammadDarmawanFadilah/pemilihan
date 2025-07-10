@@ -20,6 +20,7 @@ interface Pegawai {
   phoneNumber: string;
   nip?: string;
   pendidikan?: string;
+  role: string;
   jabatan: string;
   status: string;
   createdAt: string;

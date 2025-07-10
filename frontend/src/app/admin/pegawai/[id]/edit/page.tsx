@@ -23,9 +23,12 @@ import { useToast } from "@/hooks/use-toast";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { getApiUrl } from "@/lib/config";
+import { getWilayahName } from "@/lib/wilayah-api";
 import WilayahForm from "@/components/WilayahForm";
 import MapLocationPicker from "@/components/MapLocationPicker";
 import PhotoUpload from "@/components/PhotoUpload";
+import { EducationSearchDropdown } from "@/components/EducationSearchDropdown";
+import { JabatanSearchDropdown } from "@/components/JabatanSearchDropdown";
 
 // Layout options untuk tampilan pemilihan
 const LAYOUT_OPTIONS = [
@@ -43,7 +46,7 @@ const STEPS = [
     title: 'Data Pribadi',
     description: 'Informasi akun dan pribadi',
     icon: User,
-    fields: ['username', 'password', 'fullName', 'email', 'phoneNumber', 'nip', 'pendidikan', 'jabatan', 'status']
+    fields: ['username', 'password', 'fullName', 'email', 'phoneNumber', 'nip', 'pendidikan', 'role', 'jabatan', 'status']
   },
   {
     id: 'location',
@@ -77,6 +80,7 @@ interface PegawaiFormData {
   phoneNumber: string;
   nip: string;
   pendidikan: string;
+  role: string;
   jabatan: string;
   status: 'AKTIF' | 'TIDAK_AKTIF' | 'SUSPEND';
   alamat?: string;
@@ -101,7 +105,9 @@ interface Pegawai {
   phoneNumber: string;
   nip?: string;
   pendidikan?: string;
+  role: string;
   jabatan: string;
+  namaJabatan?: string;
   status: string;
   alamat?: string;
   provinsi?: string;
@@ -229,6 +235,7 @@ export default function EditPegawaiPage() {
     phoneNumber: '',
     nip: '',
     pendidikan: '',
+    role: '',
     jabatan: '',
     status: 'AKTIF',
     alamat: '',
@@ -255,6 +262,14 @@ export default function EditPegawaiPage() {
   // Roles state
   const [availableRoles, setAvailableRoles] = useState<Role[]>([]);
   const [rolesLoading, setRolesLoading] = useState(false);
+  
+  // Location names state for review step
+  const [locationNames, setLocationNames] = useState({
+    provinsiName: '',
+    kotaName: '',
+    kecamatanName: '',
+    kelurahanName: ''
+  });
   
   // Filter state untuk pemilihan - with separate search input
   const [filters, setFilters] = useState({
@@ -335,6 +350,34 @@ export default function EditPegawaiPage() {
     }
   };
 
+  // Function to fetch location names
+  const fetchLocationNames = async () => {
+    try {
+      const names = await Promise.all([
+        formData.provinsi ? getWilayahName(formData.provinsi) : Promise.resolve(''),
+        formData.kota ? getWilayahName(formData.kota) : Promise.resolve(''),
+        formData.kecamatan ? getWilayahName(formData.kecamatan) : Promise.resolve(''),
+        formData.kelurahan ? getWilayahName(formData.kelurahan) : Promise.resolve('')
+      ]);
+      
+      setLocationNames({
+        provinsiName: names[0],
+        kotaName: names[1],
+        kecamatanName: names[2],
+        kelurahanName: names[3]
+      });
+    } catch (error) {
+      console.error('Error fetching location names:', error);
+      // Fallback to codes if API fails
+      setLocationNames({
+        provinsiName: formData.provinsi || '',
+        kotaName: formData.kota || '',
+        kecamatanName: formData.kecamatan || '',
+        kelurahanName: formData.kelurahan || ''
+      });
+    }
+  };
+
   const loadPegawaiData = async () => {
     try {
       setIsLoading(true);
@@ -358,7 +401,8 @@ export default function EditPegawaiPage() {
           phoneNumber: pegawai.phoneNumber,
           nip: pegawai.nip || '',
           pendidikan: pegawai.pendidikan || '',
-          jabatan: pegawai.jabatan,
+          role: pegawai.role || pegawai.jabatan || '', // Use role field or fallback to jabatan for backward compatibility
+          jabatan: pegawai.namaJabatan || pegawai.jabatan || '', // Use actual jabatan name
           status: pegawai.status,
           alamat: pegawai.alamat || '',
           provinsi: pegawai.provinsi || '',
@@ -512,6 +556,10 @@ export default function EditPegawaiPage() {
       }
       
       if (canProceed) {
+        // If moving to review step (step 3), fetch location names
+        if (currentStep === 2) {
+          await fetchLocationNames();
+        }
         setCurrentStep(currentStep + 1);
       }
     }
@@ -615,8 +663,9 @@ export default function EditPegawaiPage() {
     if (!formData.fullName.trim()) mandatoryErrors.push("Nama lengkap harus diisi");
     if (!formData.email.trim()) mandatoryErrors.push("Email harus diisi");
     if (!formData.phoneNumber.trim()) mandatoryErrors.push("Nomor telepon harus diisi");
-    if (!formData.nip.trim()) mandatoryErrors.push("NIP harus diisi");
+    if (!formData.nip.trim()) mandatoryErrors.push("NIK harus diisi");
     if (!formData.pendidikan.trim()) mandatoryErrors.push("Pendidikan harus diisi");
+    if (!formData.role.trim()) mandatoryErrors.push("Role harus diisi");
     if (!formData.jabatan.trim()) mandatoryErrors.push("Jabatan harus diisi");
     if (!formData.status.trim()) mandatoryErrors.push("Status harus diisi");
     
@@ -646,6 +695,7 @@ export default function EditPegawaiPage() {
         username: formData.username.trim(),
         email: formData.email.trim(),
         phoneNumber: formData.phoneNumber.trim(),
+        nip: formData.nip.trim(),
         excludeId: pegawaiId // Exclude current pegawai from duplicate check
       };
       
@@ -667,6 +717,9 @@ export default function EditPegawaiPage() {
         }
         if (result.phoneExists) {
           duplicateErrors.push("Nomor telepon sudah terdaftar");
+        }
+        if (result.nipExists) {
+          duplicateErrors.push("NIK sudah terdaftar");
         }
         
         if (duplicateErrors.length > 0) {
@@ -810,6 +863,39 @@ export default function EditPegawaiPage() {
                 />
               </div>
               
+              <div className="space-y-2">
+                <Label htmlFor="nip">NIK *</Label>
+                <Input
+                  id="nip"
+                  value={formData.nip}
+                  onChange={(e) => {
+                    const nikValue = e.target.value;
+                    setFormData({ 
+                      ...formData, 
+                      nip: nikValue,
+                      // Auto-fill username with NIK value if username is empty or same as previous NIK
+                      username: !formData.username || formData.username === formData.nip ? nikValue : formData.username
+                    });
+                  }}
+                  placeholder="Masukkan NIK"
+                  className="h-12"
+                />
+                <p className="text-sm text-gray-500">
+                  NIK akan otomatis mengisi username, namun username bisa diubah manual
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="fullName">Nama Lengkap *</Label>
+                <Input
+                  id="fullName"
+                  value={formData.fullName}
+                  onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                  placeholder="Masukkan nama lengkap"
+                  className="h-12"
+                />
+              </div>
+              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="username">Username *</Label>
@@ -820,6 +906,9 @@ export default function EditPegawaiPage() {
                     placeholder="Masukkan username"
                     className="h-12"
                   />
+                  <p className="text-sm text-gray-500">
+                    Username otomatis terisi dari NIK, dapat diubah manual
+                  </p>
                 </div>
                 
                 <div className="space-y-2">
@@ -833,17 +922,6 @@ export default function EditPegawaiPage() {
                     className="h-12"
                   />
                 </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="fullName">Nama Lengkap *</Label>
-                <Input
-                  id="fullName"
-                  value={formData.fullName}
-                  onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                  placeholder="Masukkan nama lengkap"
-                  className="h-12"
-                />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -873,38 +951,26 @@ export default function EditPegawaiPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="nip">NIP *</Label>
-                  <Input
-                    id="nip"
-                    value={formData.nip}
-                    onChange={(e) => setFormData({ ...formData, nip: e.target.value })}
-                    placeholder="Masukkan NIP"
-                    className="h-12"
+                  <Label htmlFor="pendidikan">Pendidikan *</Label>
+                  <EducationSearchDropdown
+                    value={formData.pendidikan}
+                    onValueChange={(value) => setFormData({ ...formData, pendidikan: value })}
+                    placeholder="Pilih pendidikan terakhir"
                   />
+                  <p className="text-sm text-gray-500">
+                    Pilih jenjang pendidikan terakhir yang ditempuh
+                  </p>
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="pendidikan">Pendidikan *</Label>
-                  <Input
-                    id="pendidikan"
-                    value={formData.pendidikan}
-                    onChange={(e) => setFormData({ ...formData, pendidikan: e.target.value })}
-                    placeholder="Masukkan pendidikan terakhir"
-                    className="h-12"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="jabatan">Role/Jabatan *</Label>
+                  <Label htmlFor="role">Role *</Label>
                   <Select 
-                    value={formData.jabatan} 
-                    onValueChange={(value) => setFormData({ ...formData, jabatan: value })}
+                    value={formData.role} 
+                    onValueChange={(value) => setFormData({ ...formData, role: value })}
                     disabled={rolesLoading}
                   >
                     <SelectTrigger className="h-12">
-                      <SelectValue placeholder={rolesLoading ? "Memuat roles..." : "Pilih role/jabatan"} />
+                      <SelectValue placeholder={rolesLoading ? "Memuat roles..." : "Pilih role"} />
                     </SelectTrigger>
                     <SelectContent>
                       {availableRoles.map((role) => (
@@ -933,25 +999,37 @@ export default function EditPegawaiPage() {
                     Role menentukan hak akses pengguna dalam sistem
                   </p>
                 </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="status">Status *</Label>
-                  <Select 
-                    value={formData.status} 
-                    onValueChange={(value: 'AKTIF' | 'TIDAK_AKTIF' | 'SUSPEND') => 
-                      setFormData({ ...formData, status: value })
-                    }
-                  >
-                    <SelectTrigger className="h-12">
-                      <SelectValue placeholder="Pilih status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="AKTIF">Aktif</SelectItem>
-                      <SelectItem value="TIDAK_AKTIF">Tidak Aktif</SelectItem>
-                      <SelectItem value="SUSPEND">Suspend</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="jabatan">Jabatan *</Label>
+                <JabatanSearchDropdown
+                  value={formData.jabatan}
+                  onValueChange={(value) => setFormData({ ...formData, jabatan: value })}
+                  placeholder="Pilih jabatan"
+                />
+                <p className="text-sm text-gray-500">
+                  Pilih jabatan sesuai dengan posisi di organisasi
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="status">Status *</Label>
+                <Select 
+                  value={formData.status} 
+                  onValueChange={(value: 'AKTIF' | 'TIDAK_AKTIF' | 'SUSPEND') => 
+                    setFormData({ ...formData, status: value })
+                  }
+                >
+                  <SelectTrigger className="h-12">
+                    <SelectValue placeholder="Pilih status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="AKTIF">Aktif</SelectItem>
+                    <SelectItem value="TIDAK_AKTIF">Tidak Aktif</SelectItem>
+                    <SelectItem value="SUSPEND">Suspend</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </CardContent>
           </Card>
@@ -1558,7 +1636,7 @@ export default function EditPegawaiPage() {
                           <p className="font-medium">{originalPegawai.email}</p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-600">NIP</p>
+                          <p className="text-sm text-gray-600">NIK</p>
                           <p className="font-medium">{originalPegawai.nip || 'Tidak ada'}</p>
                         </div>
                         <div>
@@ -1566,14 +1644,33 @@ export default function EditPegawaiPage() {
                           <p className="font-medium">{originalPegawai.pendidikan || 'Tidak ada'}</p>
                         </div>
                         <div>
+                          <p className="text-sm text-gray-600">Role</p>
+                          <p className="font-medium">{originalPegawai.role || originalPegawai.jabatan || 'Tidak ada'}</p>
+                        </div>
+                        <div>
                           <p className="text-sm text-gray-600">Jabatan</p>
-                          <p className="font-medium">{originalPegawai.jabatan}</p>
+                          <p className="font-medium">{originalPegawai.namaJabatan || originalPegawai.jabatan || 'Tidak ada'}</p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-600">Status</p>
                           <Badge className={getStatusColor(originalPegawai.status)}>
                             {getStatusDisplay(originalPegawai.status)}
                           </Badge>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-600">Alamat</p>
+                          <p className="font-medium">{originalPegawai.alamat || 'Tidak ada'}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-600">Lokasi</p>
+                          <p className="font-medium">
+                            {[
+                              locationNames.kelurahanName || originalPegawai.kelurahan,
+                              locationNames.kecamatanName || originalPegawai.kecamatan,
+                              locationNames.kotaName || originalPegawai.kota,
+                              locationNames.provinsiName || originalPegawai.provinsi
+                            ].filter(Boolean).join(', ') || 'Tidak ada'}
+                          </p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-600">Total TPS</p>
@@ -1596,7 +1693,7 @@ export default function EditPegawaiPage() {
                           <p className="font-medium">{formData.email}</p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-600">NIP</p>
+                          <p className="text-sm text-gray-600">NIK</p>
                           <p className="font-medium">{formData.nip}</p>
                         </div>
                         <div>
@@ -1612,6 +1709,21 @@ export default function EditPegawaiPage() {
                           <Badge className={getStatusColor(formData.status)}>
                             {getStatusDisplay(formData.status)}
                           </Badge>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-600">Alamat</p>
+                          <p className="font-medium">{formData.alamat || 'Tidak ada'}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-600">Lokasi</p>
+                          <p className="font-medium">
+                            {[
+                              locationNames.kelurahanName || formData.kelurahan,
+                              locationNames.kecamatanName || formData.kecamatan,
+                              locationNames.kotaName || formData.kota,
+                              locationNames.provinsiName || formData.provinsi
+                            ].filter(Boolean).join(', ') || 'Tidak ada'}
+                          </p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-600">Total TPS</p>

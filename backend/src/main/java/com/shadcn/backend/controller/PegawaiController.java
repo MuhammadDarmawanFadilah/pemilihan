@@ -35,10 +35,11 @@ public class PegawaiController {
             String username = (String) checkData.get("username");
             String email = (String) checkData.get("email");
             String phoneNumber = (String) checkData.get("phoneNumber");
+            String nip = (String) checkData.get("nip");
             Integer excludeId = checkData.get("excludeId") != null ? 
                 Integer.valueOf(checkData.get("excludeId").toString()) : null;
             
-            Map<String, Boolean> result = pegawaiService.checkDuplicateData(username, email, phoneNumber, excludeId);
+            Map<String, Boolean> result = pegawaiService.checkDuplicateData(username, email, phoneNumber, nip, excludeId);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             log.error("Error checking duplicate data: ", e);

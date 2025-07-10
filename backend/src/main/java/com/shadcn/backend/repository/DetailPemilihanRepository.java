@@ -14,7 +14,7 @@ public interface DetailPemilihanRepository extends JpaRepository<DetailPemilihan
     @Query("SELECT dp FROM DetailPemilihan dp WHERE dp.pemilihan.pemilihanId = :pemilihanId ORDER BY dp.urutanTampil")
     List<DetailPemilihan> findByPemilihanIdOrderByUrutan(@Param("pemilihanId") Long pemilihanId);
     
-    @Query("SELECT dp FROM DetailPemilihan dp LEFT JOIN FETCH dp.laporan l WHERE dp.pemilihan.pemilihanId = :pemilihanId ORDER BY dp.urutanTampil")
+    @Query("SELECT dp FROM DetailPemilihan dp LEFT JOIN FETCH dp.laporan l LEFT JOIN FETCH l.jenisLaporan jl WHERE dp.pemilihan.pemilihanId = :pemilihanId ORDER BY dp.urutanTampil")
     List<DetailPemilihan> findByPemilihanIdWithLaporanOrderByUrutan(@Param("pemilihanId") Long pemilihanId);
     
     @Query("SELECT dp FROM DetailPemilihan dp WHERE dp.pemilihan.pemilihanId = :pemilihanId AND dp.posisiLayout = :posisi ORDER BY dp.urutanTampil")

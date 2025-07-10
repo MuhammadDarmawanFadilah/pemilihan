@@ -111,44 +111,44 @@ const AppSidebar = () => {
 
   // User items (accessible when logged in)
   const userItems = [
-    {
-      title: "Dokumen",
-      url: "/documents",
-      icon: FolderOpen,
-    },
-    {
-      title: "Biografi Alumni",
-      url: "/biografi",
-      icon: UserCircle,
-    },
-    {
-      title: "Komunikasi Kita",
-      url: "/komunikasi",
-      icon: MessageCircle,
-      badge: "New",
-    },
-    {
-      title: "Lokasi Alumni",
-      url: "/alumni-locations",
-      icon: MapPin,
-    },
-    {
-      title: "Usulan Kegiatan",
-      url: "/usulan",
-      icon: Lightbulb,
-      badge: "New",
-    },
-    {
-      title: "Pelaksanaan",
-      url: "/pelaksanaan",
-      icon: CheckCircle,
-      badge: "New",
-    },
-    {
-      title: "Notifikasi",
-      url: "/notifikasi",
-      icon: Bell,
-    },
+    // {
+    //   title: "Dokumen",
+    //   url: "/documents",
+    //   icon: FolderOpen,
+    // },
+    // {
+    //   title: "Biografi Alumni",
+    //   url: "/biografi",
+    //   icon: UserCircle,
+    // },
+    // {
+    //   title: "Komunikasi Kita",
+    //   url: "/komunikasi",
+    //   icon: MessageCircle,
+    //   badge: "New",
+    // },
+    // {
+    //   title: "Lokasi Alumni",
+    //   url: "/alumni-locations",
+    //   icon: MapPin,
+    // },
+    // {
+    //   title: "Usulan Kegiatan",
+    //   url: "/usulan",
+    //   icon: Lightbulb,
+    //   badge: "New",
+    // },
+    // {
+    //   title: "Pelaksanaan",
+    //   url: "/pelaksanaan",
+    //   icon: CheckCircle,
+    //   badge: "New",
+    // },
+    // {
+    //   title: "Notifikasi",
+    //   url: "/notifikasi",
+    //   icon: Bell,
+    // },
     {
       title: "Laporan Pengawas",
       url: "/laporan-pengawas",
@@ -199,36 +199,36 @@ const AppSidebar = () => {
       url: "/admin/pemilihan/lokasi",
       icon: MapPin,
     },
-    {
-      title: "Berita Management",
-      url: "/admin/berita",
-      icon: Newspaper,
-    },
-    {
-      title: "Dokumen Management",
-      url: "/admin/documents",
-      icon: FileText,
-    },
-    {
-      title: "Biografi Management",
-      url: "/admin/biografi",
-      icon: UserCircle,
-    },
-    {
-      title: "Histori Undangan",
-      url: "/admin/invitations/history",
-      icon: Mail,
-    },
-    {
-      title: "Approval Undangan",
-      url: "/admin/approvals",
-      icon: UserCheck,
-    },
-    {
-      title: "Birthday Admin",
-      url: "/admin/birthday",
-      icon: Gift,
-    },
+    // {
+    //   title: "Berita Management",
+    //   url: "/admin/berita",
+    //   icon: Newspaper,
+    // },
+    // {
+    //   title: "Dokumen Management",
+    //   url: "/admin/documents",
+    //   icon: FileText,
+    // },
+    // {
+    //   title: "Biografi Management",
+    //   url: "/admin/biografi",
+    //   icon: UserCircle,
+    // },
+    // {
+    //   title: "Histori Undangan",
+    //   url: "/admin/invitations/history",
+    //   icon: Mail,
+    // },
+    // {
+    //   title: "Approval Undangan",
+    //   url: "/admin/approvals",
+    //   icon: UserCheck,
+    // },
+    // {
+    //   title: "Birthday Admin",
+    //   url: "/admin/birthday",
+    //   icon: Gift,
+    // },
     {
       title: "File Pegawai",
       url: "/admin/file-pegawai",
@@ -236,11 +236,12 @@ const AppSidebar = () => {
     },
   ];// Master Data items (accessible to admin/moderator)
   const masterDataItems = [
+    // {
+    //   title: "Spesialisasi Kedokteran",
+    //   url: "/admin/master-data/spesialisasi",
+    //   icon: Stethoscope,
+    // },
     {
-      title: "Spesialisasi Kedokteran",
-      url: "/admin/master-data/spesialisasi",
-      icon: Stethoscope,
-    },    {
       title: "Wilayah - Provinsi",
       url: "/admin/master-data/wilayah-provinsi",
       icon: MapPin,
@@ -260,25 +261,30 @@ const AppSidebar = () => {
       url: "/admin/master-data/wilayah-kelurahan",
       icon: MapPin,
     },
-    {
-      title: "Posisi & Pekerjaan",
-      url: "/admin/master-data/posisi",
-      icon: Briefcase,
-    },
-    {
-      title: "Hobi & Minat",
-      url: "/admin/master-data/hobi",
-      icon: Heart,
-    },
-    {
-      title: "Agama",
-      url: "/admin/master-data/agama",
-      icon: Shield,
-    },
+    // {
+    //   title: "Posisi & Pekerjaan",
+    //   url: "/admin/master-data/posisi",
+    //   icon: Briefcase,
+    // },
+    // {
+    //   title: "Hobi & Minat",
+    //   url: "/admin/master-data/hobi",
+    //   icon: Heart,
+    // },
+    // {
+    //   title: "Agama",
+    //   url: "/admin/master-data/agama",
+    //   icon: Shield,
+    // },
     {
       title: "Kategori File",
       url: "/admin/master-data/file-kategori",
       icon: FolderOpen,
+    },
+    {
+      title: "Jabatan",
+      url: "/admin/master-data/jabatan",
+      icon: Briefcase,
     },
   ];
 

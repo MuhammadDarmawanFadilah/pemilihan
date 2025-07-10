@@ -25,6 +25,9 @@ public interface PegawaiRepository extends JpaRepository<Pegawai, Long> {
     // Duplicate check methods for phone number
     boolean existsByPhoneNumber(String phoneNumber);
     
+    // Duplicate check methods for NIP
+    boolean existsByNip(String nip);
+    
     // Duplicate check methods excluding specific ID (for edit operations)
     boolean existsByUsernameAndIdNot(String username, Long id);
     
@@ -32,9 +35,11 @@ public interface PegawaiRepository extends JpaRepository<Pegawai, Long> {
     
     boolean existsByPhoneNumberAndIdNot(String phoneNumber, Long id);
     
+    boolean existsByNipAndIdNot(String nip, Long id);
+    
     List<Pegawai> findByStatus(Pegawai.PegawaiStatus status);
     
-    List<Pegawai> findByJabatan(String jabatan);
+    List<Pegawai> findByJabatan_Nama(String jabatanNama);
     
     Long countByStatus(Pegawai.PegawaiStatus status);
     
@@ -75,12 +80,12 @@ public interface PegawaiRepository extends JpaRepository<Pegawai, Long> {
            " LOWER(p.username) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
            " LOWER(p.email) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
            " LOWER(p.phoneNumber) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
-           " LOWER(p.jabatan) LIKE LOWER(CONCAT('%', :search, '%'))) AND " +
+           " (p.jabatan IS NOT NULL AND LOWER(p.jabatan.nama) LIKE LOWER(CONCAT('%', :search, '%')))) AND " +
            "(:nama IS NULL OR :nama = '' OR LOWER(p.fullName) LIKE LOWER(CONCAT('%', :nama, '%'))) AND " +
            "(:email IS NULL OR :email = '' OR LOWER(p.email) LIKE LOWER(CONCAT('%', :email, '%'))) AND " +
            "(:phoneNumber IS NULL OR :phoneNumber = '' OR LOWER(p.phoneNumber) LIKE LOWER(CONCAT('%', :phoneNumber, '%'))) AND " +
            "(:status IS NULL OR :status = '' OR p.status = :status) AND " +
-           "(:jabatan IS NULL OR :jabatan = '' OR LOWER(p.jabatan) LIKE LOWER(CONCAT('%', :jabatan, '%')))")
+           "(:jabatan IS NULL OR :jabatan = '' OR (p.jabatan IS NOT NULL AND LOWER(p.jabatan.nama) LIKE LOWER(CONCAT('%', :jabatan, '%'))))")
     Page<Pegawai> findPegawaiWithFilters(@Param("search") String search,
                                         @Param("nama") String nama,
                                         @Param("email") String email,

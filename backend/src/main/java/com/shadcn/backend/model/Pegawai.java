@@ -51,7 +51,22 @@ public class Pegawai implements UserDetails {
     private String pendidikan;
     
     @Column(nullable = false)
-    private String jabatan;
+    private String role;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "jabatan_id")
+    private Jabatan jabatan;
+    
+    // Convenience field for backward compatibility and API responses
+    @Transient
+    private String namaJabatan;
+    
+    @PostLoad
+    private void populateTransientFields() {
+        if (jabatan != null) {
+            this.namaJabatan = jabatan.getNama();
+        }
+    }
     
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

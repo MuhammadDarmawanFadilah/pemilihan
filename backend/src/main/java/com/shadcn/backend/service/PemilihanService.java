@@ -203,7 +203,7 @@ public class PemilihanService {
         }
         
         List<PemilihanDTO> pemilihanList = pemilihanPage.getContent().stream()
-                .map(this::convertToDTO)
+                .map(this::convertToDTOWithStats)
                 .collect(Collectors.toList());
         
         Map<String, Object> response = new java.util.HashMap<>();
@@ -421,6 +421,12 @@ public class PemilihanService {
                     detailDTO.setUrutanTampil(detail.getUrutanTampil());
                     detailDTO.setPosisiLayout(detail.getPosisiLayout());
                     detailDTO.setKeterangan(detail.getKeterangan());
+                    
+                    // Set jenisLaporan information
+                    if (detail.getLaporan().getJenisLaporan() != null) {
+                        detailDTO.setJenisLaporan(detail.getLaporan().getJenisLaporan().getNama());
+                    }
+                    
                     return detailDTO;
                 })
                 .collect(Collectors.toList());
