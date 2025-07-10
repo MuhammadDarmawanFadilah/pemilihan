@@ -151,6 +151,18 @@ public class PegawaiController {
         }
     }
 
+    @GetMapping("/active")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MODERATOR') or hasRole('USER')")
+    public ResponseEntity<List<PegawaiResponse>> getActivePegawai() {
+        try {
+            List<PegawaiResponse> pegawaiList = pegawaiService.getPegawaiByStatus(Pegawai.PegawaiStatus.AKTIF);
+            return ResponseEntity.ok(pegawaiList);
+        } catch (Exception e) {
+            log.error("Error getting active pegawai: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
     @GetMapping("/search")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MODERATOR')")
     public ResponseEntity<List<PegawaiResponse>> searchPegawai(@RequestParam String keyword) {

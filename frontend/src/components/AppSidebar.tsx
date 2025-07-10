@@ -229,6 +229,11 @@ const AppSidebar = () => {
       url: "/admin/birthday",
       icon: Gift,
     },
+    {
+      title: "File Pegawai",
+      url: "/admin/file-pegawai",
+      icon: FileText,
+    },
   ];// Master Data items (accessible to admin/moderator)
   const masterDataItems = [
     {
@@ -269,6 +274,11 @@ const AppSidebar = () => {
       title: "Agama",
       url: "/admin/master-data/agama",
       icon: Shield,
+    },
+    {
+      title: "Kategori File",
+      url: "/admin/master-data/file-kategori",
+      icon: FolderOpen,
     },
   ];
 
