@@ -23,6 +23,10 @@ import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast-simple";
 import { pemilihanApi, PemilihanDTO } from "@/lib/pemilihan-api";
+import { PemilihanWilayahFilter } from "@/components/PemilihanWilayahFilter";
+import { ProvinsiSearchDropdown } from "@/components/ProvinsiSearchDropdown";
+import { KotaSearchDropdown } from "@/components/KotaSearchDropdown";
+import { KecamatanSearchDropdown } from "@/components/KecamatanSearchDropdown";
 
 interface PemilihanStats {
   totalPemilihan: number;
@@ -65,6 +69,9 @@ export default function PemilihanPage() {
   const [provinsiFilter, setProvinsiFilter] = useState("");
   const [kotaFilter, setKotaFilter] = useState("");
   const [kecamatanFilter, setKecamatanFilter] = useState("");
+  const [provinsiKode, setProvinsiKode] = useState(""); // Track provinsi kode
+  const [kotaKode, setKotaKode] = useState(""); // Track kota kode for kecamatan filtering
+  const [kecamatanKode, setKecamatanKode] = useState(""); // Track kecamatan kode
   const [selectedTingkat, setSelectedTingkat] = useState("all");
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [showFilters, setShowFilters] = useState(false);
@@ -92,6 +99,9 @@ export default function PemilihanPage() {
     provinsiFilter?: string;
     kotaFilter?: string;
     kecamatanFilter?: string;
+    provinsiKode?: string;
+    kotaKode?: string;
+    kecamatanKode?: string;
     selectedTingkat?: string;
     selectedStatus?: string;
   }) => {
@@ -103,6 +113,9 @@ export default function PemilihanPage() {
         provinsiFilter,
         kotaFilter,
         kecamatanFilter,
+        provinsiKode,
+        kotaKode,
+        kecamatanKode,
         selectedTingkat,
         selectedStatus
       };
@@ -111,22 +124,41 @@ export default function PemilihanPage() {
       const apiStatusFilter = filters.selectedStatus === "all" ? "" : (filters.selectedStatus || "");
       const apiTingkatFilter = filters.selectedTingkat === "all" ? "" : (filters.selectedTingkat || "");
       
-      // Combine filters into search query for backward compatibility
-      const combinedSearch = [filters.namaFilter, filters.provinsiFilter, filters.kotaFilter, filters.kecamatanFilter]
-        .filter(f => f && f.trim())
-        .join(" ");
-      
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
       console.log("API URL:", apiUrl);
       console.log("Filters:", { 
         ...filters,
-        combinedSearch, 
         apiStatusFilter, 
         apiTingkatFilter 
       });
       
+      // Build URL with individual filter parameters
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        size: pageSize.toString()
+      });
+      
+      if (filters.namaFilter && filters.namaFilter.trim()) {
+        params.append('keyword', filters.namaFilter.trim());
+      }
+      if (apiTingkatFilter) {
+        params.append('tingkat', apiTingkatFilter);
+      }
+      if (apiStatusFilter) {
+        params.append('status', apiStatusFilter);
+      }
+      if (filters.provinsiKode && filters.provinsiKode.trim()) {
+        params.append('provinsi', filters.provinsiKode.trim());
+      }
+      if (filters.kotaKode && filters.kotaKode.trim()) {
+        params.append('kota', filters.kotaKode.trim());
+      }
+      if (filters.kecamatanKode && filters.kecamatanKode.trim()) {
+        params.append('kecamatan', filters.kecamatanKode.trim());
+      }
+      
       // Load pemilihan with pagination
-      const pemilihanUrl = `${apiUrl}/pemilihan/search-paged?keyword=${encodeURIComponent(combinedSearch)}&tingkat=${encodeURIComponent(apiTingkatFilter)}&status=${encodeURIComponent(apiStatusFilter)}&page=${currentPage}&size=${pageSize}`;
+      const pemilihanUrl = `${apiUrl}/pemilihan/search-paged?${params.toString()}`;
       console.log("Pemilihan URL:", pemilihanUrl);
       
       const pemilihanResponse = await fetch(pemilihanUrl, {
@@ -148,8 +180,19 @@ export default function PemilihanPage() {
       setHasNext(pemilihanData.hasNext);
       setHasPrevious(pemilihanData.hasPrevious);
       
-      // Load statistics
-      const statsUrl = `${apiUrl}/pemilihan/statistics?keyword=${encodeURIComponent(combinedSearch)}&tingkat=${encodeURIComponent(apiTingkatFilter)}&status=${encodeURIComponent(apiStatusFilter)}`;
+      // Load statistics (for backwards compatibility, use keyword for nama filter)
+      const statsParams = new URLSearchParams();
+      if (filters.namaFilter && filters.namaFilter.trim()) {
+        statsParams.append('keyword', filters.namaFilter.trim());
+      }
+      if (apiTingkatFilter) {
+        statsParams.append('tingkat', apiTingkatFilter);
+      }
+      if (apiStatusFilter) {
+        statsParams.append('status', apiStatusFilter);
+      }
+      
+      const statsUrl = `${apiUrl}/pemilihan/statistics?${statsParams.toString()}`;
       console.log("Stats URL:", statsUrl);
       
       const statsResponse = await fetch(statsUrl, {
@@ -188,6 +231,9 @@ export default function PemilihanPage() {
     setProvinsiFilter("");
     setKotaFilter("");
     setKecamatanFilter("");
+    setProvinsiKode("");
+    setKotaKode("");
+    setKecamatanKode("");
     setSelectedTingkat("all");
     setSelectedStatus("all");
     setSearchQuery("");
@@ -199,6 +245,9 @@ export default function PemilihanPage() {
       provinsiFilter: "",
       kotaFilter: "",
       kecamatanFilter: "",
+      provinsiKode: "",
+      kotaKode: "",
+      kecamatanKode: "",
       selectedTingkat: "all",
       selectedStatus: "all"
     });
@@ -323,7 +372,7 @@ export default function PemilihanPage() {
               <div className="text-sm text-gray-500">Data Real-time</div>
             </div>
             
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
               <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-lg p-6 border border-blue-200/50">
                 <div className="flex items-center justify-between">
                   <div>
@@ -375,13 +424,7 @@ export default function PemilihanPage() {
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
 
-          {/* Secondary Statistics */}
-          <div className="grid gap-6 lg:grid-cols-2">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200/50 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Laporan & Aktivitas</h3>
               <div className="bg-gradient-to-br from-purple-50 to-purple-100/50 rounded-lg p-6 border border-purple-200/50">
                 <div className="flex items-center justify-between">
                   <div>
@@ -392,40 +435,6 @@ export default function PemilihanPage() {
                   <div className="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center">
                     <Filter className="w-6 h-6 text-white" />
                   </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200/50 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Distribusi Tingkatan</h3>
-              <div className="grid gap-3">
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="w-3 h-3 bg-indigo-500 rounded-full"></div>
-                    <span className="text-sm font-medium text-gray-700">Provinsi</span>
-                  </div>
-                  <span className="text-lg font-bold text-gray-900">{stats.tingkatProvinsi}</span>
-                </div>
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                    <span className="text-sm font-medium text-gray-700">Kota/Kabupaten</span>
-                  </div>
-                  <span className="text-lg font-bold text-gray-900">{stats.tingkatKota}</span>
-                </div>
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-                    <span className="text-sm font-medium text-gray-700">Kecamatan</span>
-                  </div>
-                  <span className="text-lg font-bold text-gray-900">{stats.tingkatKecamatan}</span>
-                </div>
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                    <span className="text-sm font-medium text-gray-700">Kelurahan/Desa</span>
-                  </div>
-                  <span className="text-lg font-bold text-gray-900">{stats.tingkatKelurahan}</span>
                 </div>
               </div>
             </div>
@@ -464,7 +473,7 @@ export default function PemilihanPage() {
                 <div className="bg-gray-50/50 rounded-lg p-6 border border-gray-200/50">
                   <div className="grid gap-6 md:grid-cols-4">
                     <div className="space-y-2">
-                      <label className="text-sm font-semibold text-gray-700">Filter Nama Pemilihan</label>
+                      <label className="text-sm font-semibold text-gray-700">Nama Pemilihan</label>
                       <Input
                         placeholder="Cari nama pemilihan..."
                         value={namaFilter}
@@ -474,32 +483,67 @@ export default function PemilihanPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-sm font-semibold text-gray-700">Filter Provinsi</label>
-                      <Input
-                        placeholder="Cari provinsi..."
+                      <label className="text-sm font-semibold text-gray-700">Provinsi</label>
+                      <ProvinsiSearchDropdown
                         value={provinsiFilter}
-                        onChange={(e) => setProvinsiFilter(e.target.value)}
-                        className="bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                        onValueChange={(value) => {
+                          setProvinsiFilter(value);
+                          // Clear dependent filters when provinsi changes
+                          if (value !== provinsiFilter) {
+                            setKotaFilter("");
+                            setKecamatanFilter("");
+                            setKotaKode("");
+                            setKecamatanKode("");
+                          }
+                        }}
+                        onProvinsiKodeChange={(kode) => {
+                          setProvinsiKode(kode);
+                          // Clear dependent fields when provinsi kode changes
+                          if (kode !== provinsiKode) {
+                            setKotaFilter("");
+                            setKecamatanFilter("");
+                            setKotaKode("");
+                            setKecamatanKode("");
+                          }
+                        }}
+                        placeholder="Pilih provinsi..."
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-sm font-semibold text-gray-700">Filter Kota/Kabupaten</label>
-                      <Input
-                        placeholder="Cari kota/kabupaten..."
+                      <label className="text-sm font-semibold text-gray-700">Kota/Kabupaten</label>
+                      <KotaSearchDropdown
                         value={kotaFilter}
-                        onChange={(e) => setKotaFilter(e.target.value)}
-                        className="bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                        onValueChange={(value) => {
+                          setKotaFilter(value);
+                          // Clear dependent filters when kota changes
+                          if (value !== kotaFilter) {
+                            setKecamatanFilter("");
+                          }
+                        }}
+                        onKotaKodeChange={(kode) => {
+                          setKotaKode(kode);
+                          // Clear kecamatan when kota kode changes
+                          if (kode !== kotaKode) {
+                            setKecamatanFilter("");
+                            setKecamatanKode("");
+                          }
+                        }}
+                        provinsiFilter={provinsiFilter}
+                        placeholder="Pilih kota/kabupaten..."
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-sm font-semibold text-gray-700">Filter Kecamatan</label>
-                      <Input
-                        placeholder="Cari kecamatan..."
+                      <label className="text-sm font-semibold text-gray-700">Kecamatan</label>
+                      <KecamatanSearchDropdown
                         value={kecamatanFilter}
-                        onChange={(e) => setKecamatanFilter(e.target.value)}
-                        className="bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                        onValueChange={setKecamatanFilter}
+                        onKecamatanKodeChange={(kode) => {
+                          setKecamatanKode(kode);
+                        }}
+                        kotaKode={kotaKode}
+                        placeholder="Pilih kecamatan..."
                       />
                     </div>
                   </div>

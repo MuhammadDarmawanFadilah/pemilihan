@@ -24,15 +24,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast-simple";
 import { pemilihanApi, PemilihanDTO } from "@/lib/pemilihan-api";
 import { useAuth } from "@/contexts/AuthContext";
-
-interface PegawaiDTO {
-  pegawaiId: number;
-  nama: string;
-  email: string;
-  nip?: string;
-  jabatan?: string;
-  unitKerja?: string;
-}
+import { PegawaiSearchDropdown } from "@/components/PegawaiSearchDropdown";
+import { ProvinsiSearchDropdown } from "@/components/ProvinsiSearchDropdown";
+import { KotaSearchDropdown } from "@/components/KotaSearchDropdown";
+import { KecamatanSearchDropdown } from "@/components/KecamatanSearchDropdown";
 
 interface PaginatedResponse {
   content: PemilihanDTO[];
@@ -47,16 +42,19 @@ interface PaginatedResponse {
 export default function LaporanPengawasPage() {
   const { user, isAuthenticated } = useAuth();
   const [pemilihan, setPemilihan] = useState<PemilihanDTO[]>([]);
-  const [pegawaiList, setPegawaiList] = useState<PegawaiDTO[]>([]);
   
   // Filter states
   const [namaFilter, setNamaFilter] = useState("");
   const [provinsiFilter, setProvinsiFilter] = useState("");
   const [kotaFilter, setKotaFilter] = useState("");
   const [kecamatanFilter, setKecamatanFilter] = useState("");
+  const [provinsiKode, setProvinsiKode] = useState(""); // Track provinsi kode
+  const [kotaKode, setKotaKode] = useState(""); // Track kota kode for kecamatan filtering
+  const [kecamatanKode, setKecamatanKode] = useState(""); // Track kecamatan kode
   const [selectedTingkat, setSelectedTingkat] = useState("all");
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [selectedPegawai, setSelectedPegawai] = useState("all");
+  const [selectedPegawaiId, setSelectedPegawaiId] = useState("all");
   const [showFilters, setShowFilters] = useState(false);
   
   // Pagination states
@@ -72,85 +70,33 @@ export default function LaporanPengawasPage() {
 
   useEffect(() => {
     loadData();
-    loadPegawaiList();
     
     // Set default pegawai filter for non-admin users
     if (user && user.role?.roleName !== 'ADMIN') {
-      setSelectedPegawai(user.id?.toString() || "all");
+      setSelectedPegawai(user.fullName || "");
+      setSelectedPegawaiId(user.id?.toString() || "");
     }
   }, [currentPage, pageSize, user]);
 
   const loadData = async () => {
-    setLoading(true);
-    try {
-      const apiStatusFilter = selectedStatus === "all" ? "" : selectedStatus;
-      const apiTingkatFilter = selectedTingkat === "all" ? "" : selectedTingkat;
-      const apiPegawaiFilter = selectedPegawai === "all" ? "" : selectedPegawai;
-      
-      const combinedSearch = [namaFilter, provinsiFilter, kotaFilter, kecamatanFilter]
-        .filter(f => f && f.trim())
-        .join(" ");
-      
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
-      
-      let pemilihanUrl = `${apiUrl}/pemilihan/search-paged?keyword=${encodeURIComponent(combinedSearch)}&tingkat=${encodeURIComponent(apiTingkatFilter)}&status=${encodeURIComponent(apiStatusFilter)}&page=${currentPage}&size=${pageSize}`;
-      
-      if (apiPegawaiFilter) {
-        pemilihanUrl += `&pegawaiId=${encodeURIComponent(apiPegawaiFilter)}`;
-      }
-      
-      const pemilihanResponse = await fetch(pemilihanUrl, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
-        },
-      });
-      
-      if (!pemilihanResponse.ok) {
-        throw new Error(`HTTP error! status: ${pemilihanResponse.status}`);
-      }
-      
-      const pemilihanData: PaginatedResponse = await pemilihanResponse.json();
-      
-      setPemilihan(pemilihanData.content);
-      setTotalElements(pemilihanData.totalElements);
-      setTotalPages(pemilihanData.totalPages);
-      setHasNext(pemilihanData.hasNext);
-      setHasPrevious(pemilihanData.hasPrevious);
-      
-    } catch (error: any) {
-      console.error("Error loading data:", error);
-      toast({
-        title: "Error",
-        description: "Gagal memuat data",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadPegawaiList = async () => {
-    try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
-      const response = await fetch(`${apiUrl}/pegawai/all`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
-        },
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      setPegawaiList(data);
-    } catch (error: any) {
-      console.error("Error loading pegawai:", error);
-    }
+    const apiStatusFilter = selectedStatus === "all" ? "" : selectedStatus;
+    const apiTingkatFilter = selectedTingkat === "all" ? "" : selectedTingkat;
+    const apiPegawaiFilter = selectedPegawaiId === "all" ? "" : selectedPegawaiId;
+    
+    // Use codes for filtering instead of names
+    const params = {
+      keyword: namaFilter,
+      provinsiId: provinsiKode,
+      kotaId: kotaKode,
+      kecamatanId: kecamatanKode,
+      tingkat: apiTingkatFilter,
+      status: apiStatusFilter,
+      pegawaiId: apiPegawaiFilter,
+      page: currentPage,
+      size: pageSize
+    };
+    
+    await loadDataWithParams(params);
   };
 
   const handleSearch = () => {
@@ -158,19 +104,62 @@ export default function LaporanPengawasPage() {
     loadData();
   };
 
-  const handleClearFilters = () => {
+  const handleClearFilters = async () => {
     setNamaFilter("");
     setProvinsiFilter("");
     setKotaFilter("");
     setKecamatanFilter("");
+    setProvinsiKode("");
+    setKotaKode("");
+    setKecamatanKode("");
     setSelectedTingkat("all");
     setSelectedStatus("all");
     if (user?.role?.roleName === 'ADMIN') {
       setSelectedPegawai("all");
+      setSelectedPegawaiId("all");
     }
     setCurrentPage(0);
     
-    loadData();
+    // Clear applied filters immediately
+    await loadDataWithParams({
+      keyword: "",
+      provinsiId: "",
+      kotaId: "",
+      kecamatanId: "",
+      tingkat: "",
+      status: "",
+      pegawaiId: "",
+      page: 0,
+      size: pageSize
+    });
+  };
+
+  const loadDataWithParams = async (params: any) => {
+    setLoading(true);
+    try {
+      const response = await pemilihanApi.searchPaged(params);
+      if (response.success && response.data) {
+        setPemilihan(response.data.content || []);
+        setTotalElements(response.data.totalElements || 0);
+        setTotalPages(response.data.totalPages || 0);
+      } else {
+        console.error("Error loading data:", response.message);
+        toast({
+          title: "Error",
+          description: response.message || "Gagal memuat data",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      toast({
+        title: "Error",
+        description: "Terjadi kesalahan saat memuat data",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -289,30 +278,54 @@ export default function LaporanPengawasPage() {
 
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-gray-700">Filter Provinsi</label>
-                  <Input
-                    placeholder="Cari provinsi..."
+                  <ProvinsiSearchDropdown
                     value={provinsiFilter}
-                    onChange={(e) => setProvinsiFilter(e.target.value)}
+                    onValueChange={(value) => {
+                      setProvinsiFilter(value);
+                      setKotaFilter("");
+                      setKecamatanFilter("");
+                      setKotaKode("");
+                      setKecamatanKode("");
+                    }}
+                    onProvinsiKodeChange={(provinsiId: string) => {
+                      setProvinsiKode(provinsiId);
+                      setKotaKode("");
+                      setKecamatanKode("");
+                    }}
+                    placeholder="Pilih provinsi..."
                     className="bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                   />
                 </div>
 
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-gray-700">Filter Kota/Kabupaten</label>
-                  <Input
-                    placeholder="Cari kota/kabupaten..."
+                  <KotaSearchDropdown
                     value={kotaFilter}
-                    onChange={(e) => setKotaFilter(e.target.value)}
+                    onValueChange={(value) => {
+                      setKotaFilter(value);
+                      setKecamatanFilter("");
+                      setKecamatanKode("");
+                    }}
+                    onKotaKodeChange={(kotaId: string) => {
+                      setKotaKode(kotaId);
+                      setKecamatanKode("");
+                    }}
+                    provinsiFilter={provinsiKode}
+                    placeholder="Pilih kota/kabupaten..."
+                    disabled={!provinsiKode}
                     className="bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                   />
                 </div>
 
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-gray-700">Filter Kecamatan</label>
-                  <Input
-                    placeholder="Cari kecamatan..."
+                  <KecamatanSearchDropdown
                     value={kecamatanFilter}
-                    onChange={(e) => setKecamatanFilter(e.target.value)}
+                    onValueChange={(value) => setKecamatanFilter(value)}
+                    onKecamatanKodeChange={(kecamatanId: string) => setKecamatanKode(kecamatanId)}
+                    kotaKode={kotaKode}
+                    placeholder="Pilih kecamatan..."
+                    disabled={!kotaKode}
                     className="bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                   />
                 </div>
@@ -352,23 +365,14 @@ export default function LaporanPengawasPage() {
 
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-gray-700">Pegawai</label>
-                  <Select 
-                    value={selectedPegawai} 
+                  <PegawaiSearchDropdown
+                    value={selectedPegawai}
                     onValueChange={(value) => setSelectedPegawai(value)}
+                    onPegawaiIdChange={(pegawaiId) => setSelectedPegawaiId(pegawaiId)}
+                    placeholder="Pilih pegawai..."
                     disabled={user?.role?.roleName !== 'ADMIN'}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Pilih pegawai" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {user?.role?.roleName === 'ADMIN' && <SelectItem value="all">👥 Semua Pegawai</SelectItem>}
-                      {pegawaiList.map((pegawai) => (
-                        <SelectItem key={pegawai.pegawaiId} value={pegawai.pegawaiId.toString()}>
-                          {pegawai.nama} {pegawai.nip && `(${pegawai.nip})`}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    includeAllOption={user?.role?.roleName === 'ADMIN'}
+                  />
                 </div>
 
                 <div className="space-y-2">

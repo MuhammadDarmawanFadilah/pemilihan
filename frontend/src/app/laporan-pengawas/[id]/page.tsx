@@ -58,7 +58,14 @@ export default function LaporanPengawasDetailPage() {
       loadPemilihan();
       loadLaporan();
     }
-  }, [pemilihanId, currentPage, pageSize, namaLaporanFilter]);
+  }, [pemilihanId, currentPage, pageSize]);
+
+  useEffect(() => {
+    // Reload data when filter changes, but only if filter is applied via search button
+    if (pemilihanId) {
+      loadLaporan();
+    }
+  }, []);
 
   const loadPemilihan = async () => {
     try {
@@ -74,18 +81,21 @@ export default function LaporanPengawasDetailPage() {
     }
   };
 
-  const loadLaporan = async () => {
+  const loadLaporan = async (filterOverride?: string) => {
     setLoading(true);
     try {
       // Use the new endpoint to get laporan by pemilihan ID
       const response = await laporanAPI.getByPemilihanId(parseInt(pemilihanId));
       
       if (response && Array.isArray(response)) {
+        // Use filterOverride if provided, otherwise use state
+        const filterValue = filterOverride !== undefined ? filterOverride : namaLaporanFilter;
+        
         // Filter laporan by nama if filter is applied
         let filteredLaporan = response;
-        if (namaLaporanFilter.trim()) {
+        if (filterValue && filterValue.trim()) {
           filteredLaporan = response.filter(lap => 
-            lap.namaLaporan?.toLowerCase().includes(namaLaporanFilter.toLowerCase())
+            lap.namaLaporan?.toLowerCase().includes(filterValue.toLowerCase())
           );
         }
         
@@ -122,10 +132,11 @@ export default function LaporanPengawasDetailPage() {
     loadLaporan();
   };
 
-  const handleClearFilter = () => {
+  const handleClearFilter = async () => {
     setNamaLaporanFilter("");
     setCurrentPage(0);
-    loadLaporan();
+    // Pass empty string as filter override to immediately clear filters
+    await loadLaporan("");
   };
 
   const getStatusBadge = (status: string) => {

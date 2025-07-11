@@ -41,10 +41,11 @@ public class DetailLaporanController {
             @RequestParam(required = false) Integer pemilihanId,
             @RequestParam(required = false) Integer laporanId,
             @RequestParam(required = false) Integer jenisLaporanId,
-            @RequestParam(required = false) Integer tahapanLaporanId) {
+            @RequestParam(required = false) Integer tahapanLaporanId,
+            @RequestParam(required = false) Long pegawaiId) {
         
         PaginatedResponse<DetailLaporanResponse> submissions = submissionLaporanService.getSubmissionsByUserPaginated(
-            userId, page, size, search, pemilihanId, laporanId, jenisLaporanId, tahapanLaporanId);
+            userId, page, size, search, pemilihanId, laporanId, jenisLaporanId, tahapanLaporanId, pegawaiId);
         return ResponseEntity.ok(submissions);
     }
 

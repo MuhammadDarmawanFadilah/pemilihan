@@ -73,4 +73,22 @@ public interface PemilihanRepository extends JpaRepository<Pemilihan, Long> {
         @Param("status") String status,
         Pageable pageable
     );
+    
+    // Advanced search with all filters including wilayah
+    @Query("SELECT p FROM Pemilihan p WHERE " +
+           "(:keyword IS NULL OR :keyword = '' OR LOWER(p.namaPemilihan) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(p.deskripsiPemilihan) LIKE LOWER(CONCAT('%', :keyword, '%'))) AND " +
+           "(:tingkat IS NULL OR :tingkat = '' OR LOWER(p.tingkatPemilihan) = LOWER(:tingkat)) AND " +
+           "(:status IS NULL OR :status = '' OR LOWER(p.status) = LOWER(:status)) AND " +
+           "(:provinsi IS NULL OR :provinsi = '' OR p.provinsiId = :provinsi) AND " +
+           "(:kota IS NULL OR :kota = '' OR p.kotaId = :kota) AND " +
+           "(:kecamatan IS NULL OR :kecamatan = '' OR p.kecamatanId = :kecamatan)")
+    Page<Pemilihan> findByAdvancedFilters(
+        @Param("keyword") String keyword,
+        @Param("tingkat") String tingkat,
+        @Param("status") String status,
+        @Param("provinsi") String provinsi,
+        @Param("kota") String kota,
+        @Param("kecamatan") String kecamatan,
+        Pageable pageable
+    );
 }

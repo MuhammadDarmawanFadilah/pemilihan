@@ -15,9 +15,20 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast-simple";
 import { laporanAPI, Laporan } from "@/lib/laporan-api";
 import { jenisLaporanAPI, JenisLaporan } from "@/lib/api";
+
+interface PaginatedResponse {
+  content: JenisLaporan[];
+  totalElements: number;
+  totalPages: number;
+  currentPage: number;
+  size: number;
+  hasNext: boolean;
+  hasPrevious: boolean;
+}
 
 export default function LaporanJenisPage() {
   const params = useParams();
@@ -28,6 +39,14 @@ export default function LaporanJenisPage() {
   // Filter states
   const [namaJenisFilter, setNamaJenisFilter] = useState("");
   const [showFilters, setShowFilters] = useState(false);
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalElements, setTotalElements] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [hasNext, setHasNext] = useState(false);
+  const [hasPrevious, setHasPrevious] = useState(false);
   
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
@@ -45,7 +64,7 @@ export default function LaporanJenisPage() {
     if (laporan) {
       loadJenisLaporan();
     }
-  }, [laporan, namaJenisFilter]);
+  }, [laporan, currentPage, pageSize]);
 
   const loadLaporan = async () => {
     try {
@@ -61,25 +80,37 @@ export default function LaporanJenisPage() {
     }
   };
 
-  const loadJenisLaporan = async () => {
+  const loadJenisLaporan = async (filterOverride?: string) => {
     setLoading(true);
     try {
-      // First get the laporan with detail
+      // First get the laporan with detail to ensure we only show related jenis laporan
       if (!laporan) return;
       
-      // Extract unique jenis laporan IDs from detailLaporanList
+      // Use filter override if provided, otherwise use state
+      const filterValue = filterOverride !== undefined ? filterOverride : namaJenisFilter;
+      
+      // Extract unique jenis laporan IDs from detailLaporanList specific to this laporan
       let jenisLaporanIds: number[] = [];
       if (laporan.detailLaporanList && laporan.detailLaporanList.length > 0) {
         const uniqueJenisLaporanIds = new Set(
           laporan.detailLaporanList.map(detail => detail.jenisLaporanId)
         );
         jenisLaporanIds = Array.from(uniqueJenisLaporanIds);
-      } else {
+      } else if (laporan.jenisLaporanId) {
         // Fallback to primary jenis laporan if no detail laporan
         jenisLaporanIds = [laporan.jenisLaporanId];
       }
       
-      // Load each jenis laporan by ID
+      if (jenisLaporanIds.length === 0) {
+        setJenisLaporan([]);
+        setTotalElements(0);
+        setTotalPages(0);
+        setHasNext(false);
+        setHasPrevious(false);
+        return;
+      }
+      
+      // Load each jenis laporan by ID (only those related to this specific laporan)
       const jenisLaporanDetails = await Promise.all(
         jenisLaporanIds.map(async (id) => {
           try {
@@ -92,17 +123,30 @@ export default function LaporanJenisPage() {
       );
       
       // Filter out null results and apply name filter if any
-      const validJenisLaporan = jenisLaporanDetails
-        .filter(jl => jl !== null)
-        .filter(jl => {
-          if (!namaJenisFilter) return true;
-          return jl.nama.toLowerCase().includes(namaJenisFilter.toLowerCase());
-        });
+      let validJenisLaporan = jenisLaporanDetails.filter(jl => jl !== null);
       
-      setJenisLaporan(validJenisLaporan);
+      if (filterValue && filterValue.trim()) {
+        validJenisLaporan = validJenisLaporan.filter(jl => 
+          jl.nama.toLowerCase().includes(filterValue.toLowerCase())
+        );
+      }
+      
+      // Apply client-side pagination
+      const startIndex = currentPage * pageSize;
+      const endIndex = startIndex + pageSize;
+      const paginatedData = validJenisLaporan.slice(startIndex, endIndex);
+      
+      setJenisLaporan(paginatedData);
+      setTotalElements(validJenisLaporan.length);
+      setTotalPages(Math.ceil(validJenisLaporan.length / pageSize));
+      setHasNext(endIndex < validJenisLaporan.length);
+      setHasPrevious(currentPage > 0);
+      
     } catch (error: any) {
       console.error('Error loading jenis laporan:', error);
       setJenisLaporan([]);
+      setTotalElements(0);
+      setTotalPages(0);
       toast({
         title: "Error",
         description: "Gagal memuat data jenis laporan",
@@ -114,16 +158,35 @@ export default function LaporanJenisPage() {
   };
 
   const handleSearch = () => {
+    setCurrentPage(0);
     if (laporan) {
       loadJenisLaporan();
     }
   };
 
-  const handleClearFilter = () => {
+  const handleClearFilter = async () => {
     setNamaJenisFilter("");
+    setCurrentPage(0);
     if (laporan) {
-      loadJenisLaporan();
+      await loadJenisLaporan("");
     }
+  };
+
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+    let startPage = Math.max(0, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages - 1, startPage + maxVisiblePages - 1);
+    
+    if (endPage - startPage < maxVisiblePages - 1) {
+      startPage = Math.max(0, endPage - maxVisiblePages + 1);
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+    
+    return pages;
   };
 
   return (
@@ -204,9 +267,9 @@ export default function LaporanJenisPage() {
             </div>
             
             <div className="p-6">
-              <div className="flex gap-4 items-end">
-                <div className="flex-1">
-                  <label className="text-sm font-semibold text-gray-700 block mb-2">Nama Jenis Laporan</label>
+              <div className="grid gap-6 md:grid-cols-2">
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-gray-700">Nama Jenis Laporan</label>
                   <Input
                     placeholder="Cari nama jenis laporan..."
                     value={namaJenisFilter}
@@ -214,19 +277,46 @@ export default function LaporanJenisPage() {
                     className="bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                   />
                 </div>
+                
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-gray-700">Items per Halaman</label>
+                  <Select
+                    value={pageSize.toString()}
+                    onValueChange={(value) => {
+                      setPageSize(parseInt(value));
+                      setCurrentPage(0);
+                    }}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="5">5 per halaman</SelectItem>
+                      <SelectItem value="10">10 per halaman</SelectItem>
+                      <SelectItem value="25">25 per halaman</SelectItem>
+                      <SelectItem value="100">100 per halaman</SelectItem>
+                      <SelectItem value="1000">1000 per halaman</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              <div className="flex justify-center items-center gap-4 mt-6">
                 <Button 
                   onClick={handleSearch} 
-                  className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
+                  className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-sm px-8 py-2"
                 >
                   <Search className="mr-2 h-4 w-4" />
-                  Cari
+                  Cari Data
                 </Button>
+                
                 <Button 
                   variant="outline" 
-                  onClick={handleClearFilter}
+                  onClick={handleClearFilter} 
+                  className="border-gray-300 hover:bg-gray-50 px-8 py-2"
                 >
                   <X className="mr-2 h-4 w-4" />
-                  Reset
+                  Reset Filter
                 </Button>
               </div>
             </div>
@@ -240,7 +330,7 @@ export default function LaporanJenisPage() {
               <div>
                 <h2 className="text-lg font-semibold text-gray-900">Daftar Jenis Laporan</h2>
                 <p className="text-sm text-gray-500 mt-1">
-                  Menampilkan {jenisLaporan.length} jenis laporan
+                  Menampilkan {jenisLaporan.length} dari {totalElements} total jenis laporan
                 </p>
               </div>
             </div>
@@ -327,6 +417,70 @@ export default function LaporanJenisPage() {
               </TableBody>
             </Table>
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="p-6 border-t border-gray-200/50">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="text-sm text-gray-600">
+                  Halaman <span className="font-medium">{currentPage + 1}</span> dari{' '}
+                  <span className="font-medium">{totalPages}</span> | 
+                  Total <span className="font-medium">{totalElements}</span> data
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(0)}
+                    disabled={!hasPrevious}
+                    className="px-3"
+                  >
+                    First
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(currentPage - 1)}
+                    disabled={!hasPrevious}
+                    className="px-3"
+                  >
+                    Previous
+                  </Button>
+                  
+                  {getPageNumbers().map((page) => (
+                    <Button
+                      key={page}
+                      variant={page === currentPage ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setCurrentPage(page)}
+                      className={page === currentPage ? "bg-blue-600 hover:bg-blue-700 px-3" : "px-3"}
+                    >
+                      {page + 1}
+                    </Button>
+                  ))}
+                  
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(currentPage + 1)}
+                    disabled={!hasNext}
+                    className="px-3"
+                  >
+                    Next
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(totalPages - 1)}
+                    disabled={!hasNext}
+                    className="px-3"
+                  >
+                    Last
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

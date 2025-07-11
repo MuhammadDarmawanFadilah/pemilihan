@@ -107,7 +107,7 @@ export default function CreatePemilihanPage() {
       judulPemilihan: '',
       deskripsi: '',
       status: 'AKTIF',
-      tingkatPemilihan: '',
+      tingkatPemilihan: 'kota', // Default to kota
       provinsi: '',
       kota: '',
       kecamatan: '',
@@ -129,7 +129,7 @@ export default function CreatePemilihanPage() {
     judulPemilihan: '',
     deskripsi: '',
     status: 'AKTIF',
-    tingkatPemilihan: '',
+    tingkatPemilihan: 'kota', // Default to kota
     provinsi: '',
     kota: '',
     kecamatan: '',
@@ -899,10 +899,10 @@ export default function CreatePemilihanPage() {
                     <p className="text-sm text-gray-600 mb-3">Pilih tingkat pemilihan untuk menentukan wilayah yang diperlukan</p>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                       {[
-                        { value: 'provinsi', label: 'Provinsi', icon: '🏛️' },
+                        // { value: 'provinsi', label: 'Provinsi', icon: '🏛️' },
                         { value: 'kota', label: 'Kota/Kabupaten', icon: '🏢' },
-                        { value: 'kecamatan', label: 'Kecamatan', icon: '🏪' },
-                        { value: 'kelurahan', label: 'Kelurahan/Desa', icon: '🏠' }
+                        // { value: 'kecamatan', label: 'Kecamatan', icon: '🏪' },
+                        // { value: 'kelurahan', label: 'Kelurahan/Desa', icon: '🏠' }
                       ].map((tingkat) => (
                         <button
                           key={tingkat.value}

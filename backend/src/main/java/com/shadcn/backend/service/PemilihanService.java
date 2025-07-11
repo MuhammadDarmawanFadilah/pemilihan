@@ -188,6 +188,8 @@ public class PemilihanService {
     }
     
     public Map<String, Object> searchPemilihanWithPaging(String keyword, String tingkat, String status, 
+                                                         String provinsi, String kota, String kecamatan,
+                                                         String provinsiId, String kotaId, String kecamatanId, String pegawaiId,
                                                          int page, int size) {
         org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
         org.springframework.data.domain.Page<Pemilihan> pemilihanPage;
@@ -195,9 +197,17 @@ public class PemilihanService {
         // Build criteria for search
         if ((keyword != null && !keyword.trim().isEmpty()) || 
             (tingkat != null && !tingkat.trim().isEmpty()) || 
-            (status != null && !status.trim().isEmpty())) {
+            (status != null && !status.trim().isEmpty()) ||
+            (provinsi != null && !provinsi.trim().isEmpty()) ||
+            (kota != null && !kota.trim().isEmpty()) ||
+            (kecamatan != null && !kecamatan.trim().isEmpty()) ||
+            (provinsiId != null && !provinsiId.trim().isEmpty()) ||
+            (kotaId != null && !kotaId.trim().isEmpty()) ||
+            (kecamatanId != null && !kecamatanId.trim().isEmpty()) ||
+            (pegawaiId != null && !pegawaiId.trim().isEmpty())) {
             
-            pemilihanPage = pemilihanRepository.findByFilters(keyword, tingkat, status, pageable);
+            pemilihanPage = pemilihanRepository.findByAdvancedFilters(
+                keyword, tingkat, status, provinsiId, kotaId, kecamatanId, pageable);
         } else {
             pemilihanPage = pemilihanRepository.findAll(pageable);
         }
@@ -205,6 +215,20 @@ public class PemilihanService {
         List<PemilihanDTO> pemilihanList = pemilihanPage.getContent().stream()
                 .map(this::convertToDTOWithStats)
                 .collect(Collectors.toList());
+        
+        // Filter by pegawai if specified
+        if (pegawaiId != null && !pegawaiId.trim().isEmpty()) {
+            Long pegawaiIdLong = Long.valueOf(pegawaiId);
+            pemilihanList = pemilihanList.stream()
+                .filter(dto -> {
+                    // Check if this pegawai is assigned to this pemilihan
+                    List<com.shadcn.backend.model.Pegawai> pegawaiInPemilihan = 
+                        pegawaiRepository.findByPemilihanId(dto.getPemilihanId());
+                    return pegawaiInPemilihan.stream()
+                        .anyMatch(p -> p.getId().equals(pegawaiIdLong));
+                })
+                .collect(Collectors.toList());
+        }
         
         Map<String, Object> response = new java.util.HashMap<>();
         response.put("content", pemilihanList);
@@ -219,6 +243,8 @@ public class PemilihanService {
     }
     
     public Map<String, Object> getStatistics(String keyword, String tingkat, String status) {
+        // For statistics, we'll still use the old method for backwards compatibility
+        // or extend it if needed
         List<Pemilihan> allPemilihan;
         
         // Get filtered pemilihan
@@ -637,22 +663,22 @@ public class PemilihanService {
                 })
                 .filter(pemilihan -> {
                     if (provinsi != null && !provinsi.trim().isEmpty()) {
-                        return pemilihan.getProvinsiNama() != null && 
-                               pemilihan.getProvinsiNama().toLowerCase().contains(provinsi.trim().toLowerCase());
+                        return pemilihan.getProvinsiId() != null && 
+                               pemilihan.getProvinsiId().equals(provinsi.trim());
                     }
                     return true;
                 })
                 .filter(pemilihan -> {
                     if (kota != null && !kota.trim().isEmpty()) {
-                        return pemilihan.getKotaNama() != null && 
-                               pemilihan.getKotaNama().toLowerCase().contains(kota.trim().toLowerCase());
+                        return pemilihan.getKotaId() != null && 
+                               pemilihan.getKotaId().equals(kota.trim());
                     }
                     return true;
                 })
                 .filter(pemilihan -> {
                     if (kecamatan != null && !kecamatan.trim().isEmpty()) {
-                        return pemilihan.getKecamatanNama() != null && 
-                               pemilihan.getKecamatanNama().toLowerCase().contains(kecamatan.trim().toLowerCase());
+                        return pemilihan.getKecamatanId() != null && 
+                               pemilihan.getKecamatanId().equals(kecamatan.trim());
                     }
                     return true;
                 })

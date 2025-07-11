@@ -221,6 +221,38 @@ export const pemilihanApi = {
     return { data, success: true }
   },
 
+  // Search pemilihan with pagination
+  searchPaged: async (params: {
+    keyword?: string
+    tingkat?: string
+    status?: string
+    provinsiId?: string
+    kotaId?: string
+    kecamatanId?: string
+    pegawaiId?: string
+    page?: number
+    size?: number
+  }): Promise<ApiResponse<any>> => {
+    const searchParams = new URLSearchParams()
+    
+    if (params.keyword) searchParams.append('keyword', params.keyword)
+    if (params.tingkat) searchParams.append('tingkat', params.tingkat)
+    if (params.status) searchParams.append('status', params.status)
+    if (params.provinsiId) searchParams.append('provinsiId', params.provinsiId)
+    if (params.kotaId) searchParams.append('kotaId', params.kotaId)
+    if (params.kecamatanId) searchParams.append('kecamatanId', params.kecamatanId)
+    if (params.pegawaiId) searchParams.append('pegawaiId', params.pegawaiId)
+    if (params.page !== undefined) searchParams.append('page', params.page.toString())
+    if (params.size !== undefined) searchParams.append('size', params.size.toString())
+    
+    const response = await fetch(`${BASE_URL}/api/pemilihan/search-paged?${searchParams}`)
+    if (!response.ok) {
+      throw new Error('Failed to search pemilihan with pagination')
+    }
+    const data = await response.json()
+    return { data, success: true }
+  },
+
   // Update expired pemilihan
   updateExpired: async (): Promise<ApiResponse<void>> => {
     const response = await fetch(`${BASE_URL}/api/pemilihan/update-expired`, {

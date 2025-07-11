@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { PegawaiSearchDropdown } from "@/components/PegawaiSearchDropdown";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -87,9 +88,9 @@ export default function LaporanSayaPage() {
   const [totalPages, setTotalPages] = useState(0);
 
   const pageSizeOptions = [
+    { value: "5", label: "5 per halaman" },
     { value: "10", label: "10 per halaman" },
     { value: "25", label: "25 per halaman" },
-    { value: "50", label: "50 per halaman" },
     { value: "100", label: "100 per halaman" },
     { value: "1000", label: "1000 per halaman" }
   ];
@@ -99,13 +100,15 @@ export default function LaporanSayaPage() {
   const [laporanOptions, setLaporanOptions] = useState<LaporanOption[]>([]);
   const [jenisLaporanOptions, setJenisLaporanOptions] = useState<JenisLaporanOption[]>([]);
   const [tahapanLaporanOptions, setTahapanLaporanOptions] = useState<TahapanLaporanOption[]>([]);
+  const [pegawaiOptions, setPegawaiOptions] = useState<any[]>([]);
 
   // Applied filter values
   const [appliedFilters, setAppliedFilters] = useState({
     pemilihanId: '',
     laporanId: '',
     jenisLaporanId: '',
-    tahapanLaporanId: ''
+    tahapanLaporanId: '',
+    pegawaiId: ''
   });
 
   // Input filter values (for form)
@@ -113,13 +116,14 @@ export default function LaporanSayaPage() {
     pemilihanId: '',
     laporanId: '',
     jenisLaporanId: '',
-    tahapanLaporanId: ''
+    tahapanLaporanId: '',
+    pegawaiId: ''
   });
 
   const statusOptions = [
     { value: "ALL", label: "Semua Status" },
     { value: "DRAFT", label: "Draft" },
-    { value: "SUBMITTED", label: "Terkirim" },
+    { value: "SUBMITTED", label: "Dikirim" },
     { value: "REVIEWED", label: "Direview" },
     { value: "APPROVED", label: "Disetujui" },
     { value: "REJECTED", label: "Ditolak" }
@@ -129,6 +133,9 @@ export default function LaporanSayaPage() {
     if (user?.id) {
       loadSubmissions();
       loadPemilihanOptions();
+      if (user?.role?.roleName === 'ADMIN') {
+        loadPegawaiOptions();
+      }
     }
   }, [user, appliedFilters, currentPage, pageSize]);
 
@@ -186,6 +193,22 @@ export default function LaporanSayaPage() {
       setTahapanLaporanOptions([]);
     }
   }, [inputFilters.jenisLaporanId]);
+
+  const loadPegawaiOptions = async () => {
+    try {
+      const response = await fetch(getApiUrl('pegawai/list'), {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setPegawaiOptions(data);
+      }
+    } catch (error) {
+      console.error('Error loading pegawai:', error);
+    }
+  };
 
   const loadPemilihanOptions = async () => {
     try {
@@ -269,6 +292,7 @@ export default function LaporanSayaPage() {
       if (appliedFilters.laporanId) params.append('laporanId', appliedFilters.laporanId);
       if (appliedFilters.jenisLaporanId) params.append('jenisLaporanId', appliedFilters.jenisLaporanId);
       if (appliedFilters.tahapanLaporanId) params.append('tahapanLaporanId', appliedFilters.tahapanLaporanId);
+      if (appliedFilters.pegawaiId && user?.role?.roleName === 'ADMIN') params.append('pegawaiId', appliedFilters.pegawaiId);
       
       url += `?${params.toString()}`;
 
@@ -317,7 +341,8 @@ export default function LaporanSayaPage() {
       pemilihanId: '',
       laporanId: '',
       jenisLaporanId: '',
-      tahapanLaporanId: ''
+      tahapanLaporanId: '',
+      pegawaiId: ''
     };
     setInputFilters(emptyFilters);
     setAppliedFilters(emptyFilters);
@@ -418,7 +443,7 @@ export default function LaporanSayaPage() {
   const getStatusLabel = (status: string) => {
     switch (status) {
       case 'DRAFT': return 'Draft';
-      case 'SUBMITTED': return 'Terkirim';
+      case 'SUBMITTED': return 'Dikirim';
       case 'REVIEWED': return 'Direview';
       case 'APPROVED': return 'Disetujui';
       case 'REJECTED': return 'Ditolak';
@@ -435,9 +460,9 @@ export default function LaporanSayaPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-6xl mx-auto px-4">
-        <div className="flex justify-between items-center mb-6">
+    <div className="min-h-screen bg-gray-50">
+      <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 max-w-full">
+        <div className="flex justify-between items-center mb-6 pt-8">
           <h1 className="text-2xl font-bold text-gray-900">Laporan Saya</h1>
           <Button onClick={() => router.push('/laporan-saya/buat')}>
             <Plus className="w-4 h-4 mr-2" />
@@ -462,7 +487,7 @@ export default function LaporanSayaPage() {
               </div>
 
               {/* Category Filters Row */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                 <div>
                   <Label htmlFor="pemilihan">Pemilihan</Label>
                   <Select 
@@ -533,6 +558,43 @@ export default function LaporanSayaPage() {
                       {tahapanLaporanOptions.map((option) => (
                         <SelectItem key={option.tahapanLaporanId} value={option.tahapanLaporanId.toString()}>
                           {option.nama}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {user?.role?.roleName === 'ADMIN' && (
+                  <div>
+                    <Label htmlFor="pegawai">Pegawai</Label>
+                    <PegawaiSearchDropdown
+                      value={inputFilters.pegawaiId}
+                      onValueChange={(value) => setInputFilters(prev => ({ ...prev, pegawaiId: value }))}
+                      onPegawaiIdChange={(pegawaiId) => setInputFilters(prev => ({ ...prev, pegawaiId: pegawaiId }))}
+                      placeholder="Semua Pegawai..."
+                      includeAllOption={true}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Page Size Row */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                  <Label htmlFor="pageSize">Items per Halaman</Label>
+                  <Select
+                    value={pageSize.toString()}
+                    onValueChange={(value) => {
+                      setPageSize(parseInt(value));
+                      setCurrentPage(0);
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {pageSizeOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -619,22 +681,22 @@ export default function LaporanSayaPage() {
                             {submission.konten}
                           </div>
                           
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-500 mb-4">
-                            <div className="flex items-center gap-1">
-                              <span className="font-medium">Tanggal:</span> 
-                              <span>{submission.tanggalLaporan}</span>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm text-gray-500 mb-4">
+                            <div className="flex flex-col">
+                              <span className="font-medium text-gray-700 mb-1">Nama Pegawai:</span> 
+                              <span className="text-gray-900">{submission.userName}</span>
                             </div>
-                            <div className="flex items-center gap-1">
-                              <span className="font-medium">Lokasi:</span> 
-                              <span className="truncate">{submission.lokasi || '-'}</span>
+                            <div className="flex flex-col">
+                              <span className="font-medium text-gray-700 mb-1">Lokasi:</span> 
+                              <span className="text-gray-900">{submission.lokasi || '-'}</span>
                             </div>
-                            <div className="flex items-center gap-1">
-                              <span className="font-medium">Dibuat:</span> 
-                              <span>{new Date(submission.tanggalBuat).toLocaleDateString('id-ID')}</span>
+                            <div className="flex flex-col">
+                              <span className="font-medium text-gray-700 mb-1">Tanggal Laporan:</span> 
+                              <span className="text-gray-900">{submission.tanggalLaporan}</span>
                             </div>
-                            <div className="flex items-center gap-1">
-                              <span className="font-medium">Dibuat oleh:</span> 
-                              <span className="truncate">{submission.userName}</span>
+                            <div className="flex flex-col">
+                              <span className="font-medium text-gray-700 mb-1">Nama Pemilihan:</span> 
+                              <span className="text-gray-900">{submission.pemilihanJudul || '-'}</span>
                             </div>
                           </div>
 
@@ -713,18 +775,22 @@ export default function LaporanSayaPage() {
                           {submission.konten}
                         </div>
                         
-                        <div className="space-y-2 text-sm text-gray-500">
-                          <div className="flex items-center justify-between">
-                            <span className="font-medium">Tanggal:</span> 
-                            <span>{submission.tanggalLaporan}</span>
+                        <div className="space-y-3 text-sm text-gray-500">
+                          <div className="flex flex-col">
+                            <span className="font-medium text-gray-700 mb-1">Nama Pegawai:</span> 
+                            <span className="text-gray-900">{submission.userName}</span>
                           </div>
-                          <div className="flex items-center justify-between">
-                            <span className="font-medium">Lokasi:</span> 
-                            <span className="truncate">{submission.lokasi || '-'}</span>
+                          <div className="flex flex-col">
+                            <span className="font-medium text-gray-700 mb-1">Lokasi:</span> 
+                            <span className="text-gray-900">{submission.lokasi || '-'}</span>
                           </div>
-                          <div className="flex items-center justify-between">
-                            <span className="font-medium">Dibuat oleh:</span> 
-                            <span className="truncate">{submission.userName}</span>
+                          <div className="flex flex-col">
+                            <span className="font-medium text-gray-700 mb-1">Tanggal Laporan:</span> 
+                            <span className="text-gray-900">{submission.tanggalLaporan}</span>
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="font-medium text-gray-700 mb-1">Nama Pemilihan:</span> 
+                            <span className="text-gray-900">{submission.pemilihanJudul || '-'}</span>
                           </div>
                         </div>
 

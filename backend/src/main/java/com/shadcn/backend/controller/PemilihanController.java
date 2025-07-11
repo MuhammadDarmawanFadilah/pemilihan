@@ -170,10 +170,18 @@ public class PemilihanController {
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String tingkat,
             @RequestParam(required = false) String status,
+            @RequestParam(required = false) String provinsi,
+            @RequestParam(required = false) String kota,
+            @RequestParam(required = false) String kecamatan,
+            @RequestParam(required = false) String provinsiId,
+            @RequestParam(required = false) String kotaId,
+            @RequestParam(required = false) String kecamatanId,
+            @RequestParam(required = false) String pegawaiId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         try {
-            java.util.Map<String, Object> result = pemilihanService.searchPemilihanWithPaging(keyword, tingkat, status, page, size);
+            java.util.Map<String, Object> result = pemilihanService.searchPemilihanWithPaging(
+                keyword, tingkat, status, provinsi, kota, kecamatan, provinsiId, kotaId, kecamatanId, pegawaiId, page, size);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();

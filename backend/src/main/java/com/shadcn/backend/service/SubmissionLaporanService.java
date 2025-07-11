@@ -180,10 +180,14 @@ public class SubmissionLaporanService {
             Integer pemilihanId, 
             Integer laporanId, 
             Integer jenisLaporanId, 
-            Integer tahapanLaporanId) {
+            Integer tahapanLaporanId,
+            Long pegawaiId) {
+        
+        // If userId is provided, use it. If pegawaiId is provided and user is admin, use pegawaiId
+        Long targetUserId = (pegawaiId != null) ? pegawaiId : userId;
         
         Pageable pageable = PageRequest.of(page, size, Sort.by("tanggalBuat").descending());
-        Page<SubmissionLaporan> submissionPage = submissionLaporanRepository.findByUserIdOrderByTanggalBuatDesc(userId, pageable);
+        Page<SubmissionLaporan> submissionPage = submissionLaporanRepository.findByUserIdOrderByTanggalBuatDesc(targetUserId, pageable);
         
         List<DetailLaporanResponse> filteredSubmissions = submissionPage.getContent().stream()
             .filter(submission -> {
