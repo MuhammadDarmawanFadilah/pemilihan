@@ -500,6 +500,57 @@ export default function BuatLaporanSayaPage() {
     uploadedFiles: []
   });
 
+  // Auto-populate location from user data
+  useEffect(() => {
+    const loadLocationData = async () => {
+      try {
+        const response = await fetch(getApiUrl('auth/me/location'), {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          }
+        });
+        
+        if (response.ok) {
+          const locationData = await response.json();
+          const locationParts = [];
+          
+          if (locationData.kelurahan) locationParts.push(locationData.kelurahan);
+          if (locationData.kecamatan) locationParts.push(locationData.kecamatan);
+          if (locationData.kota) locationParts.push(locationData.kota);
+          if (locationData.provinsi) locationParts.push(locationData.provinsi);
+          
+          const autoLocation = locationParts.length > 0 ? locationParts.join(', ') : locationData.alamat || "";
+          
+          setSubmissionData(prev => ({
+            ...prev,
+            lokasi: autoLocation
+          }));
+        }
+      } catch (error) {
+        console.error('Error loading location data:', error);
+        // Fallback to biografi data if API fails
+        if (user?.biografi) {
+          const locationParts = [];
+          if (user.biografi.kelurahanNama) locationParts.push(user.biografi.kelurahanNama);
+          if (user.biografi.kecamatanNama) locationParts.push(user.biografi.kecamatanNama);
+          if (user.biografi.kotaNama) locationParts.push(user.biografi.kotaNama);
+          if (user.biografi.provinsiNama) locationParts.push(user.biografi.provinsiNama);
+          
+          const autoLocation = locationParts.length > 0 ? locationParts.join(', ') : user.biografi.alamat || "";
+          
+          setSubmissionData(prev => ({
+            ...prev,
+            lokasi: autoLocation
+          }));
+        }
+      }
+    };
+    
+    if (user) {
+      loadLocationData();
+    }
+  }, [user]);
+
   const steps = [
     { id: 1, title: "Pilih Pemilihan", description: "Pilih pemilihan, laporan, jenis, dan tahapan" },
     { id: 2, title: "Isi Laporan", description: "Masukkan detail laporan" },
@@ -638,14 +689,20 @@ export default function BuatLaporanSayaPage() {
 
   const loadPemilihanOptions = async () => {
     try {
-      const response = await fetch(getApiUrl('pemilihan'), {
+      const response = await fetch(getApiUrl('laporan/dropdown/pemilihan'), {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
         }
       });
       if (response.ok) {
         const data = await response.json();
-        setPemilihanOptions(data);
+        // Transform data to match expected format
+        const transformedData = data.map((item: any) => ({
+          pemilihanId: item.pemilihanId,
+          judulPemilihan: item.namaPemilihan,
+          status: 'AKTIF'
+        }));
+        setPemilihanOptions(transformedData);
       }
     } catch (error) {
       console.error('Error loading pemilihan:', error);
@@ -670,14 +727,17 @@ export default function BuatLaporanSayaPage() {
 
   const loadJenisLaporanOptions = async (laporanId: number) => {
     try {
-      const response = await fetch(getApiUrl(`laporan/${laporanId}/jenis-laporan`), {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+      // Get jenis laporan based on selected pemilihan instead of laporan
+      if (submissionData.pemilihanId) {
+        const response = await fetch(getApiUrl(`laporan/dropdown/jenis-laporan/${submissionData.pemilihanId}`), {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setJenisLaporanOptions(data);
         }
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setJenisLaporanOptions(data);
       }
     } catch (error) {
       console.error('Error loading jenis laporan:', error);

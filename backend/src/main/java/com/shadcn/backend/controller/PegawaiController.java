@@ -49,7 +49,7 @@ public class PegawaiController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MODERATOR')")
+    @PreAuthorize("hasAuthority('pegawai.read')")
     public ResponseEntity<Map<String, Object>> getAllPegawai(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String nama,
@@ -81,7 +81,7 @@ public class PegawaiController {
     }
 
     @GetMapping("/list")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MODERATOR')")
+    @PreAuthorize("hasAuthority('pegawai.read')")
     public ResponseEntity<List<PegawaiResponse>> getAllPegawaiList() {
         try {
             List<PegawaiResponse> pegawaiList = pegawaiService.getAllPegawai();
@@ -93,7 +93,7 @@ public class PegawaiController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MODERATOR')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MODERATOR') or (hasRole('USER') and #id == authentication.principal.id)")
     public ResponseEntity<PegawaiResponse> getPegawaiById(@PathVariable Long id) {
         try {
             Optional<PegawaiResponse> pegawaiOpt = pegawaiService.getPegawaiById(id);
@@ -177,7 +177,7 @@ public class PegawaiController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('pegawai.create')")
     public ResponseEntity<PegawaiResponse> createPegawai(@Valid @RequestBody PegawaiRequest request) {
         try {
             PegawaiResponse pegawai = pegawaiService.createPegawai(request);
@@ -192,7 +192,7 @@ public class PegawaiController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('pegawai.update') or (hasRole('USER') and #id == authentication.principal.id)")
     public ResponseEntity<PegawaiResponse> updatePegawai(
             @PathVariable Long id, 
             @Valid @RequestBody UpdatePegawaiRequest request) {
@@ -209,7 +209,7 @@ public class PegawaiController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('pegawai.delete')")
     public ResponseEntity<Void> deletePegawai(@PathVariable Long id) {
         try {
             pegawaiService.deletePegawai(id);
@@ -316,7 +316,7 @@ public class PegawaiController {
     }
 
     @GetMapping("/map-locations")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MODERATOR')")
+    @PreAuthorize("hasAuthority('lokasi-pegawai.read')")
     public ResponseEntity<List<PegawaiResponse>> getPegawaiMapLocations(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String nama,
@@ -333,5 +333,27 @@ public class PegawaiController {
             log.error("Error getting pegawai map locations: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
+    }
+
+    @PutMapping("/{id}/reset-password")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MODERATOR') or (hasRole('USER') and #id == authentication.principal.id)")
+    public ResponseEntity<?> resetPassword(@PathVariable Long id, @RequestBody Map<String, String> request) {
+        try {
+            String currentPassword = request.get("currentPassword");
+            String newPassword = request.get("newPassword");
+            
+            if (currentPassword == null || newPassword == null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Current password and new password are required"));
+            }
+            
+            PegawaiResponse updatedPegawai = pegawaiService.resetPassword(id, currentPassword, newPassword);
+            return ResponseEntity.ok(Map.of("message", "Password berhasil diubah", "pegawai", updatedPegawai));
+        } catch (RuntimeException e) {
+            log.error("Error resetting pegawai password: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            log.error("Error resetting pegawai password", e);
+            return ResponseEntity.internalServerError().body(Map.of("error", "Terjadi kesalahan saat mengubah password"));
+        }    
     }
 }

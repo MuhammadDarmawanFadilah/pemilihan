@@ -15,6 +15,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -34,7 +35,10 @@ import java.util.Map;
 @CrossOrigin(origins = "${frontend.url}", maxAge = 3600)
 public class DocumentController {
 
-    private final DocumentService documentService;    @GetMapping
+    private final DocumentService documentService;
+
+    @GetMapping
+    @PreAuthorize("hasAuthority('documents.read')")
     public ResponseEntity<Map<String, Object>> getAllDocuments(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
@@ -79,6 +83,7 @@ public class DocumentController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }    @GetMapping("/search")
+    @PreAuthorize("hasAuthority('documents.read')")
     public ResponseEntity<Map<String, Object>> searchDocuments(
             @RequestParam String keyword,
             @RequestParam(defaultValue = "0") int page,

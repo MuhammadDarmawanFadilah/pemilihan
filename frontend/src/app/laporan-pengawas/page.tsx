@@ -56,6 +56,7 @@ export default function LaporanPengawasPage() {
   const [selectedPegawai, setSelectedPegawai] = useState("all");
   const [selectedPegawaiId, setSelectedPegawaiId] = useState("all");
   const [showFilters, setShowFilters] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
   
   // Pagination states
   const [currentPage, setCurrentPage] = useState(0);
@@ -69,14 +70,23 @@ export default function LaporanPengawasPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    loadData();
-    
     // Set default pegawai filter for non-admin users
     if (user && user.role?.roleName !== 'ADMIN') {
       setSelectedPegawai(user.fullName || "");
       setSelectedPegawaiId(user.id?.toString() || "");
+      setIsInitialized(true);
+    } else if (user) {
+      // For admin or other roles, mark as initialized
+      setIsInitialized(true);
     }
-  }, [currentPage, pageSize, user]);
+  }, [user]);
+
+  useEffect(() => {
+    // Load data only after initialization is complete
+    if (isInitialized) {
+      loadData();
+    }
+  }, [currentPage, pageSize, selectedPegawaiId, isInitialized]);
 
   const loadData = async () => {
     const apiStatusFilter = selectedStatus === "all" ? "" : selectedStatus;

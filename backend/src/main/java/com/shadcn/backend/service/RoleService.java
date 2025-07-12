@@ -31,35 +31,65 @@ public class RoleService {
         
         // Public Menu Items (Always visible)
         "home.access",
-        "berita.read",
         
-        // User/Alumni Menu Items (Visible when authenticated)
-        "documents.read", "documents.create", "documents.update", "documents.delete",
-        "biografi.read", "biografi.create", "biografi.update", "biografi.delete",
-        "komunikasi.read", "komunikasi.create", "komunikasi.update", "komunikasi.delete",
-        "alumni-locations.read", "alumni-locations.create", "alumni-locations.update", "alumni-locations.delete",
-        "usulan.read", "usulan.create", "usulan.update", "usulan.delete",
-        "pelaksanaan.read", "pelaksanaan.create", "pelaksanaan.update", "pelaksanaan.delete",
-        "notifikasi.read", "notifikasi.create", "notifikasi.update", "notifikasi.delete",
+        // Menu Pegawai (Visible when authenticated)
+        "laporan-pengawas.read", "laporan-pengawas.create", "laporan-pengawas.update", "laporan-pengawas.delete",
+        "laporan-saya.read", "laporan-saya.create", "laporan-saya.update", "laporan-saya.delete",
+        "file-manager.read", "file-manager.create", "file-manager.update", "file-manager.delete",
         
-        // Admin Menu Items (Admin/Moderator only)
-        "users.read", "users.create", "users.update", "users.delete",
+        // Administrasi Pegawai
+        "pegawai.read", "pegawai.create", "pegawai.update", "pegawai.delete",
+        "lokasi-pegawai.read", "lokasi-pegawai.create", "lokasi-pegawai.update", "lokasi-pegawai.delete",
         "roles.read", "roles.create", "roles.update", "roles.delete",
-        "berita.admin", "berita.create", "berita.update", "berita.delete",
-        "documents.admin",
-        "biografi.admin",
-        "invitations.history", "invitations.approval",
-        "birthday.admin",
+        "file-pegawai.read", "file-pegawai.create", "file-pegawai.update", "file-pegawai.delete",
         
-        // Master Data Menu Items (Admin/Moderator only)
-        "master-data.spesialisasi.read", "master-data.spesialisasi.create", "master-data.spesialisasi.update", "master-data.spesialisasi.delete",
-        "master-data.wilayah-provinsi.read", "master-data.wilayah-provinsi.create", "master-data.wilayah-provinsi.update", "master-data.wilayah-provinsi.delete",
-        "master-data.wilayah-kota.read", "master-data.wilayah-kota.create", "master-data.wilayah-kota.update", "master-data.wilayah-kota.delete",
-        "master-data.wilayah-kecamatan.read", "master-data.wilayah-kecamatan.create", "master-data.wilayah-kecamatan.update", "master-data.wilayah-kecamatan.delete",
-        "master-data.wilayah-kelurahan.read", "master-data.wilayah-kelurahan.create", "master-data.wilayah-kelurahan.update", "master-data.wilayah-kelurahan.delete",
-        "master-data.posisi.read", "master-data.posisi.create", "master-data.posisi.update", "master-data.posisi.delete",
-        "master-data.hobi.read", "master-data.hobi.create", "master-data.hobi.update", "master-data.hobi.delete",
-        "master-data.agama.read", "master-data.agama.create", "master-data.agama.update", "master-data.agama.delete"
+        // Administrasi Pemilihan  
+        "pemilihan.read", "pemilihan.create", "pemilihan.update", "pemilihan.delete",
+        "laporan.read", "laporan.create", "laporan.update", "laporan.delete",
+        "jenis-laporan.read", "jenis-laporan.create", "jenis-laporan.update", "jenis-laporan.delete",
+        "lokasi-pemilihan.read", "lokasi-pemilihan.create", "lokasi-pemilihan.update", "lokasi-pemilihan.delete",
+        
+        // Master Data  
+        "kategori-file.read", "kategori-file.create", "kategori-file.update", "kategori-file.delete",
+        "jabatan.read", "jabatan.create", "jabatan.update", "jabatan.delete",
+        "wilayah-provinsi.read", "wilayah-provinsi.create", "wilayah-provinsi.update", "wilayah-provinsi.delete",
+        "wilayah-kota.read", "wilayah-kota.create", "wilayah-kota.update", "wilayah-kota.delete",
+        "wilayah-kecamatan.read", "wilayah-kecamatan.create", "wilayah-kecamatan.update", "wilayah-kecamatan.delete",
+        "wilayah-kelurahan.read", "wilayah-kelurahan.create", "wilayah-kelurahan.update", "wilayah-kelurahan.delete"
+    );
+    
+    // Order permissions according to sidebar structure
+    public static final List<String> PERMISSION_ORDER = Arrays.asList(
+        // Menu Utama
+        "home.access",
+        
+        // Menu Pegawai
+        "laporan-pengawas.read", "laporan-pengawas.create", "laporan-pengawas.update", "laporan-pengawas.delete",
+        "laporan-saya.read", "laporan-saya.create", "laporan-saya.update", "laporan-saya.delete", 
+        "file-manager.read", "file-manager.create", "file-manager.update", "file-manager.delete",
+        
+        // Administrasi Pegawai
+        "pegawai.read", "pegawai.create", "pegawai.update", "pegawai.delete",
+        "lokasi-pegawai.read", "lokasi-pegawai.create", "lokasi-pegawai.update", "lokasi-pegawai.delete",
+        "roles.read", "roles.create", "roles.update", "roles.delete",
+        "file-pegawai.read", "file-pegawai.create", "file-pegawai.update", "file-pegawai.delete",
+        
+        // Administrasi Pemilihan
+        "pemilihan.read", "pemilihan.create", "pemilihan.update", "pemilihan.delete",
+        "laporan.read", "laporan.create", "laporan.update", "laporan.delete",
+        "jenis-laporan.read", "jenis-laporan.create", "jenis-laporan.update", "jenis-laporan.delete",
+        "lokasi-pemilihan.read", "lokasi-pemilihan.create", "lokasi-pemilihan.update", "lokasi-pemilihan.delete",
+        
+        // Master Data
+        "kategori-file.read", "kategori-file.create", "kategori-file.update", "kategori-file.delete",
+        "jabatan.read", "jabatan.create", "jabatan.update", "jabatan.delete",
+        "wilayah-provinsi.read", "wilayah-provinsi.create", "wilayah-provinsi.update", "wilayah-provinsi.delete",
+        "wilayah-kota.read", "wilayah-kota.create", "wilayah-kota.update", "wilayah-kota.delete",
+        "wilayah-kecamatan.read", "wilayah-kecamatan.create", "wilayah-kecamatan.update", "wilayah-kecamatan.delete",
+        "wilayah-kelurahan.read", "wilayah-kelurahan.create", "wilayah-kelurahan.update", "wilayah-kelurahan.delete",
+        
+        // System
+        "dashboard.view", "admin.panel.access"
     );
       public List<Role> getAllRoles() {
         return roleRepository.findAllOrderByName();
@@ -146,7 +176,8 @@ public class RoleService {
     }
     
     public Set<String> getAvailablePermissions() {
-        return AVAILABLE_PERMISSIONS;
+        // Return permissions in the order defined by PERMISSION_ORDER
+        return new java.util.LinkedHashSet<>(PERMISSION_ORDER);
     }
     
     public void initializeDefaultRoles() {
@@ -165,50 +196,27 @@ public class RoleService {
             moderatorRole.setRoleName("MODERATOR");
             moderatorRole.setDescription("Moderator dengan akses admin terbatas");
             moderatorRole.setPermissions(Set.of(
-                "dashboard.view", "admin.panel.access",
-                "home.access", "berita.read", "berita.create", "berita.update", "berita.delete", "berita.admin",
-                "documents.read", "documents.create", "documents.update", "documents.delete", "documents.admin",
-                "biografi.read", "biografi.create", "biografi.update", "biografi.delete", "biografi.admin",
-                "komunikasi.read", "komunikasi.create", "komunikasi.update", "komunikasi.delete",
-                "alumni-locations.read", "alumni-locations.update",
-                "usulan.read", "usulan.create", "usulan.update", "usulan.delete",
-                "pelaksanaan.read", "pelaksanaan.create", "pelaksanaan.update", "pelaksanaan.delete",
-                "notifikasi.read",
-                "users.read", "users.update",
-                "invitations.history", "invitations.approval",
-                "birthday.admin"
+                "dashboard.view", "admin.panel.access", "home.access",
+                "laporan-pengawas.read", "laporan-saya.read", "file-manager.read",
+                "pegawai.read", "pegawai.update", "lokasi-pegawai.read", "roles.read", "file-pegawai.read",
+                "pemilihan.read", "laporan.read", "jenis-laporan.read", "lokasi-pemilihan.read",
+                "kategori-file.read", "jabatan.read", 
+                "wilayah-provinsi.read", "wilayah-kota.read", "wilayah-kecamatan.read", "wilayah-kelurahan.read"
             ));
             roleRepository.save(moderatorRole);
         }
         
-        // Create ALUMNI role if not exists
-        if (!roleRepository.existsByRoleName("ALUMNI")) {
-            Role alumniRole = new Role();
-            alumniRole.setRoleName("ALUMNI");
-            alumniRole.setDescription("Alumni dengan akses ke fitur alumni");
-            alumniRole.setPermissions(Set.of(
-                "dashboard.view", "home.access", "berita.read",
-                "documents.read", "documents.create", "documents.update",
-                "biografi.read", "biografi.create", "biografi.update",
-                "komunikasi.read", "komunikasi.create", "komunikasi.update",
-                "alumni-locations.read", "alumni-locations.update",
-                "usulan.read", "usulan.create", "usulan.update",
-                "pelaksanaan.read", "pelaksanaan.create", "pelaksanaan.update",
-                "notifikasi.read"
+        // Create PEGAWAI role if not exists
+        if (!roleRepository.existsByRoleName("PEGAWAI")) {
+            Role pegawaiRole = new Role();
+            pegawaiRole.setRoleName("PEGAWAI");
+            pegawaiRole.setDescription("Pegawai dengan akses ke fitur pegawai");
+            pegawaiRole.setPermissions(Set.of(
+                "dashboard.view", "home.access",
+                "laporan-pengawas.read", "laporan-saya.read", "laporan-saya.create", "laporan-saya.update",
+                "file-manager.read", "file-manager.create", "file-manager.update"
             ));
-            roleRepository.save(alumniRole);
-        }
-        
-        // Create USER role if not exists
-        if (!roleRepository.existsByRoleName("USER")) {
-            Role userRole = new Role();
-            userRole.setRoleName("USER");
-            userRole.setDescription("User biasa dengan akses dasar");
-            userRole.setPermissions(Set.of(
-                "dashboard.view", "home.access", "berita.read",
-                "documents.read", "biografi.read", "notifikasi.read"
-            ));
-            roleRepository.save(userRole);
+            roleRepository.save(pegawaiRole);
         }
     }
 }

@@ -41,10 +41,10 @@ export default function MonthlyDataChart({ monthlyData }: MonthlyDataChartProps)
         <div className="flex items-center justify-between">
           <div className="space-y-2">
             <CardTitle className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              Analisis Data Bulanan
+              Data Registrasi Bulanan
             </CardTitle>
             <p className="text-gray-600 dark:text-gray-400">
-              Visualisasi aktivitas dan pertumbuhan sistem
+              Visualisasi data pegawai dan pemilihan per bulan
             </p>
           </div>
           <div className="flex items-center space-x-2">
@@ -56,30 +56,24 @@ export default function MonthlyDataChart({ monthlyData }: MonthlyDataChartProps)
       
       <CardContent className="relative">
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 bg-gray-100 dark:bg-gray-700 p-1 rounded-xl">
+          <TabsList className="grid w-full grid-cols-3 bg-gray-100 dark:bg-gray-700 p-1 rounded-xl">
             <TabsTrigger 
               value="overview" 
               className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:text-blue-600 font-medium transition-all duration-200"
             >
-              Overview
+              Data Pegawai
             </TabsTrigger>
             <TabsTrigger 
               value="users"
               className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:text-green-600 font-medium transition-all duration-200"
             >
-              Pengguna
+              Data Pemilihan
             </TabsTrigger>
             <TabsTrigger 
               value="content"
               className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:text-orange-600 font-medium transition-all duration-200"
             >
-              Konten
-            </TabsTrigger>
-            <TabsTrigger 
-              value="engagement"
-              className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:text-purple-600 font-medium transition-all duration-200"
-            >
-              Engagement
+              Aktivitas Login
             </TabsTrigger>
           </TabsList>
           
@@ -123,27 +117,19 @@ export default function MonthlyDataChart({ monthlyData }: MonthlyDataChartProps)
                     <Legend />
                     <Area 
                       type="monotone" 
-                      dataKey="logins" 
+                      dataKey="pegawai" 
                       stackId="1" 
                       stroke={chartColors.primary}
                       fill="url(#colorLogins)"
-                      name="Login"
+                      name="Data Pegawai"
                     />
                     <Area 
                       type="monotone" 
-                      dataKey="newMembers" 
+                      dataKey="pemilihan" 
                       stackId="1" 
                       stroke={chartColors.secondary}
                       fill="url(#colorMembers)"
-                      name="Anggota Baru"
-                    />
-                    <Area 
-                      type="monotone" 
-                      dataKey="newsPublished" 
-                      stackId="1" 
-                      stroke={chartColors.tertiary}
-                      fill="url(#colorNews)"
-                      name="Berita"
+                      name="Data Pemilihan"
                     />
                   </AreaChart>
                 </ResponsiveContainer>
@@ -177,21 +163,12 @@ export default function MonthlyDataChart({ monthlyData }: MonthlyDataChartProps)
                     <Legend />
                     <Line 
                       type="monotone" 
-                      dataKey="logins" 
+                      dataKey="pemilihan" 
                       stroke={chartColors.primary}
                       strokeWidth={3}
                       dot={{ fill: chartColors.primary, r: 6 }}
                       activeDot={{ r: 8, fill: chartColors.primary }}
-                      name="Total Login"
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="newMembers" 
-                      stroke={chartColors.secondary}
-                      strokeWidth={3}
-                      dot={{ fill: chartColors.secondary, r: 6 }}
-                      activeDot={{ r: 8, fill: chartColors.secondary }}
-                      name="Anggota Baru"
+                      name="Data Pemilihan"
                     />
                   </LineChart>
                 </ResponsiveContainer>
@@ -224,78 +201,12 @@ export default function MonthlyDataChart({ monthlyData }: MonthlyDataChartProps)
                     />
                     <Legend />
                     <Bar 
-                      dataKey="newsPublished" 
+                      dataKey="logins" 
                       fill={chartColors.primary} 
-                      name="Berita" 
-                      radius={[4, 4, 0, 0]}
-                    />
-                    <Bar 
-                      dataKey="proposalsSubmitted" 
-                      fill={chartColors.secondary} 
-                      name="Usulan"
-                      radius={[4, 4, 0, 0]}
-                    />
-                    <Bar 
-                      dataKey="documentsUploaded" 
-                      fill={chartColors.tertiary} 
-                      name="Dokumen"
+                      name="Login Harian" 
                       radius={[4, 4, 0, 0]}
                     />
                   </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="engagement" className="space-y-4">
-            <div className="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-950/20 dark:to-indigo-950/20 rounded-xl p-4">
-              <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={monthlyData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis 
-                      dataKey="month" 
-                      tick={{ fontSize: 12 }}
-                      stroke="#6b7280"
-                    />
-                    <YAxis 
-                      tick={{ fontSize: 12 }}
-                      stroke="#6b7280"
-                    />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: 'white', 
-                        border: 'none', 
-                        borderRadius: '12px', 
-                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' 
-                      }}
-                    />
-                    <Legend />
-                    <Line 
-                      type="monotone" 
-                      dataKey="logins" 
-                      stroke={chartColors.primary}
-                      strokeWidth={3}
-                      dot={{ fill: chartColors.primary, r: 4 }}
-                      name="Login"
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="newsPublished" 
-                      stroke={chartColors.secondary}
-                      strokeWidth={3}
-                      dot={{ fill: chartColors.secondary, r: 4 }}
-                      name="Berita Dipublikasi"
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="proposalsSubmitted" 
-                      stroke={chartColors.tertiary}
-                      strokeWidth={3}
-                      dot={{ fill: chartColors.tertiary, r: 4 }}
-                      name="Usulan Diajukan"
-                    />
-                  </LineChart>
                 </ResponsiveContainer>
               </div>
             </div>

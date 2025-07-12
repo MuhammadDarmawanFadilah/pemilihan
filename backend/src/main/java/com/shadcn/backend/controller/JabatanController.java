@@ -17,12 +17,12 @@ import java.util.List;
 @RequestMapping("/api/admin/master-data/jabatan")
 @RequiredArgsConstructor
 @Slf4j
-@PreAuthorize("hasRole('ADMIN') or hasRole('MODERATOR')")
 public class JabatanController {
     
     private final JabatanService jabatanService;
     
     @GetMapping
+    @PreAuthorize("hasAuthority('jabatan.read')")
     public ResponseEntity<Page<Jabatan>> getAllJabatan(
             @RequestParam(defaultValue = "") String search,
             @RequestParam(defaultValue = "0") int page,
@@ -39,6 +39,7 @@ public class JabatanController {
     }
     
     @GetMapping("/active")
+    @PreAuthorize("hasAuthority('jabatan.read')")
     public ResponseEntity<List<Jabatan>> getActiveJabatan() {
         try {
             List<Jabatan> activeJabatan = jabatanService.getAllActiveJabatan();
@@ -50,6 +51,7 @@ public class JabatanController {
     }
     
     @GetMapping("/all")
+    @PreAuthorize("hasAuthority('jabatan.read')")
     public ResponseEntity<List<Jabatan>> getAllJabatanList() {
         try {
             List<Jabatan> jabatanList = jabatanService.getAllJabatan();
@@ -61,6 +63,7 @@ public class JabatanController {
     }
     
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('jabatan.read')")
     public ResponseEntity<Jabatan> getJabatanById(@PathVariable Long id) {
         try {
             return jabatanService.getJabatanById(id)
@@ -73,6 +76,7 @@ public class JabatanController {
     }
     
     @PostMapping
+    @PreAuthorize("hasAuthority('jabatan.create')")
     public ResponseEntity<?> createJabatan(@Valid @RequestBody Jabatan jabatan) {
         try {
             Jabatan createdJabatan = jabatanService.createJabatan(jabatan);
@@ -88,6 +92,7 @@ public class JabatanController {
     }
     
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('jabatan.update')")
     public ResponseEntity<?> updateJabatan(@PathVariable Long id, @Valid @RequestBody Jabatan jabatan) {
         try {
             Jabatan updatedJabatan = jabatanService.updateJabatan(id, jabatan);
@@ -103,6 +108,7 @@ public class JabatanController {
     }
     
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('jabatan.delete')")
     public ResponseEntity<?> deleteJabatan(@PathVariable Long id) {
         try {
             jabatanService.deleteJabatan(id);
@@ -118,6 +124,7 @@ public class JabatanController {
     }
     
     @PatchMapping("/{id}/toggle-active")
+    @PreAuthorize("hasAuthority('jabatan.update')")
     public ResponseEntity<?> toggleJabatanStatus(@PathVariable Long id) {
         try {
             Jabatan jabatan = jabatanService.toggleJabatanStatus(id);

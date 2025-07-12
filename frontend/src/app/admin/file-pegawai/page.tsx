@@ -123,7 +123,7 @@ export default function FilePegawaiPage() {
       if (selectedKategori) params.append('kategoriId', selectedKategori.toString())
       
       const response = await fetch(
-        getApiUrl(`admin/file-pegawai?${params.toString()}`),
+        getApiUrl(`api/admin/file-pegawai?${params.toString()}`),
         {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
@@ -149,7 +149,7 @@ export default function FilePegawaiPage() {
 
   const loadPegawaiOptions = async () => {
     try {
-      const response = await fetch(getApiUrl('pegawai/active'), {
+      const response = await fetch(getApiUrl('api/pegawai/active'), {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
         }
@@ -257,7 +257,7 @@ export default function FilePegawaiPage() {
 
     try {
       setLoading(true)
-      const response = await fetch(getApiUrl(`admin/file-pegawai/${selectedFile.id}`), {
+      const response = await fetch(getApiUrl(`api/admin/file-pegawai/${selectedFile.id}`), {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
@@ -286,7 +286,7 @@ export default function FilePegawaiPage() {
     
     try {
       setLoading(true)
-      const response = await fetch(getApiUrl(`admin/file-pegawai/${selectedFile.id}/toggle-active`), {
+      const response = await fetch(getApiUrl(`api/admin/file-pegawai/${selectedFile.id}/toggle-active`), {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('auth_token')}`

@@ -102,11 +102,12 @@ const AppSidebar = () => {
       url: "/",
       icon: Home,
     },
-    {
-      title: "Portal Berita",      url: "/berita",
-      icon: Newspaper,
-      badge: "New",
-    },
+    // {
+    //   title: "Portal Berita",
+    //   url: "/berita",
+    //   icon: Newspaper,
+    //   badge: "New",
+    // },
   ];
 
   // User items (accessible when logged in)
@@ -160,8 +161,14 @@ const AppSidebar = () => {
       url: "/laporan-saya",
       icon: FileText,
     },
-  ];  // Admin items (accessible to admin/moderator)
-  const adminItems = [
+    {
+      title: "File Manager",
+      url: "/file-manager",
+      icon: FolderOpen,
+      badge: "New",
+    },
+  ];  // Admin Pegawai items (accessible to admin/moderator)
+  const adminPegawaiItems = [
     {
       title: "Pegawai",
       url: "/admin/pegawai",
@@ -179,9 +186,19 @@ const AppSidebar = () => {
       icon: Shield,
     },
     {
-      title: "Jenis Laporan",
-      url: "/admin/jenis-laporan",
+      title: "File Pegawai",
+      url: "/admin/file-pegawai",
       icon: FileText,
+    },
+  ];
+
+  // Admin Pemilihan items (accessible to admin/moderator)
+  const adminPemilihanItems = [
+    {
+      title: "Pemilihan",
+      url: "/admin/pemilihan",
+      icon: Vote,
+      badge: "New",
     },
     {
       title: "Laporan",
@@ -189,10 +206,9 @@ const AppSidebar = () => {
       icon: FolderOpen,
     },
     {
-      title: "Pemilihan",
-      url: "/admin/pemilihan",
-      icon: Vote,
-      badge: "New",
+      title: "Jenis Laporan",
+      url: "/admin/jenis-laporan",
+      icon: FileText,
     },
     {
       title: "Lokasi Pemilihan",
@@ -229,11 +245,6 @@ const AppSidebar = () => {
     //   url: "/admin/birthday",
     //   icon: Gift,
     // },
-    {
-      title: "File Pegawai",
-      url: "/admin/file-pegawai",
-      icon: FileText,
-    },
   ];// Master Data items (accessible to admin/moderator)
   const masterDataItems = [
     // {
@@ -241,6 +252,16 @@ const AppSidebar = () => {
     //   url: "/admin/master-data/spesialisasi",
     //   icon: Stethoscope,
     // },
+    {
+      title: "Kategori File",
+      url: "/admin/master-data/file-kategori",
+      icon: FolderOpen,
+    },
+    {
+      title: "Jabatan",
+      url: "/admin/master-data/jabatan",
+      icon: Briefcase,
+    },
     {
       title: "Wilayah - Provinsi",
       url: "/admin/master-data/wilayah-provinsi",
@@ -276,16 +297,6 @@ const AppSidebar = () => {
     //   url: "/admin/master-data/agama",
     //   icon: Shield,
     // },
-    {
-      title: "Kategori File",
-      url: "/admin/master-data/file-kategori",
-      icon: FolderOpen,
-    },
-    {
-      title: "Jabatan",
-      url: "/admin/master-data/jabatan",
-      icon: Briefcase,
-    },
   ];
 
   const isAdmin = user?.role?.roleName === 'ADMIN' || user?.role?.roleName === 'MODERATOR';
@@ -307,7 +318,7 @@ const AppSidebar = () => {
           <SidebarMenuItem>            <SidebarMenuButton asChild className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-md">
               <Link href="/" onClick={handleMenuClick} className="flex items-center gap-2 md:gap-3">
                 <Image src="/logo.svg" alt="logo" width={24} height={24} className="md:w-8 md:h-8 flex-shrink-0" />
-                <span className="font-semibold text-sm md:text-base group-data-[collapsible=icon]:group-data-[state=collapsed]:hidden">Sistem IDAU</span>
+                <span className="font-semibold text-sm md:text-base group-data-[collapsible=icon]:group-data-[state=collapsed]:hidden">Tren-Silapor</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -339,14 +350,14 @@ const AppSidebar = () => {
                           <item.icon className="h-4 w-4 flex-shrink-0" />
                           <span className="hidden md:inline truncate">{item.title}</span>
                           <span className="md:hidden text-xs truncate max-w-[80px]">
-                            {item.title === "Portal Berita" ? "Berita" : item.title}
+                            {item.title}
                           </span>
-                          {item.badge && (
+                          {(item as any).badge && (
                             <SidebarMenuBadge className="ml-auto bg-green-500 text-white text-xs px-1.5 py-0.5 rounded-full hidden md:inline-block">
-                              {item.badge}
+                              {(item as any).badge}
                             </SidebarMenuBadge>
                           )}
-                          {item.badge && (
+                          {(item as any).badge && (
                             <div className="md:hidden w-2 h-2 bg-green-500 rounded-full ml-auto flex-shrink-0"></div>
                           )}
                         </Link>
@@ -357,7 +368,7 @@ const AppSidebar = () => {
               </SidebarGroupContent>
             </CollapsibleContent>
           </SidebarGroup>
-        </Collapsible>{/* USER SECTION - Only visible when authenticated */}
+        </Collapsible>        {/* USER SECTION - Only visible when authenticated */}
         {isAuthenticated && (
           <Collapsible open={isAlumniMenuOpen} onOpenChange={setIsAlumniMenuOpen} className="group/collapsible">
             <SidebarGroup>
@@ -365,8 +376,8 @@ const AppSidebar = () => {
                 <CollapsibleTrigger className="w-full flex items-center justify-between hover:bg-sidebar-accent hover:text-sidebar-accent-foreground px-2 py-1.5 text-sm font-medium transition-colors rounded-md">
                   <span className="flex items-center gap-2">
                     <Users className="h-4 w-4" />
-                    <span className="hidden md:inline">Menu Alumni</span>
-                    <span className="md:hidden">Alumni</span>
+                    <span className="hidden md:inline">Menu Pegawai</span>
+                    <span className="md:hidden">Pegawai</span>
                   </span>
                   <ChevronDown className="h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-180" />
                 </CollapsibleTrigger>
@@ -422,21 +433,17 @@ const AppSidebar = () => {
                   <SidebarMenu className="space-y-1">                    <SidebarMenuItem>
                       <SidebarMenuButton asChild className="w-full">
                         <Link 
-                          href={user?.biografi?.biografiId ? `/biografi/${user.biografi.biografiId}/edit` : '/biografi/create'}
+                          href="/pegawai/edit"
                           onClick={handleMenuClick}
                           className="flex items-center gap-3 px-3 py-2 text-sm font-medium transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-md group"
                         >
                           <Edit className="h-4 w-4 flex-shrink-0" />
-                          <span className="hidden md:inline truncate">
-                            {user?.biografi?.biografiId ? 'Edit Biografi' : 'Buat Biografi'}
-                          </span>
-                          <span className="md:hidden text-xs truncate">
-                            {user?.biografi?.biografiId ? 'Edit' : 'Buat'}
-                          </span>
+                          <span className="hidden md:inline truncate">Edit Pegawai</span>
+                          <span className="md:hidden text-xs truncate">Edit</span>
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>                    <SidebarMenuItem>                      <SidebarMenuButton asChild className="w-full">
-                        {user?.biografi?.biografiId ? (
+                        {/* {user?.biografi?.biografiId ? (
                           <Link 
                             href={`/alumni-card/${encodeId(user.biografi.biografiId)}`}
                             onClick={handleMenuClick}
@@ -452,7 +459,7 @@ const AppSidebar = () => {
                             <span className="hidden md:inline truncate">Kartu Alumni</span>
                             <span className="md:hidden text-xs truncate">Kartu</span>
                           </div>
-                        )}
+                        )} */}
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                     <SidebarMenuItem>
@@ -475,19 +482,51 @@ const AppSidebar = () => {
             </SidebarGroup>
           </Collapsible>
         )}
-          {/* ADMIN SECTION - Only visible for admin/moderator */}
+          {/* ADMIN PEGAWAI SECTION - Only visible for admin/moderator */}
         {isAuthenticated && isAdmin && (
           <Collapsible defaultOpen className="group/collapsible">
             <SidebarGroup>              <SidebarGroupLabel asChild>
                 <CollapsibleTrigger>
-                  <Shield className="mr-2 h-4 w-4" />
-                  Administration
+                  <Users className="mr-2 h-4 w-4" />
+                  Administrasi Pegawai
                   <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
                 </CollapsibleTrigger>
               </SidebarGroupLabel>
               <CollapsibleContent>
                 <SidebarGroupContent>
-                  <SidebarMenu>                    {adminItems.map((item) => (
+                  <SidebarMenu>                    {adminPegawaiItems.map((item) => (
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton asChild>
+                          <Link href={item.url} onClick={handleMenuClick}>
+                            <item.icon />
+                            <span>{item.title}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                        {item.badge && (
+                          <SidebarMenuBadge>{item.badge}</SidebarMenuBadge>
+                        )}
+                      </SidebarMenuItem>
+                    ))}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </CollapsibleContent>
+            </SidebarGroup>
+          </Collapsible>
+        )}
+
+        {/* ADMIN PEMILIHAN SECTION - Only visible for admin/moderator */}
+        {isAuthenticated && isAdmin && (
+          <Collapsible defaultOpen className="group/collapsible">
+            <SidebarGroup>              <SidebarGroupLabel asChild>
+                <CollapsibleTrigger>
+                  <Vote className="mr-2 h-4 w-4" />
+                  Administrasi Pemilihan
+                  <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+                </CollapsibleTrigger>
+              </SidebarGroupLabel>
+              <CollapsibleContent>
+                <SidebarGroupContent>
+                  <SidebarMenu>                    {adminPemilihanItems.map((item) => (
                       <SidebarMenuItem key={item.title}>
                         <SidebarMenuButton asChild>
                           <Link href={item.url} onClick={handleMenuClick}>

@@ -22,7 +22,7 @@ public class MasterAgamaController {
     
     private final MasterAgamaService service;
       @GetMapping
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MODERATOR')")
+    @PreAuthorize("hasAuthority('master-data.read')")
     public ResponseEntity<Page<MasterAgamaResponse>> findAll(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) Boolean isActive,
@@ -46,7 +46,7 @@ public class MasterAgamaController {
     }
     
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MODERATOR')")
+    @PreAuthorize("hasAuthority('master-data.read')")
     public ResponseEntity<MasterAgamaResponse> findById(@PathVariable Long id) {
         log.info("GET /api/admin/master-data/agama/{}", id);
         MasterAgamaResponse result = service.findById(id);
@@ -54,7 +54,7 @@ public class MasterAgamaController {
     }
     
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MODERATOR')")
+    @PreAuthorize("hasAuthority('master-data.create')")
     public ResponseEntity<MasterAgamaResponse> create(@Valid @RequestBody MasterAgamaRequest request) {
         log.info("POST /api/admin/master-data/agama - {}", request);
         MasterAgamaResponse result = service.create(request);
@@ -62,7 +62,7 @@ public class MasterAgamaController {
     }
     
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MODERATOR')")
+    @PreAuthorize("hasAuthority('master-data.update')")
     public ResponseEntity<MasterAgamaResponse> update(@PathVariable Long id, @Valid @RequestBody MasterAgamaRequest request) {
         log.info("PUT /api/admin/master-data/agama/{} - {}", id, request);
         MasterAgamaResponse result = service.update(id, request);
@@ -70,7 +70,7 @@ public class MasterAgamaController {
     }
     
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('master-data.delete')")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         log.info("DELETE /api/admin/master-data/agama/{}", id);
         service.delete(id);
@@ -78,7 +78,7 @@ public class MasterAgamaController {
     }
     
     @PatchMapping("/{id}/toggle-active")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MODERATOR')")
+    @PreAuthorize("hasAuthority('master-data.update')")
     public ResponseEntity<MasterAgamaResponse> toggleActive(@PathVariable Long id) {
         log.info("PATCH /api/admin/master-data/agama/{}/toggle-active", id);
         MasterAgamaResponse result = service.toggleActive(id);

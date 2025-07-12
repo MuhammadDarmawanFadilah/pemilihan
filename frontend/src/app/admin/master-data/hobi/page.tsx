@@ -233,7 +233,7 @@ export default function HobiMasterDataPage() {
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Master Data Hobi</h1>          <p className="text-muted-foreground">
-            Kelola data hobi untuk Sistem IDAU
+            Kelola data hobi untuk Sistem Tren-Silapor
           </p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

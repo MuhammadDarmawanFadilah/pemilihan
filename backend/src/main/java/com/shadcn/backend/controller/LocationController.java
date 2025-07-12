@@ -117,7 +117,7 @@ public class LocationController {
     
     // Create provinsi (ADMIN)
     @PostMapping("/admin/provinsi")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MODERATOR')")
+    @PreAuthorize("hasAuthority('wilayah-provinsi.create')")
     public ResponseEntity<ProvinsiResponseDTO> createProvinsi(@Valid @RequestBody ProvinsiRequest request) {
         log.info("POST /api/location/admin/provinsi - {}", request);
         
@@ -135,7 +135,7 @@ public class LocationController {
     
     // Update provinsi (ADMIN)
     @PutMapping("/admin/provinsi/{id}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MODERATOR')")
+    @PreAuthorize("hasAuthority('wilayah-provinsi.update')")
     public ResponseEntity<ProvinsiResponseDTO> updateProvinsi(@PathVariable Long id, @Valid @RequestBody ProvinsiRequest request) {
         log.info("PUT /api/location/admin/provinsi/{} - {}", id, request);
         
@@ -153,7 +153,7 @@ public class LocationController {
     
     // Delete provinsi (ADMIN)
     @DeleteMapping("/admin/provinsi/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('wilayah-provinsi.delete')")
     public ResponseEntity<Void> deleteProvinsi(@PathVariable Long id) {
         log.info("DELETE /api/location/admin/provinsi/{}", id);
         
@@ -171,7 +171,7 @@ public class LocationController {
     
     // Get kota with pagination (ADMIN)
     @GetMapping("/admin/kota")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MODERATOR')")
+    @PreAuthorize("hasAuthority('wilayah-kota.read')")
     public ResponseEntity<Page<KotaResponseDTO>> getAllKotaWithPagination(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) Long provinsiId,
@@ -192,7 +192,7 @@ public class LocationController {
     
     // Get kota by ID (ADMIN)
     @GetMapping("/admin/kota/{id}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MODERATOR')")
+    @PreAuthorize("hasAuthority('wilayah-kota.read')")
     public ResponseEntity<KotaResponseDTO> getKotaByIdAdmin(@PathVariable Long id) {
         log.info("GET /api/location/admin/kota/{}", id);
         
@@ -210,7 +210,7 @@ public class LocationController {
     
     // Create kota (ADMIN)
     @PostMapping("/admin/kota")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MODERATOR')")
+    @PreAuthorize("hasAuthority('wilayah-kota.create')")
     public ResponseEntity<KotaResponseDTO> createKota(@Valid @RequestBody KotaRequest request) {
         log.info("POST /api/location/admin/kota - {}", request);
         
@@ -228,7 +228,7 @@ public class LocationController {
     
     // Update kota (ADMIN)
     @PutMapping("/admin/kota/{id}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MODERATOR')")
+    @PreAuthorize("hasAuthority('wilayah-kota.update')")
     public ResponseEntity<KotaResponseDTO> updateKota(@PathVariable Long id, @Valid @RequestBody KotaRequest request) {
         log.info("PUT /api/location/admin/kota/{} - {}", id, request);
         
@@ -246,7 +246,7 @@ public class LocationController {
     
     // Delete kota (ADMIN)
     @DeleteMapping("/admin/kota/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('wilayah-kota.delete')")
     public ResponseEntity<Void> deleteKota(@PathVariable Long id) {
         log.info("DELETE /api/location/admin/kota/{}", id);
         

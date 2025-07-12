@@ -1,3 +1,5 @@
+import { getApiUrl } from '@/lib/config';
+
 interface DashboardStats {
   monthlyLoginCount: number;
   recentLogins: UserInfo[];
@@ -107,12 +109,12 @@ interface ActivityFeed {
   color: string;
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:8181';
-
 export class DashboardService {
   static async getDashboardStats(): Promise<DashboardStats> {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/dashboard/stats`, {
+      const url = getApiUrl('dashboard/stats');
+      console.log('Fetching dashboard stats from:', url);
+      const response = await fetch(url, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -132,7 +134,9 @@ export class DashboardService {
 
   static async getDashboardOverview(): Promise<DashboardOverview> {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/dashboard/overview`, {
+      const url = getApiUrl('dashboard/overview');
+      console.log('Fetching dashboard overview from:', url);
+      const response = await fetch(url, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

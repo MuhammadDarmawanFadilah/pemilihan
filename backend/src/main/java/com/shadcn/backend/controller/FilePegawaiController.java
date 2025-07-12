@@ -83,7 +83,7 @@ public class FilePegawaiController {
     }
     
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MODERATOR') or hasRole('USER')")
+    @PreAuthorize("hasAuthority('file-pegawai.create')")
     public ResponseEntity<FilePegawaiResponse> create(@Valid @RequestBody FilePegawaiRequest request) {
         try {
             log.info("POST /api/admin/file-pegawai - Request: {}", request);
@@ -97,7 +97,7 @@ public class FilePegawaiController {
     }
     
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MODERATOR') or hasRole('USER')")
+    @PreAuthorize("hasAuthority('file-pegawai.update')")
     public ResponseEntity<FilePegawaiResponse> update(@PathVariable Long id, @Valid @RequestBody FilePegawaiRequest request) {
         log.info("PUT /api/admin/file-pegawai/{} - {}", id, request);
         FilePegawaiResponse result = service.update(id, request);

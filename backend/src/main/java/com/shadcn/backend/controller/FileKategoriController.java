@@ -23,7 +23,7 @@ public class FileKategoriController {
     private final FileKategoriService service;
     
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MODERATOR')")
+    @PreAuthorize("hasAuthority('kategori-file.read')")
     public ResponseEntity<Page<FileKategoriResponse>> findAll(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) Boolean isActive,

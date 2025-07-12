@@ -173,6 +173,10 @@ public class Pegawai implements UserDetails {
             pemilihanList = new HashSet<>();
         }
         pemilihanList.add(pemilihan);
+        // Sync bidirectional relationship
+        if (pemilihan.getPegawaiList() != null) {
+            pemilihan.getPegawaiList().add(this);
+        }
         // Automatically update totalTps
         this.totalTps = pemilihanList.size();
     }
@@ -180,6 +184,10 @@ public class Pegawai implements UserDetails {
     public void removePemilihan(Pemilihan pemilihan) {
         if (pemilihanList != null) {
             pemilihanList.remove(pemilihan);
+            // Sync bidirectional relationship
+            if (pemilihan.getPegawaiList() != null) {
+                pemilihan.getPegawaiList().remove(this);
+            }
             // Automatically update totalTps
             this.totalTps = pemilihanList.size();
         }

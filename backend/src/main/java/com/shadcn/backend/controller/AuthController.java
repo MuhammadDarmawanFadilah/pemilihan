@@ -4,8 +4,10 @@ import com.shadcn.backend.dto.AuthRequest;
 import com.shadcn.backend.dto.AuthResponse;
 import com.shadcn.backend.dto.PublicRegistrationRequest;
 import com.shadcn.backend.model.User;
+import com.shadcn.backend.model.Pegawai;
 import com.shadcn.backend.service.AuthService;
 import com.shadcn.backend.service.UserService;
+import com.shadcn.backend.service.WilayahCacheService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +26,7 @@ public class AuthController {
     
     private final AuthService authService;
     private final UserService userService;
+    private final WilayahCacheService wilayahCacheService;
       @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody AuthRequest authRequest) {
         try {
@@ -124,6 +127,57 @@ public class AuthController {
             log.error("Error during public registration for username: {}", request.getUsername(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of("error", "Terjadi kesalahan saat mendaftarkan pengguna"));
+        }
+    }
+      @GetMapping("/me/location")
+    public ResponseEntity<?> getCurrentUserLocation(@RequestHeader(value = "Authorization", required = false) String token) {
+        try {
+            if (token == null || !token.startsWith("Bearer ")) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "No valid token provided"));
+            }
+            
+            String actualToken = token.substring(7);
+            
+            // Check if token is for pegawai
+            if (authService.isPegawaiToken(actualToken)) {
+                Pegawai pegawai = authService.getCurrentPegawai(actualToken);
+                if (pegawai == null) {
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("error", "Invalid token"));
+                }
+                
+                Map<String, Object> locationData = Map.of(
+                    "alamat", pegawai.getAlamat() != null ? pegawai.getAlamat() : "",
+                    "provinsi", pegawai.getProvinsi() != null ? wilayahCacheService.getNamaByKode(pegawai.getProvinsi()) : "",
+                    "kota", pegawai.getKota() != null ? wilayahCacheService.getNamaByKode(pegawai.getKota()) : "",
+                    "kecamatan", pegawai.getKecamatan() != null ? wilayahCacheService.getNamaByKode(pegawai.getKecamatan()) : "",
+                    "kelurahan", pegawai.getKelurahan() != null ? wilayahCacheService.getNamaByKode(pegawai.getKelurahan()) : ""
+                );
+                
+                return ResponseEntity.ok(locationData);
+            } else {
+                // Regular user - return biografi location if available
+                User user = authService.getUserFromToken(actualToken);
+                if (user == null) {
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("error", "Invalid token"));
+                }
+                
+                Map<String, Object> locationData = Map.of(
+                    "alamat", user.getBiografi() != null && user.getBiografi().getAlamat() != null ? user.getBiografi().getAlamat() : "",
+                    "provinsi", user.getBiografi() != null && user.getBiografi().getProvinsi() != null ? wilayahCacheService.getNamaByKode(user.getBiografi().getProvinsi()) : "",
+                    "kota", user.getBiografi() != null && user.getBiografi().getKota() != null ? wilayahCacheService.getNamaByKode(user.getBiografi().getKota()) : "",
+                    "kecamatan", user.getBiografi() != null && user.getBiografi().getKecamatan() != null ? wilayahCacheService.getNamaByKode(user.getBiografi().getKecamatan()) : "",
+                    "kelurahan", user.getBiografi() != null && user.getBiografi().getKelurahan() != null ? wilayahCacheService.getNamaByKode(user.getBiografi().getKelurahan()) : ""
+                );
+                
+                return ResponseEntity.ok(locationData);
+            }
+        } catch (Exception e) {
+            log.error("Error getting current user location", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("error", "Failed to get location info"));
         }
     }
 }

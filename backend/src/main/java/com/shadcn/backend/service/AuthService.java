@@ -4,6 +4,7 @@ import com.shadcn.backend.dto.AuthResponse;
 import com.shadcn.backend.dto.UserSummaryDto;
 import com.shadcn.backend.model.User;
 import com.shadcn.backend.model.Pegawai;
+import com.shadcn.backend.model.Role;
 import com.shadcn.backend.repository.UserRepository;
 import com.shadcn.backend.repository.PegawaiRepository;
 import lombok.RequiredArgsConstructor;
@@ -259,6 +260,40 @@ public class AuthService {
         return false;
     }
     
+    /**
+     * Get current pegawai from token if token belongs to pegawai
+     */
+    public Pegawai getCurrentPegawai(String token) {
+        if (token == null || !isPegawaiToken(token)) {
+            return null;
+        }
+        
+        Long pegawaiId = getUserIdFromToken(token);
+        if (pegawaiId == null) {
+            return null;
+        }
+        
+        Optional<Pegawai> pegawaiOpt = pegawaiRepository.findById(pegawaiId);
+        if (pegawaiOpt.isEmpty()) {
+            return null;
+        }
+        
+        Pegawai pegawai = pegawaiOpt.get();
+        
+        // Validate token signature
+        String expectedToken = generatePermanentTokenForPegawai(pegawai);
+        if (!token.equals(expectedToken)) {
+            return null;
+        }
+        
+        // Check if pegawai is still active
+        if (pegawai.getStatus() != Pegawai.PegawaiStatus.AKTIF) {
+            return null;
+        }
+        
+        return pegawai;
+    }
+    
     private String generatePermanentToken(User user) {
         // Generate deterministic permanent token based on user data
         // This ensures same token for same user across server restarts
@@ -326,6 +361,13 @@ public class AuthService {
         } else {
             user.setStatus(User.UserStatus.INACTIVE);
         }
+        
+        // Set role for pegawai - create a dummy role for compatibility
+        Role pegawaiRole = new Role();
+        pegawaiRole.setRoleId(999L);
+        pegawaiRole.setRoleName("PEGAWAI");
+        pegawaiRole.setDescription("Pegawai Sistem");
+        user.setRole(pegawaiRole);
         
         return user;
     }

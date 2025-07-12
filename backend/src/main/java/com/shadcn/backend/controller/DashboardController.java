@@ -15,7 +15,9 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class DashboardController {
 
-    private final DashboardService dashboardService;    @GetMapping("/stats")
+    private final DashboardService dashboardService;
+
+    @GetMapping("/stats")
     public ResponseEntity<DashboardStatsDTO> getDashboardStats() {
         try {
             log.info("Getting dashboard statistics");
@@ -45,5 +47,18 @@ public class DashboardController {
     public ResponseEntity<String> healthCheck() {
         log.info("Dashboard health check requested");
         return ResponseEntity.ok("Dashboard API is running");
+    }
+
+    @PostMapping("/initialize")
+    public ResponseEntity<String> initializeDashboardData() {
+        try {
+            log.info("Initializing dashboard data");
+            dashboardService.initializeDashboardData();
+            log.info("Dashboard data initialized successfully");
+            return ResponseEntity.ok("Dashboard data initialized successfully");
+        } catch (Exception e) {
+            log.error("Error initializing dashboard data", e);
+            return ResponseEntity.internalServerError().body("Error initializing dashboard data");
+        }
     }
 }

@@ -194,7 +194,12 @@ public class PemilihanService {
         org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
         org.springframework.data.domain.Page<Pemilihan> pemilihanPage;
         
-        // Build criteria for search
+        // Build criteria for search with pegawai filtering
+        Long pegawaiIdLong = null;
+        if (pegawaiId != null && !pegawaiId.trim().isEmpty()) {
+            pegawaiIdLong = Long.valueOf(pegawaiId);
+        }
+        
         if ((keyword != null && !keyword.trim().isEmpty()) || 
             (tingkat != null && !tingkat.trim().isEmpty()) || 
             (status != null && !status.trim().isEmpty()) ||
@@ -204,10 +209,10 @@ public class PemilihanService {
             (provinsiId != null && !provinsiId.trim().isEmpty()) ||
             (kotaId != null && !kotaId.trim().isEmpty()) ||
             (kecamatanId != null && !kecamatanId.trim().isEmpty()) ||
-            (pegawaiId != null && !pegawaiId.trim().isEmpty())) {
+            (pegawaiIdLong != null)) {
             
-            pemilihanPage = pemilihanRepository.findByAdvancedFilters(
-                keyword, tingkat, status, provinsiId, kotaId, kecamatanId, pageable);
+            pemilihanPage = pemilihanRepository.findByAdvancedFiltersWithPegawai(
+                keyword, tingkat, status, provinsiId, kotaId, kecamatanId, pegawaiIdLong, pageable);
         } else {
             pemilihanPage = pemilihanRepository.findAll(pageable);
         }
@@ -215,20 +220,6 @@ public class PemilihanService {
         List<PemilihanDTO> pemilihanList = pemilihanPage.getContent().stream()
                 .map(this::convertToDTOWithStats)
                 .collect(Collectors.toList());
-        
-        // Filter by pegawai if specified
-        if (pegawaiId != null && !pegawaiId.trim().isEmpty()) {
-            Long pegawaiIdLong = Long.valueOf(pegawaiId);
-            pemilihanList = pemilihanList.stream()
-                .filter(dto -> {
-                    // Check if this pegawai is assigned to this pemilihan
-                    List<com.shadcn.backend.model.Pegawai> pegawaiInPemilihan = 
-                        pegawaiRepository.findByPemilihanId(dto.getPemilihanId());
-                    return pegawaiInPemilihan.stream()
-                        .anyMatch(p -> p.getId().equals(pegawaiIdLong));
-                })
-                .collect(Collectors.toList());
-        }
         
         Map<String, Object> response = new java.util.HashMap<>();
         response.put("content", pemilihanList);

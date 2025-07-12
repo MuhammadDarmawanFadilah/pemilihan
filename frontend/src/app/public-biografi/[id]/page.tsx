@@ -450,7 +450,7 @@ export default function PublicBiografiDetailPage() {
           <div className="flex items-center justify-center gap-2">
             <Shield className="h-5 w-5" />
             <span className="text-sm font-medium">
-              ✓ Profil ini telah terverifikasi sebagai Alumni terdaftar di Sistem Alumni IDAU
+              ✓ Profil ini telah terverifikasi sebagai Pegawai terdaftar di Sistem Tren-Silapor
             </span>
           </div>
         </div>

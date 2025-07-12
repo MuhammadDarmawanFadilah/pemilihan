@@ -52,6 +52,8 @@ public class DashboardOverviewDTO {
         private Long newsPublished;
         private Long proposalsSubmitted;
         private Long documentsUploaded;
+        private Long pegawai;
+        private Long pemilihan;
     }
 
     @Data

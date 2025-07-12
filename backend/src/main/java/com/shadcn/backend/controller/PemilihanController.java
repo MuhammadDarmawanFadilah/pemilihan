@@ -6,6 +6,7 @@ import com.shadcn.backend.service.PemilihanService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,6 +21,7 @@ public class PemilihanController {
     private PemilihanService pemilihanService;
     
     @GetMapping
+    @PreAuthorize("hasAuthority('pemilihan.read')")
     public ResponseEntity<List<PemilihanDTO>> getAllPemilihan() {
         try {
             List<PemilihanDTO> pemilihanList = pemilihanService.getAllPemilihan();
@@ -75,6 +77,7 @@ public class PemilihanController {
     }
     
     @PostMapping
+    @PreAuthorize("hasAuthority('pemilihan.create')")
     public ResponseEntity<PemilihanDTO> createPemilihan(@RequestBody CreatePemilihanRequest request) {
         try {
             System.out.println("=== CREATE PEMILIHAN REQUEST ===");

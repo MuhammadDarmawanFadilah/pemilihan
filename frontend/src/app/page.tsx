@@ -14,8 +14,7 @@ import OrganizationInfoCard from '@/components/dashboard/OrganizationInfoCard';
 import QuickStatsCards from '@/components/dashboard/QuickStatsCards';
 import MonthlyDataChart from '@/components/dashboard/MonthlyDataChart';
 import ActivityFeedCard from '@/components/dashboard/ActivityFeedCard';
-import RecentCommentsCard from '@/components/dashboard/RecentCommentsCard';
-import { TrendingUp, Eye, MessageCircle, ThumbsUp, Download } from 'lucide-react';
+import { TrendingUp, Eye, MessageCircle, ThumbsUp, Download, FileText, Users, Calendar } from 'lucide-react';
 
 const Dashboard = () => {
   const [overview, setOverview] = useState<DashboardOverview | null>(null);
@@ -191,31 +190,36 @@ const Dashboard = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
       <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8">        {/* Enhanced Header Section */}
         <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700 fade-in">
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-purple-600/10"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-red-600/10 via-white/5 to-blue-600/10"></div>
           <div className="relative p-6 sm:p-8">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="space-y-2">
-                <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  Dashboard Alumni IDAU
+                <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-red-600 to-blue-600 bg-clip-text text-transparent">
+                  Dashboard Tren-Silapor
                 </h1>
                 <p className="text-gray-600 dark:text-gray-300 text-lg">
-                  Selamat datang di sistem informasi alumni Unsoed
+                  Sistem Pelaporan dan Pengawasan Pemilihan - Mewujudkan Pemilu yang Demokratis dan Berintegritas
                 </p>
                 <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                   <div className="w-2 h-2 bg-green-500 rounded-full pulse"></div>
-                  <span>Sistem berjalan normal</span>
+                  <span>Sistem berjalan normal • Monitoring aktif</span>
                 </div>
               </div>
-              <Button 
-                variant="outline" 
-                size="lg"
-                onClick={fetchDashboardData}
-                disabled={loading}
-                className="self-start sm:self-auto bg-white/50 hover:bg-white/80 dark:bg-gray-700/50 dark:hover:bg-gray-700/80 backdrop-blur-sm border-2 focus-ring"
-              >
-                <RefreshCw className={`w-5 h-5 mr-3 ${loading ? 'animate-spin' : ''}`} />
-                Refresh Data
-              </Button>
+              <div className="flex flex-col gap-2">
+                <Button 
+                  variant="outline" 
+                  size="lg"
+                  onClick={fetchDashboardData}
+                  disabled={loading}
+                  className="self-start sm:self-auto bg-white/50 hover:bg-white/80 dark:bg-gray-700/50 dark:hover:bg-gray-700/80 backdrop-blur-sm border-2 focus-ring"
+                >
+                  <RefreshCw className={`w-5 h-5 mr-3 ${loading ? 'animate-spin' : ''}`} />
+                  Refresh Data
+                </Button>
+                <div className="text-xs text-gray-500 text-center">
+                  Update terakhir: {new Date().toLocaleTimeString('id-ID')}
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -223,18 +227,18 @@ const Dashboard = () => {
         {/* Organization Info Section */}
         <div className="space-y-4 fade-in-delay-1">
           <div className="flex items-center gap-3">
-            <div className="w-1 h-8 bg-gradient-to-b from-blue-500 to-blue-600 rounded-full"></div>
+            <div className="w-1 h-8 bg-gradient-to-b from-green-500 to-green-600 rounded-full"></div>
             <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              Informasi Organisasi
+              Informasi Sistem
             </h2>
           </div>
           <OrganizationInfoCard organizationInfo={overview.organizationInfo} />
         </div>        {/* Quick Stats Section */}
         <div className="space-y-4 fade-in-delay-2">
           <div className="flex items-center gap-3">
-            <div className="w-1 h-8 bg-gradient-to-b from-green-500 to-green-600 rounded-full"></div>
+            <div className="w-1 h-8 bg-gradient-to-b from-orange-500 to-orange-600 rounded-full"></div>
             <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              Statistik Cepat
+              Statistik Pengawasan
             </h2>
           </div>
           <QuickStatsCards quickStats={overview.quickStats} />
@@ -243,16 +247,95 @@ const Dashboard = () => {
           <div className="flex items-center gap-3">
             <div className="w-1 h-8 bg-gradient-to-b from-purple-500 to-purple-600 rounded-full"></div>
             <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              Analisis Data
+              Analisis Data Pengawasan
             </h2>
           </div>
           <MonthlyDataChart monthlyData={overview.monthlyData} />
-        </div>        {/* Content and Activity Section */}
+        </div>        {/* Quick Actions for Bawaslu Functions */}
+        <div className="space-y-4 fade-in-delay-4">
+          <div className="flex items-center gap-3">
+            <div className="w-1 h-8 bg-gradient-to-b from-indigo-500 to-indigo-600 rounded-full"></div>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+              Aksi Cepat Pengawasan
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card 
+              className="relative overflow-hidden bg-gradient-to-br from-red-50 to-red-100 dark:from-red-950/20 dark:to-red-900/20 border-red-200 dark:border-red-800 hover:shadow-lg transition-all duration-200 cursor-pointer group"
+              onClick={() => router.push('/laporan-pengawas')}
+            >
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-semibold text-red-700 dark:text-red-300 mb-2">Laporan Pengawas</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Kelola laporan pengawasan pemilu</p>
+                  </div>
+                  <div className="w-12 h-12 bg-red-500/20 rounded-lg flex items-center justify-center group-hover:bg-red-500/30 transition-colors">
+                    <FileText className="w-6 h-6 text-red-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card 
+              className="relative overflow-hidden bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/20 dark:to-blue-900/20 border-blue-200 dark:border-blue-800 hover:shadow-lg transition-all duration-200 cursor-pointer group"
+              onClick={() => router.push('/admin/pemilihan')}
+            >
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-semibold text-blue-700 dark:text-blue-300 mb-2">Data Pemilihan</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Monitoring data pemilihan aktif</p>
+                  </div>
+                  <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center group-hover:bg-blue-500/30 transition-colors">
+                    <TrendingUp className="w-6 h-6 text-blue-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card 
+              className="relative overflow-hidden bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950/20 dark:to-green-900/20 border-green-200 dark:border-green-800 hover:shadow-lg transition-all duration-200 cursor-pointer group"
+              onClick={() => router.push('/documents')}
+            >
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-semibold text-green-700 dark:text-green-300 mb-2">Dokumentasi</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Akses dokumen dan regulasi</p>
+                  </div>
+                  <div className="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center group-hover:bg-green-500/30 transition-colors">
+                    <Download className="w-6 h-6 text-green-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card 
+              className="relative overflow-hidden bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950/20 dark:to-purple-900/20 border-purple-200 dark:border-purple-800 hover:shadow-lg transition-all duration-200 cursor-pointer group"
+              onClick={() => router.push('/komunikasi')}
+            >
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-semibold text-purple-700 dark:text-purple-300 mb-2">Komunikasi</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Pusat komunikasi dan koordinasi</p>
+                  </div>
+                  <div className="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center group-hover:bg-purple-500/30 transition-colors">
+                    <MessageCircle className="w-6 h-6 text-purple-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* Content and Activity Section */}
         <div className="space-y-6">
           <div className="flex items-center gap-3">
-            <div className="w-1 h-8 bg-gradient-to-b from-orange-500 to-orange-600 rounded-full"></div>
+            <div className="w-1 h-8 bg-gradient-to-b from-teal-500 to-teal-600 rounded-full"></div>
             <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              Konten dan Aktivitas
+              Laporan dan Aktivitas Pengawasan
             </h2>
           </div>
           
@@ -262,10 +345,10 @@ const Dashboard = () => {
             
             <CardHeader className="relative">
               <CardTitle className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center">
+                <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-blue-600 rounded-lg flex items-center justify-center">
                   <TrendingUp className="w-5 h-5 text-white" />
                 </div>
-                <span className="text-xl font-bold text-gray-900 dark:text-gray-100">Konten Populer</span>
+                <span className="text-xl font-bold text-gray-900 dark:text-gray-100">Laporan dan Dokumen Populer</span>
               </CardTitle>
             </CardHeader>
             
@@ -274,48 +357,42 @@ const Dashboard = () => {
                 <TabsList className="grid w-full grid-cols-3 bg-gray-100 dark:bg-gray-700 p-1 rounded-xl">
                   <TabsTrigger 
                     value="news"
-                    className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:text-orange-600 font-medium transition-all duration-200"
+                    className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:text-red-600 font-medium transition-all duration-200"
                   >
-                    Berita Populer
+                    Data Pegawai
                   </TabsTrigger>
                   <TabsTrigger 
                     value="proposals"
                     className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:text-blue-600 font-medium transition-all duration-200"
                   >
-                    Usulan Terpopuler
+                    Data Pemilihan
                   </TabsTrigger>
                   <TabsTrigger 
                     value="documents"
                     className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:text-green-600 font-medium transition-all duration-200"
                   >
-                    Dokumen Populer
+                    Statistik Sistem
                   </TabsTrigger>
                 </TabsList>
                 
                 <TabsContent value="news" className="space-y-4">
-                  <div className="bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-950/20 dark:to-red-950/20 rounded-xl p-4">
+                  <div className="bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-950/20 dark:to-orange-950/20 rounded-xl p-4">
                     {stats.popularNews.length === 0 ? (
-                      <p className="text-center text-gray-500 py-8">Belum ada berita populer</p>                    ) : (
+                      <p className="text-center text-gray-500 py-8">Belum ada data pegawai populer</p>
+                    ) : (
                       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                         {stats.popularNews.map((news, index) => (
                           <div 
                             key={index} 
-                            className="bg-white dark:bg-gray-700 rounded-lg p-4 hover:shadow-lg transition-all duration-200 cursor-pointer hover:scale-105 hover:bg-orange-50 dark:hover:bg-gray-600"
-                            onClick={() => navigateToDetail('berita', news.id)}
+                            className="bg-white dark:bg-gray-700 rounded-lg p-4 hover:shadow-lg transition-all duration-200 cursor-pointer hover:scale-105 hover:bg-red-50 dark:hover:bg-gray-600"
+                            onClick={() => router.push('/admin/pegawai')}
                           >
-                            <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2 line-clamp-2 hover:text-orange-600 dark:hover:text-orange-400">
+                            <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2 line-clamp-2 hover:text-red-600 dark:hover:text-red-400">
                               {news.title}
                             </h4>
                             <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
                               <div className="flex items-center space-x-4">
-                                <div className="flex items-center space-x-1">
-                                  <Eye className="w-4 h-4" />
-                                  <span>{news.viewCount.toLocaleString()}</span>
-                                </div>
-                                <div className="flex items-center space-x-1">
-                                  <MessageCircle className="w-4 h-4" />
-                                  <span>{news.commentCount}</span>
-                                </div>
+                                <span>NIP: {news.author}</span>
                               </div>
                               <span>{news.publishDate}</span>
                             </div>
@@ -328,27 +405,26 @@ const Dashboard = () => {
                   <TabsContent value="proposals" className="space-y-4">
                   <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 rounded-xl p-4">
                     {stats.popularProposals.length === 0 ? (
-                      <p className="text-center text-gray-500 py-8">Belum ada usulan populer</p>                    ) : (
+                      <p className="text-center text-gray-500 py-8">Belum ada data pemilihan</p>
+                    ) : (
                       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                         {stats.popularProposals.map((proposal, index) => (
                           <div 
                             key={index} 
                             className="bg-white dark:bg-gray-700 rounded-lg p-4 hover:shadow-lg transition-all duration-200 cursor-pointer hover:scale-105 hover:bg-blue-50 dark:hover:bg-gray-600"
-                            onClick={() => navigateToDetail('usulan', proposal.id)}
+                            onClick={() => router.push('/admin/pemilihan')}
                           >
                             <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2 line-clamp-2 hover:text-blue-600 dark:hover:text-blue-400">
                               {proposal.title}
                             </h4>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2 line-clamp-2">
+                              {proposal.description}
+                            </p>
                             <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
                               <div className="flex items-center space-x-4">
-                                <div className="flex items-center space-x-1">
-                                  <Eye className="w-4 h-4" />
-                                  <span>{proposal.voteCount.toLocaleString()}</span>
-                                </div>
-                                <div className="flex items-center space-x-1">
-                                  <ThumbsUp className="w-4 h-4" />
-                                  <span>{proposal.status}</span>
-                                </div>
+                                <span className="px-2 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded-full text-xs">
+                                  {proposal.status}
+                                </span>
                               </div>
                               <span>{proposal.createdDate}</span>
                             </div>
@@ -360,49 +436,163 @@ const Dashboard = () => {
                 </TabsContent>
                   <TabsContent value="documents" className="space-y-4">
                   <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 rounded-xl p-4">
-                    {stats.popularDocuments.length === 0 ? (
-                      <p className="text-center text-gray-500 py-8">Belum ada dokumen populer</p>                    ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                        {stats.popularDocuments.map((document, index) => (
-                          <div 
-                            key={index} 
-                            className="bg-white dark:bg-gray-700 rounded-lg p-4 hover:shadow-lg transition-all duration-200 cursor-pointer hover:scale-105 hover:bg-green-50 dark:hover:bg-gray-600"
-                            onClick={() => navigateToDetail('documents', document.id)}
-                          >
-                            <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2 line-clamp-2 hover:text-green-600 dark:hover:text-green-400">
-                              {document.title}
-                            </h4>
-                            <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
-                              <div className="flex items-center space-x-4">
-                                <div className="flex items-center space-x-1">
-                                  <Download className="w-4 h-4" />
-                                  <span>{document.downloadCount.toLocaleString()}</span>
-                                </div>
-                              </div>
-                              <span>{document.uploadDate}</span>
-                            </div>
-                          </div>
-                        ))}
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                      <div className="bg-white dark:bg-gray-700 rounded-lg p-6 text-center">
+                        <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Total Users</h4>
+                        <p className="text-2xl font-bold text-green-600">{overview.quickStats.totalMembers}</p>
                       </div>
-                    )}
+                      <div className="bg-white dark:bg-gray-700 rounded-lg p-6 text-center">
+                        <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Total Pegawai</h4>
+                        <p className="text-2xl font-bold text-blue-600">{overview.quickStats.activeMembers}</p>
+                      </div>
+                      <div className="bg-white dark:bg-gray-700 rounded-lg p-6 text-center">
+                        <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Total Pemilihan</h4>
+                        <p className="text-2xl font-bold text-purple-600">{overview.quickStats.totalProposals}</p>
+                      </div>
+                    </div>
                   </div>
                 </TabsContent>
               </Tabs>
             </CardContent>
-          </Card>          {/* Side by Side: Activity Feed and Recent Comments */}
+          </Card>          {/* Side by Side: Activity Feed and System Statistics */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="order-1 lg:order-1">
               <ActivityFeedCard activityFeed={overview.activityFeed} />
             </div>
             <div className="order-2 lg:order-2">
-              <RecentCommentsCard recentComments={stats.recentComments} />
+              <Card className="relative overflow-hidden bg-white dark:bg-gray-800 border-0 shadow-xl">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-blue-400/10 to-purple-400/10 rounded-full -translate-y-12 translate-x-12"></div>
+                
+                <CardHeader className="relative flex flex-row items-center justify-between pb-4">
+                  <div className="space-y-1">
+                    <CardTitle className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                      Statistik Sistem
+                    </CardTitle>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Ringkasan data sistem pengawasan
+                    </p>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                      <TrendingUp className="w-4 h-4 text-white" />
+                    </div>
+                  </div>
+                </CardHeader>
+                
+                <CardContent className="relative space-y-4">
+                  <div className="grid grid-cols-1 gap-4">
+                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 rounded-lg p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">Total Users</p>
+                          <p className="text-2xl font-bold text-green-600">{overview.quickStats.totalMembers}</p>
+                        </div>
+                        <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
+                          <Users className="w-5 h-5 text-green-600" />
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 rounded-lg p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">Total Pegawai</p>
+                          <p className="text-2xl font-bold text-blue-600">{overview.quickStats.activeMembers}</p>
+                        </div>
+                        <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                          <FileText className="w-5 h-5 text-blue-600" />
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 rounded-lg p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">Total Pemilihan</p>
+                          <p className="text-2xl font-bold text-purple-600">{overview.quickStats.totalProposals}</p>
+                        </div>
+                        <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
+                          <Calendar className="w-5 h-5 text-purple-600" />
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-950/20 dark:to-red-950/20 rounded-lg p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">Status Sistem</p>
+                          <p className="text-lg font-bold text-orange-600">Aktif</p>
+                        </div>
+                        <div className="w-10 h-10 bg-orange-500/20 rounded-lg flex items-center justify-center">
+                          <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
+
+        {/* Contact and Information Footer */}
+        <div className="bg-gradient-to-r from-red-50 via-white to-blue-50 dark:from-red-950/20 dark:via-gray-800 dark:to-blue-950/20 rounded-xl shadow-sm border border-gray-200/50 p-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="space-y-4">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 flex items-center">
+                <div className="w-6 h-6 bg-red-600 rounded mr-3"></div>
+                Tentang Bawaslu
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
+                Badan Pengawas Pemilihan Umum adalah lembaga negara yang bertugas mengawasi 
+                penyelenggaraan pemilihan umum di seluruh Indonesia untuk menjamin pemilu yang demokratis.
+              </p>
+            </div>
+            
+            <div className="space-y-4">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 flex items-center">
+                <div className="w-6 h-6 bg-blue-600 rounded mr-3"></div>
+                Layanan Pengaduan
+              </h3>
+              <div className="space-y-2 text-sm">
+                <p className="text-gray-600 dark:text-gray-400">
+                  📞 Call Center: 1500-991
+                </p>
+                <p className="text-gray-600 dark:text-gray-400">
+                  📧 Email: pengaduan@bawaslu.go.id
+                </p>
+                <p className="text-gray-600 dark:text-gray-400">
+                  🌐 Website: www.bawaslu.go.id
+                </p>
+              </div>
+            </div>
+            
+            <div className="space-y-4">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 flex items-center">
+                <div className="w-6 h-6 bg-green-600 rounded mr-3"></div>
+                Jam Operasional
+              </h3>
+              <div className="space-y-2 text-sm">
+                <p className="text-gray-600 dark:text-gray-400">
+                  Senin - Jumat: 08:00 - 17:00 WIB
+                </p>
+                <p className="text-gray-600 dark:text-gray-400">
+                  Sabtu: 08:00 - 12:00 WIB
+                </p>
+                <p className="text-gray-600 dark:text-gray-400">
+                  Minggu & Hari Libur: Tutup
+                </p>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Footer Info */}
         <div className="text-center py-6 text-sm text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700">
-          <p>© 2025 IDAU - Sistem Informasi Alumni Universitas Jenderal Soedirman</p>
+          <p>© 2025 Tren-Silapor - Sistem Pelaporan dan Pengawasan Pemilihan untuk Demokrasi yang Berkualitas</p>
+          <p className="mt-2 text-xs">
+            Dikembangkan untuk mendukung pengawasan pemilu yang transparan dan partisipatif
+          </p>
         </div>
       </div>
     </div>

@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,7 +21,9 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class RoleController {
     
-    private final RoleService roleService;    @GetMapping
+    private final RoleService roleService;    
+    @GetMapping
+    @PreAuthorize("hasAuthority('roles.read')")
     public ResponseEntity<Page<Role>> getAllRoles(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -38,6 +41,7 @@ public class RoleController {
     }
     
     @GetMapping("/all")
+    @PreAuthorize("hasAuthority('roles.read')")
     public ResponseEntity<List<Role>> getAllRolesNoPagination() {
         try {
             List<Role> roles = roleService.getAllRoles();
@@ -48,6 +52,7 @@ public class RoleController {
     }
     
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('roles.read')")
     public ResponseEntity<Role> getRoleById(@PathVariable Long id) {
         try {
             return roleService.getRoleById(id)
@@ -58,6 +63,7 @@ public class RoleController {
         }
     }
       @PostMapping
+    @PreAuthorize("hasAuthority('roles.create')")
     public ResponseEntity<?> createRole(@Valid @RequestBody RoleRequest request) {
         try {
             log.debug("Creating new role: {}", request.getRoleName());
@@ -74,6 +80,7 @@ public class RoleController {
     }
     
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('roles.update')")
     public ResponseEntity<?> updateRole(@PathVariable Long id, @Valid @RequestBody RoleRequest request) {
         try {
             Role role = roleService.updateRole(id, request);
@@ -86,6 +93,7 @@ public class RoleController {
     }
     
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('roles.delete')")
     public ResponseEntity<?> deleteRole(@PathVariable Long id) {
         try {
             roleService.deleteRole(id);
@@ -98,6 +106,7 @@ public class RoleController {
     }
     
     @GetMapping("/search")
+    @PreAuthorize("hasAuthority('roles.read')")
     public ResponseEntity<List<Role>> searchRoles(@RequestParam(required = false) String name) {
         try {
             List<Role> roles = roleService.searchRoles(name);
@@ -108,6 +117,7 @@ public class RoleController {
     }
     
     @GetMapping("/permissions")
+    @PreAuthorize("hasAuthority('roles.read')")
     public ResponseEntity<Set<String>> getAvailablePermissions() {
         try {
             Set<String> permissions = roleService.getAvailablePermissions();
@@ -118,6 +128,7 @@ public class RoleController {
     }
     
     @PostMapping("/initialize")
+    @PreAuthorize("hasAuthority('roles.create')")
     public ResponseEntity<?> initializeDefaultRoles() {
         try {
             roleService.initializeDefaultRoles();

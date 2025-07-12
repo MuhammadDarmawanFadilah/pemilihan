@@ -96,7 +96,7 @@ export const userAPI = {
   
   // Reset password
   resetPassword: (id: number, currentPassword: string, newPassword: string): Promise<{ message: string; user: User }> =>
-    apiCall<{ message: string; user: User }>(`/users/${id}/reset-password`, {
+    apiCall<{ message: string; user: User }>(`/pegawai/${id}/reset-password`, {
       method: 'PUT',
       body: JSON.stringify({ currentPassword, newPassword }),
     }),

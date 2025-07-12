@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -33,19 +34,22 @@ import java.util.Optional;
 public class BiografiController {
 
     private final BiografiService biografiService;
-    private final AuthService authService;/**
+    private final AuthService authService;
+
+    /**
      * Get all biografi with pagination using modern Java patterns
      */
     @GetMapping
+    @PreAuthorize("hasAuthority('biografi.read')")
     public ResponseEntity<Page<BiografiSearchDto>> getAllBiografi(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDirection) {
-        
-        log.debug("Fetching biografi page: {}, size: {}, sortBy: {}, direction: {}", 
+
+        log.debug("Fetching biografi page: {}, size: {}, sortBy: {}, direction: {}",
                  page, size, sortBy, sortDirection);
-        
+
         try {
             Page<BiografiSearchDto> biografiPage = biografiService.getAllBiografiDto(page, size, sortBy, sortDirection);
             return ResponseEntity.ok(biografiPage);
@@ -98,16 +102,16 @@ public class BiografiController {
                 error.put("error", "Anda harus login untuk mengakses biografi");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
             }
-            
+
             // Extract token and get user ID
             String token = authHeader.substring(7);
-            Long userId = authService.getUserIdFromToken(token);            
+            Long userId = authService.getUserIdFromToken(token);
             if (userId == null) {
                 Map<String, String> error = new HashMap<>();
                 error.put("error", "Token tidak valid atau telah kedaluwarsa");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
             }
-            
+
             // Check if user has a biography and get it efficiently (avoid N+1)
             Optional<BiografiProfileDto> biografiDto = biografiService.getMyBiografiProfile(userId);
             if (biografiDto.isEmpty()) {
@@ -115,7 +119,7 @@ public class BiografiController {
                 error.put("error", "Anda belum memiliki biografi");
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
             }
-            
+
             return ResponseEntity.ok(biografiDto.get());
         } catch (Exception e) {
             Map<String, String> error = new HashMap<>();
@@ -142,7 +146,7 @@ public class BiografiController {
     }    // Update biografi
     @PutMapping("/{id}")
     public ResponseEntity<?> updateBiografi(
-            @PathVariable Long id, 
+            @PathVariable Long id,
             @Valid @RequestBody BiografiRequest biografiRequest,
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         try {
@@ -152,21 +156,21 @@ public class BiografiController {
                 error.put("error", "Anda harus login untuk mengedit biografi");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
             }
-            
+
             // Extract token and get user ID
             String token = authHeader.substring(7);
             Long userId = authService.getUserIdFromToken(token);
-            
+
             if (userId == null) {
                 Map<String, String> error = new HashMap<>();
                 error.put("error", "Token tidak valid atau telah kedaluwarsa");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
             }
-            
+
             // Update the biography with authorization check built into service
             Biografi updatedBiografi = biografiService.updateBiografi(id, biografiRequest);
             return ResponseEntity.ok(updatedBiografi);
-            
+
         } catch (SecurityException e) {
             Map<String, String> error = new HashMap<>();
             error.put("error", e.getMessage());
@@ -224,7 +228,7 @@ public class BiografiController {
             @RequestParam String nama,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        
+
         try {
             Page<BiografiSearchDto> biografiPage = biografiService.searchBiografiDtoByName(nama, page, size);
             return ResponseEntity.ok(biografiPage);
@@ -250,7 +254,7 @@ public class BiografiController {
             @PathVariable String status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        
+
         try {
             Biografi.StatusBiografi statusEnum = Biografi.StatusBiografi.valueOf(status.toUpperCase());
             Page<BiografiSearchDto> biografiPage = biografiService.getBiografiDtoByStatus(statusEnum, page, size);
@@ -317,19 +321,19 @@ public class BiografiController {
             countRequest.setSize(1);
             countRequest.setSortBy("namaLengkap");
             countRequest.setSortDirection("asc");
-            
+
             Page<RecipientSummaryDTO> result = biografiService.getRecipientsForSelection(countRequest);
-            
+
             Map<String, Object> stats = new HashMap<>();
             stats.put("totalRecipients", result.getTotalElements());
             stats.put("hasPhoneNumber", result.getTotalElements()); // All recipients should have phone numbers
-            
+
             return ResponseEntity.ok(stats);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
-    
+
     // Dropdown data endpoints
     @GetMapping("/filters/jurusan")
     public ResponseEntity<List<String>> getDistinctJurusan() {
@@ -340,7 +344,7 @@ public class BiografiController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
-    
+
     // Get distinct location values for dropdown filters
     @GetMapping("/filters/provinsi")
     public ResponseEntity<List<String>> getDistinctProvinsi() {
@@ -428,20 +432,20 @@ public class BiografiController {
             Optional<BiografiSearchDto> biografiOpt = biografiService.getBiografiDtoById(id);
             if (biografiOpt.isPresent()) {
                 BiografiSearchDto biografi = biografiOpt.get();
-                
+
                 // Check if biografi status is AKTIF (only show active profiles publicly)
                 if (biografi.getStatus() != Biografi.StatusBiografi.AKTIF) {
                     return ResponseEntity.notFound().build();
                 }
-                
+
                 // Mask sensitive phone number
                 if (biografi.getNomorTelepon() != null && !biografi.getNomorTelepon().isEmpty()) {
                     biografi.setNomorTelepon(maskPhoneNumber(biografi.getNomorTelepon()));
                 }
-                
+
                 // Don't include full address for privacy - only keep kota and provinsi
                 biografi.setAlamat(null);
-                
+
                 return ResponseEntity.ok(biografi);
             } else {
                 return ResponseEntity.notFound().build();
@@ -450,18 +454,18 @@ public class BiografiController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
-    
+
     // Helper method to mask phone numbers
     private String maskPhoneNumber(String phoneNumber) {
         if (phoneNumber == null || phoneNumber.length() <= 4) {
             return phoneNumber;
         }
-        
+
         String visibleStart = phoneNumber.substring(0, 4);
         String visibleEnd = phoneNumber.length() > 6 ? phoneNumber.substring(phoneNumber.length() - 2) : "";
         int maskedLength = Math.max(0, phoneNumber.length() - 6);
         String maskedMiddle = "*".repeat(maskedLength);
-        
+
         return visibleStart + maskedMiddle + visibleEnd;
     }
 
@@ -505,7 +509,7 @@ public class BiografiController {
             @RequestParam(required = false) String spesialisasi,
             @RequestParam(required = false) String pekerjaan,
             @RequestParam(required = false) String alumniTahun) {
-        
+
         try {
             List<Map<String, Object>> locations = biografiService.getAlumniWithCoordinatesAdvanced(
                 search, provinsi, kota, kecamatan, kelurahan, kodePos, spesialisasi, pekerjaan, alumniTahun);
@@ -514,7 +518,7 @@ public class BiografiController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
-    
+
     // Get biografi summary for map popup
     @GetMapping("/{id}/summary")
     public ResponseEntity<Map<String, Object>> getBiografiSummary(@PathVariable Long id) {

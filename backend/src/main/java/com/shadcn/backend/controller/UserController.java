@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -33,6 +34,7 @@ public class UserController {
     private final RoleService roleService;
 
     @GetMapping
+    @PreAuthorize("hasAuthority('pegawai.read')")
     public ResponseEntity<Page<UserSummaryDto>> getAllUsers(
         @RequestParam(defaultValue = "") String search,
         @RequestParam(required = false) Long roleId,
@@ -62,6 +64,7 @@ public class UserController {
     }
       
     @GetMapping("/all")
+    @PreAuthorize("hasAuthority('pegawai.read')")
     public ResponseEntity<List<UserSummaryDto>> getAllUsersList() {
         try {
             List<User> users = userService.getAllUsers();
@@ -76,6 +79,7 @@ public class UserController {
     }
       
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('pegawai.read')")
     public ResponseEntity<UserSummaryDto> getUserById(@PathVariable Long id) {
         try {
             Optional<User> user = userService.getUserById(id);
@@ -88,6 +92,7 @@ public class UserController {
     }
       
     @GetMapping("/username/{username}")
+    @PreAuthorize("hasAuthority('pegawai.read')")
     public ResponseEntity<UserSummaryDto> getUserByUsername(@PathVariable String username) {
         try {
             Optional<User> user = userService.getUserByUsername(username);
@@ -100,6 +105,7 @@ public class UserController {
     }    
 
     @GetMapping("/email/{email}")
+    @PreAuthorize("hasAuthority('pegawai.read')")
     public ResponseEntity<UserSummaryDto> getUserByEmail(@PathVariable String email) {
         try {
             Optional<User> user = userService.getUserByEmail(email);
@@ -112,6 +118,7 @@ public class UserController {
     }
       
     @GetMapping("/phone/{phoneNumber}")
+    @PreAuthorize("hasAuthority('pegawai.read')")
     public ResponseEntity<UserSummaryDto> getUserByPhoneNumber(@PathVariable String phoneNumber) {
         try {
             Optional<User> user = userService.getUserByPhoneNumber(phoneNumber);
@@ -124,6 +131,7 @@ public class UserController {
     }
       
     @GetMapping("/status/{status}")
+    @PreAuthorize("hasAuthority('pegawai.read')")
     public ResponseEntity<List<UserSummaryDto>> getUsersByStatus(@PathVariable User.UserStatus status) {
         try {
             List<User> users = userService.getUsersByStatus(status);
@@ -138,6 +146,7 @@ public class UserController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAuthority('pegawai.create')")
     public ResponseEntity<?> createUser(@Valid @RequestBody UserRequest request) {
         try {
             User user = userService.createUser(request);
@@ -152,6 +161,7 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('pegawai.update')")
     public ResponseEntity<?> updateUser(@PathVariable Long id, @Valid @RequestBody UpdateUserRequest request) {
         try {
             User user = userService.updateUser(id, request);
@@ -169,6 +179,7 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('pegawai.delete')")
     public ResponseEntity<?> deleteUser(@PathVariable Long id) {
         try {
             userService.deleteUser(id);
@@ -186,6 +197,7 @@ public class UserController {
     }
     
     @PutMapping("/{id}/toggle-status")
+    @PreAuthorize("hasAuthority('pegawai.update')")
     public ResponseEntity<?> toggleUserStatus(@PathVariable Long id) {
         try {
             User user = userService.toggleUserStatus(id);
@@ -198,6 +210,7 @@ public class UserController {
     }
     
     @PutMapping("/{id}/old")
+    @PreAuthorize("hasAuthority('pegawai.update')")
     public ResponseEntity<?> updateUserOld(@PathVariable Long id, @Valid @RequestBody User userDetails) {
         try {
             User updatedUser = userService.updateUser(id, userDetails);

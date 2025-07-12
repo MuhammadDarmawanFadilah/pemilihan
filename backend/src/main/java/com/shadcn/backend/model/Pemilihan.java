@@ -12,6 +12,8 @@ import lombok.ToString;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Set;
+import java.util.HashSet;
 
 @Entity
 @Table(name = "pemilihan", indexes = {
@@ -24,8 +26,8 @@ import java.util.ArrayList;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(exclude = {"detailPemilihanList"})
-@ToString(exclude = {"detailPemilihanList"})
+@EqualsAndHashCode(exclude = {"detailPemilihanList", "pegawaiList"})
+@ToString(exclude = {"detailPemilihanList", "pegawaiList"})
 public class Pemilihan {
     
     @Id
@@ -84,6 +86,30 @@ public class Pemilihan {
     // One-to-many relationship dengan DetailPemilihan (laporan yang dipilih)
     @OneToMany(mappedBy = "pemilihan", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<DetailPemilihan> detailPemilihanList = new ArrayList<>();
+    
+    // Many-to-many relationship dengan Pegawai (pegawai yang ditugaskan)
+    @ManyToMany(mappedBy = "pemilihanList", fetch = FetchType.LAZY)
+    private java.util.Set<Pegawai> pegawaiList = new java.util.HashSet<>();
+    
+    // Helper methods for bidirectional relationship
+    public void addPegawai(Pegawai pegawai) {
+        if (pegawaiList == null) {
+            pegawaiList = new java.util.HashSet<>();
+        }
+        pegawaiList.add(pegawai);
+        if (pegawai.getPemilihanList() != null) {
+            pegawai.getPemilihanList().add(this);
+        }
+    }
+    
+    public void removePegawai(Pegawai pegawai) {
+        if (pegawaiList != null) {
+            pegawaiList.remove(pegawai);
+            if (pegawai.getPemilihanList() != null) {
+                pegawai.getPemilihanList().remove(this);
+            }
+        }
+    }
     
     public enum TingkatPemilihan {
         PROVINSI,

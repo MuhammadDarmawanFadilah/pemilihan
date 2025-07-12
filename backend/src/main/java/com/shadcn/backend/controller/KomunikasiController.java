@@ -10,6 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -30,6 +31,7 @@ public class KomunikasiController {
      * Upload media for communication posts
      */
     @PostMapping("/upload")
+    @PreAuthorize("hasAuthority('komunikasi.create')")
     public ResponseEntity<Map<String, String>> uploadMedia(
             @RequestParam("file") MultipartFile file) {
         
@@ -56,6 +58,7 @@ public class KomunikasiController {
      * Get feed posts (latest posts)
      */
     @GetMapping("/feed")
+    @PreAuthorize("hasAuthority('komunikasi.read')")
     public ResponseEntity<Page<PostKomunikasiDTO>> getFeedPosts(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -76,6 +79,7 @@ public class KomunikasiController {
      * Get popular posts
      */
     @GetMapping("/popular")
+    @PreAuthorize("hasAuthority('komunikasi.read')")
     public ResponseEntity<Page<PostKomunikasiDTO>> getPopularPosts(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -95,6 +99,7 @@ public class KomunikasiController {
      * Get trending posts
      */
     @GetMapping("/trending")
+    @PreAuthorize("hasAuthority('komunikasi.read')")
     public ResponseEntity<Page<PostKomunikasiDTO>> getTrendingPosts(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -115,6 +120,7 @@ public class KomunikasiController {
      * Search posts
      */
     @GetMapping("/search")
+    @PreAuthorize("hasAuthority('komunikasi.read')")
     public ResponseEntity<Page<PostKomunikasiDTO>> searchPosts(
             @RequestParam String keyword,
             @RequestParam(defaultValue = "0") int page,
@@ -129,6 +135,7 @@ public class KomunikasiController {
      * Get posts by user
      */
     @GetMapping("/user/{biografiId}")
+    @PreAuthorize("hasAuthority('komunikasi.read')")
     public ResponseEntity<Page<PostKomunikasiDTO>> getPostsByUser(
             @PathVariable Long biografiId,
             @RequestParam(defaultValue = "0") int page,
@@ -150,6 +157,7 @@ public class KomunikasiController {
      * Get single post by ID
      */
     @GetMapping("/post/{postId}")
+    @PreAuthorize("hasAuthority('komunikasi.read')")
     public ResponseEntity<PostKomunikasiDTO> getPostById(
             @PathVariable Long postId,
             @RequestParam(required = false) Long currentUserId) {
@@ -163,6 +171,7 @@ public class KomunikasiController {
      * Create new post
      */
     @PostMapping("/post")
+    @PreAuthorize("hasAuthority('komunikasi.create')")
     public ResponseEntity<PostKomunikasiDTO> createPost(
             @Valid @RequestBody CreatePostRequest request,
             @RequestParam Long biografiId) {
@@ -179,6 +188,7 @@ public class KomunikasiController {
      * Delete post
      */
     @DeleteMapping("/post/{postId}")
+    @PreAuthorize("hasAuthority('komunikasi.delete')")
     public ResponseEntity<Map<String, String>> deletePost(
             @PathVariable Long postId,
             @RequestParam Long biografiId) {
@@ -197,6 +207,7 @@ public class KomunikasiController {
      * Toggle reaction on post
      */
     @PostMapping("/post/{postId}/reaction")
+    @PreAuthorize("hasAuthority('komunikasi.create')")
     public ResponseEntity<PostKomunikasiDTO> togglePostReaction(
             @PathVariable Long postId,
             @RequestParam String reactionType,
@@ -214,6 +225,7 @@ public class KomunikasiController {
      * Get reactions for a post
      */
     @GetMapping("/post/{postId}/reactions")
+    @PreAuthorize("hasAuthority('komunikasi.read')")
     public ResponseEntity<List<ReactionSummaryDTO>> getPostReactions(@PathVariable Long postId) {
         List<ReactionSummaryDTO> reactions = komunikasiService.getPostReactions(postId);
         return ResponseEntity.ok(reactions);
@@ -225,6 +237,7 @@ public class KomunikasiController {
      * Get comments for a post
      */
     @GetMapping("/post/{postId}/comments")
+    @PreAuthorize("hasAuthority('komunikasi.read')")
     public ResponseEntity<Page<PostCommentDTO>> getPostComments(
             @PathVariable Long postId,
             @RequestParam(defaultValue = "0") int page,
@@ -240,6 +253,7 @@ public class KomunikasiController {
      * Get replies for a comment
      */
     @GetMapping("/comment/{commentId}/replies")
+    @PreAuthorize("hasAuthority('komunikasi.read')")
     public ResponseEntity<List<PostCommentDTO>> getCommentReplies(
             @PathVariable Long commentId,
             @RequestParam(required = false) Long currentUserId) {
@@ -251,6 +265,7 @@ public class KomunikasiController {
      * Create new comment
      */    
     @PostMapping("/post/{postId}/comment")
+    @PreAuthorize("hasAuthority('komunikasi.create')")
     public ResponseEntity<PostCommentDTO> createComment(
             @PathVariable Long postId,
             @Valid @RequestBody CreateCommentRequest request,
@@ -270,6 +285,7 @@ public class KomunikasiController {
      * Delete comment
      */
     @DeleteMapping("/comment/{commentId}")
+    @PreAuthorize("hasAuthority('komunikasi.delete')")
     public ResponseEntity<Map<String, String>> deleteComment(
             @PathVariable Long commentId,
             @RequestParam Long biografiId) {
@@ -286,6 +302,7 @@ public class KomunikasiController {
      * Toggle reaction on comment
      */
     @PostMapping("/comment/{commentId}/reaction")
+    @PreAuthorize("hasAuthority('komunikasi.create')")
     public ResponseEntity<PostCommentDTO> toggleCommentReaction(
             @PathVariable Long commentId,
             @RequestParam String reactionType,
@@ -305,6 +322,7 @@ public class KomunikasiController {
      * Get communication statistics
      */
     @GetMapping("/stats")
+    @PreAuthorize("hasAuthority('komunikasi.read')")
     public ResponseEntity<Map<String, Object>> getStats() {
         try {
             Map<String, Object> stats = komunikasiService.getCommunicationStats();
@@ -312,10 +330,13 @@ public class KomunikasiController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().build();
         }
-    }    /**
+    }
+    
+    /**
      * Get trending topics
      */
     @GetMapping("/trending-topics")
+    @PreAuthorize("hasAuthority('komunikasi.read')")
     public ResponseEntity<List<String>> getTrendingTopics() {
         try {
             List<String> trendingTopics = komunikasiService.getTrendingTopics();
@@ -329,6 +350,7 @@ public class KomunikasiController {
      * Get available reaction types
      */
     @GetMapping("/reactions/types")
+    @PreAuthorize("hasAuthority('komunikasi.read')")
     public ResponseEntity<Map<String, String>> getReactionTypes() {
         Map<String, String> reactionTypes = Map.of(
             "LIKE", "👍",

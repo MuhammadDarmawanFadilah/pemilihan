@@ -494,4 +494,25 @@ public class PegawaiService {
                 .map(this::createPegawaiResponseWithLocationNames)
                 .collect(Collectors.toList());
     }
+
+    public PegawaiResponse resetPassword(Long pegawaiId, String currentPassword, String newPassword) {
+        log.info("Resetting password for pegawai: {}", pegawaiId);
+        
+        Pegawai pegawai = pegawaiRepository.findById(pegawaiId)
+                .orElseThrow(() -> new RuntimeException("Pegawai tidak ditemukan"));
+        
+        // Verify current password
+        if (!passwordEncoder.matches(currentPassword, pegawai.getPassword())) {
+            throw new RuntimeException("Password lama tidak benar");
+        }
+        
+        // Update password
+        pegawai.setPassword(passwordEncoder.encode(newPassword));
+        pegawai.setUpdatedAt(LocalDateTime.now());
+        
+        Pegawai updatedPegawai = pegawaiRepository.save(pegawai);
+        log.info("Password updated successfully for pegawai: {}", pegawaiId);
+        
+        return createPegawaiResponseWithLocationNames(updatedPegawai);
+    }
 }

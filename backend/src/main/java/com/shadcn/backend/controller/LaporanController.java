@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -28,6 +29,7 @@ public class LaporanController {
 
     // Get all laporan with pagination and filters
     @PostMapping("/search")
+    @PreAuthorize("hasAuthority('laporan.read')")
     public ResponseEntity<Page<LaporanDto>> searchLaporan(@RequestBody LaporanFilterRequest filterRequest) {
         try {
             Page<LaporanDto> laporanPage = laporanService.getAllLaporan(filterRequest);
@@ -70,31 +72,39 @@ public class LaporanController {
 
     // Get laporan by pemilihan ID
     @GetMapping("/pemilihan/{pemilihanId}")
-    public ResponseEntity<?> getLaporanByPemilihanId(
-            @PathVariable Long pemilihanId,
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    public ResponseEntity<?> getLaporanByPemilihanId(@PathVariable Long pemilihanId) {
         try {
-            // Check authorization
-            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                Map<String, String> error = new HashMap<>();
-                error.put("error", "Anda harus login untuk mengakses laporan");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
-            }
-
-            String token = authHeader.substring(7);
-            Long userId = authService.getUserIdFromToken(token);
-
-            if (userId == null) {
-                Map<String, String> error = new HashMap<>();
-                error.put("error", "Token tidak valid atau telah kedaluwarsa");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
-            }
-
             // Get laporan by pemilihan ID
             java.util.List<LaporanDto> laporanList = laporanService.getLaporanByPemilihanId(pemilihanId);
             return ResponseEntity.ok(laporanList);
         } catch (Exception e) {
             log.error("Error fetching laporan by pemilihan ID", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    // Get pemilihan dropdown for laporan creation
+    @GetMapping("/dropdown/pemilihan")
+    public ResponseEntity<?> getPemilihanDropdown(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        try {
+            Long userId = null;
+            boolean isAdmin = false;
+            
+            // Check if user is authenticated
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                String token = authHeader.substring(7);
+                userId = authService.getUserIdFromToken(token);
+                if (userId != null) {
+                    isAdmin = authService.isAdmin(userId);
+                }
+            }
+            
+            // Get pemilihan list based on user role
+            java.util.List<Map<String, Object>> pemilihanList = laporanService.getPemilihanDropdown(userId, isAdmin);
+            return ResponseEntity.ok(pemilihanList);
+        } catch (Exception e) {
+            log.error("Error fetching pemilihan dropdown", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
@@ -122,15 +132,23 @@ public class LaporanController {
             }
 
             // Get jenis laporan associated with this laporan
-            Map<String, Object> result = laporanService.getLaporanWithJenisLaporan(id, userId, authService.isAdmin(userId));
-            
-            if (result.containsKey("associatedJenisLaporan")) {
-                return ResponseEntity.ok(result.get("associatedJenisLaporan"));
-            } else {
-                return ResponseEntity.ok(new java.util.ArrayList<>());
-            }
+            java.util.List<Map<String, Object>> jenisLaporanList = laporanService.getJenisLaporanByLaporanId(id);
+            return ResponseEntity.ok(jenisLaporanList);
         } catch (Exception e) {
             log.error("Error fetching jenis laporan by laporan ID", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    // Get jenis laporan by pemilihan ID for dropdown
+    @GetMapping("/dropdown/jenis-laporan/{pemilihanId}")
+    public ResponseEntity<?> getJenisLaporanByPemilihanId(@PathVariable Long pemilihanId) {
+        try {
+            // Get all jenis laporan associated with this pemilihan
+            java.util.List<Map<String, Object>> jenisLaporanList = laporanService.getJenisLaporanByPemilihanId(pemilihanId);
+            return ResponseEntity.ok(jenisLaporanList);
+        } catch (Exception e) {
+            log.error("Error fetching jenis laporan by pemilihan ID", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
@@ -141,7 +159,7 @@ public class LaporanController {
             @PathVariable Long id,
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         try {
-            // Check authorization
+            // Check authentication only - no role validation
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
                 Map<String, String> error = new HashMap<>();
                 error.put("error", "Anda harus login untuk mengakses laporan");
@@ -149,21 +167,16 @@ public class LaporanController {
             }
 
             String token = authHeader.substring(7);
+            // Validate token without checking user ID
             Long userId = authService.getUserIdFromToken(token);
-
             if (userId == null) {
                 Map<String, String> error = new HashMap<>();
-                error.put("error", "Token tidak valid atau telah kedaluwarsa");
+                error.put("error", "Token tidak valid");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
             }
 
-            // For admin, show all laporan. For user, only show their own laporan
-            Optional<LaporanDto> laporan;
-            if (authService.isAdmin(userId)) {
-                laporan = laporanService.getLaporanById(id);
-            } else {
-                laporan = laporanService.getLaporanByIdForUser(id, userId);
-            }
+            // Simply return the laporan by ID without role/user restrictions
+            Optional<LaporanDto> laporan = laporanService.getLaporanById(id);
 
             if (laporan.isPresent()) {
                 return ResponseEntity.ok(laporan.get());

@@ -73,12 +73,21 @@ export const getApiUrl = (endpoint: string) => {
   // Remove leading slash if present, and ensure endpoint doesn't duplicate /api
   const cleanEndpoint = endpoint.startsWith('/') ? endpoint.substring(1) : endpoint;
   
+  console.log('getApiUrl input:', endpoint);
+  console.log('cleanEndpoint:', cleanEndpoint);
+  console.log('config.apiUrl:', config.apiUrl);
+  console.log('config.backendUrl:', config.backendUrl);
+  
   // If endpoint already includes 'api/', use it as is with backend URL
   if (cleanEndpoint.startsWith('api/')) {
-    return `${config.backendUrl}/${cleanEndpoint}`;
+    const url = `${config.backendUrl}/${cleanEndpoint}`;
+    console.log('Using backend URL (with api/):', url);
+    return url;
   } else {
     // Otherwise, use the full apiUrl
-    return `${config.apiUrl}/${cleanEndpoint}`;
+    const url = `${config.apiUrl}/${cleanEndpoint}`;
+    console.log('Using full apiUrl:', url);
+    return url;
   }
 };
 export const getImageUrl = (filename: string) => `${config.backendUrl}${config.imageServeEndpoint}/${filename}`;

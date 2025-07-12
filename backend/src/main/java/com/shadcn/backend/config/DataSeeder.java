@@ -1,11 +1,7 @@
 package com.shadcn.backend.config;
 
-import com.shadcn.backend.model.Payment;
-import com.shadcn.backend.model.User;
-import com.shadcn.backend.model.Role;
-import com.shadcn.backend.repository.PaymentRepository;
-import com.shadcn.backend.repository.UserRepository;
-import com.shadcn.backend.repository.RoleRepository;
+import com.shadcn.backend.model.*;
+import com.shadcn.backend.repository.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,17 +18,18 @@ import java.util.HashSet;
 public class DataSeeder implements CommandLineRunner {
     
     private static final Logger logger = LoggerFactory.getLogger(DataSeeder.class);
-      @Autowired
+    @Autowired
     private UserRepository userRepository;
-      @Autowired
+    @Autowired
     private PaymentRepository paymentRepository;
-    
     @Autowired
     private RoleRepository roleRepository;
-    
+    @Autowired
+    private PegawaiRepository pegawaiRepository;
+    @Autowired
+    private JabatanRepository jabatanRepository;
     @Autowired
     private PasswordEncoder passwordEncoder;
-    
     @Autowired
     private AppProperties appProperties;
       @Override
@@ -51,6 +48,22 @@ public class DataSeeder implements CommandLineRunner {
         } else {
             logger.info("Roles already exist, skipping role seeding. Count: {}", roleRepository.count());
         }
+        
+        // Seed jabatan
+        if (jabatanRepository.count() == 0) {
+            logger.info("No jabatan found, seeding jabatan...");
+            seedJabatan();
+        } else {
+            logger.info("Jabatan already exist, skipping jabatan seeding. Count: {}", jabatanRepository.count());
+        }
+        
+        // Seed pegawai (including admin users)
+        if (pegawaiRepository.count() == 0) {
+            logger.info("No pegawai found, seeding pegawai...");
+            seedAdminPegawai();
+        } else {
+            logger.info("Pegawai already exist, skipping pegawai seeding. Count: {}", pegawaiRepository.count());
+        }
           if (userRepository.count() == 0) {
             logger.info("No users found, seeding users...");
             seedUsers();
@@ -66,11 +79,7 @@ public class DataSeeder implements CommandLineRunner {
         } else {
             logger.info("Payments already exist, skipping payment seeding. Count: {}", paymentRepository.count());
         }
-          logger.info("Data seeding process completed.");
-    }
-    
-    private String generatePaymentId(int index) {
-        return appProperties.getPayment().getPrefix() + String.format("%08d", index);
+        logger.info("Data seeding process completed.");
     }
       private void seedUsers() {
         // Create users using default constructor and setters
@@ -141,40 +150,42 @@ public class DataSeeder implements CommandLineRunner {
         adminRole.setPermissions(new HashSet<>(Arrays.asList(
             "users.read", "users.write", "users.delete",
             "roles.read", "roles.write", "roles.delete",
-            "biografi.read", "biografi.write", "biografi.delete",
+            "pegawai.read", "pegawai.write", "pegawai.delete",
+            "pemilihan.read", "pemilihan.write", "pemilihan.delete",
+            "laporan.read", "laporan.write", "laporan.delete",
             "payments.read", "payments.write", "payments.delete",
-            "documents.read", "documents.write", "documents.delete",
-            "news.read", "news.write", "news.delete"
+            "documents.read", "documents.write", "documents.delete"
         )));
         
         Role userRole = new Role();
         userRole.setRoleName("USER");
         userRole.setPermissions(new HashSet<>(Arrays.asList(
-            "biografi.read", "biografi.write",
-            "payments.read",
-            "documents.read",
-            "news.read"
+            "pegawai.read",
+            "pemilihan.read",
+            "laporan.read",
+            "documents.read"
         )));
-          Role moderatorRole = new Role();
+        
+        Role moderatorRole = new Role();
         moderatorRole.setRoleName("MODERATOR");
         moderatorRole.setPermissions(new HashSet<>(Arrays.asList(
             "users.read", "users.write",
-            "biografi.read", "biografi.write",
-            "payments.read",
-            "documents.read", "documents.write",
-            "news.read", "news.write"
+            "pegawai.read", "pegawai.write",
+            "pemilihan.read", "pemilihan.write",
+            "laporan.read", "laporan.write",
+            "documents.read", "documents.write"
         )));
         
-        Role alumniRole = new Role();
-        alumniRole.setRoleName("ALUMNI");
-        alumniRole.setPermissions(new HashSet<>(Arrays.asList(
-            "biografi.read", "biografi.write",
-            "payments.read",
-            "documents.read",
-            "news.read"
+        Role pegawaiRole = new Role();
+        pegawaiRole.setRoleName("PEGAWAI");
+        pegawaiRole.setPermissions(new HashSet<>(Arrays.asList(
+            "pegawai.read",
+            "pemilihan.read", "pemilihan.write",
+            "laporan.read", "laporan.write",
+            "documents.read"
         )));
         
-        List<Role> roles = Arrays.asList(adminRole, userRole, moderatorRole, alumniRole);
+        List<Role> roles = Arrays.asList(adminRole, userRole, moderatorRole, pegawaiRole);
         roleRepository.saveAll(roles);
         logger.info("Successfully seeded {} roles", roles.size());
         
@@ -184,6 +195,83 @@ public class DataSeeder implements CommandLineRunner {
                 role.getRoleId(), role.getRoleName(), role.getPermissions());
         }
     }
+
+    private void seedJabatan() {
+        logger.info("Starting jabatan seeding...");
+        
+        List<Jabatan> jabatanList = Arrays.asList(
+            Jabatan.builder().nama("Ketua Bawaslu").deskripsi("Pimpinan tertinggi Bawaslu").sortOrder(1).build(),
+            Jabatan.builder().nama("Wakil Ketua Bawaslu").deskripsi("Wakil pimpinan Bawaslu").sortOrder(2).build(),
+            Jabatan.builder().nama("Anggota Bawaslu").deskripsi("Anggota dewan pengawas pemilu").sortOrder(3).build(),
+            Jabatan.builder().nama("Sekretaris Jenderal").deskripsi("Kepala sekretariat Bawaslu").sortOrder(4).build(),
+            Jabatan.builder().nama("Direktur Teknis").deskripsi("Kepala divisi teknis").sortOrder(5).build(),
+            Jabatan.builder().nama("Direktur Hukum").deskripsi("Kepala divisi hukum").sortOrder(6).build(),
+            Jabatan.builder().nama("Direktur SDM").deskripsi("Kepala divisi sumber daya manusia").sortOrder(7).build(),
+            Jabatan.builder().nama("Kepala Bagian Umum").deskripsi("Kepala bagian urusan umum").sortOrder(8).build(),
+            Jabatan.builder().nama("Kepala Bagian Keuangan").deskripsi("Kepala bagian keuangan").sortOrder(9).build(),
+            Jabatan.builder().nama("Kepala Bagian Humas").deskripsi("Kepala bagian hubungan masyarakat").sortOrder(10).build(),
+            Jabatan.builder().nama("Staf Teknis").deskripsi("Staf teknis pemilu").sortOrder(11).build(),
+            Jabatan.builder().nama("Staf Administrasi").deskripsi("Staf administrasi").sortOrder(12).build(),
+            Jabatan.builder().nama("Staf Hukum").deskripsi("Staf bagian hukum").sortOrder(13).build(),
+            Jabatan.builder().nama("Koordinator Lapangan").deskripsi("Koordinator kegiatan lapangan").sortOrder(14).build(),
+            Jabatan.builder().nama("Pengawas Pemilu").deskripsi("Petugas pengawas pemilu").sortOrder(15).build()
+        );
+        
+        jabatanRepository.saveAll(jabatanList);
+        logger.info("Successfully seeded {} jabatan", jabatanList.size());
+    }
+
+    private void seedAdminPegawai() {
+        logger.info("Starting admin pegawai seeding...");
+        
+        List<User> adminUsers = userRepository.findByStatus(User.UserStatus.ACTIVE)
+            .stream()
+            .filter(user -> user.getRole() != null && "ADMIN".equals(user.getRole().getRoleName()))
+            .toList();
+        
+        List<Jabatan> jabatanList = jabatanRepository.findAll();
+        
+        if (adminUsers.isEmpty()) {
+            logger.warn("No admin users found for pegawai seeding");
+            return;
+        }
+        
+        if (jabatanList.isEmpty()) {
+            logger.warn("No jabatan found for pegawai seeding");
+            return;
+        }
+        
+        Jabatan defaultJabatan = jabatanList.stream()
+            .filter(j -> "Ketua Bawaslu".equals(j.getNama()))
+            .findFirst()
+            .orElse(jabatanList.get(0));
+        
+        for (User adminUser : adminUsers) {
+            // Check if pegawai already exists for this user
+            if (pegawaiRepository.existsByUsername(adminUser.getUsername())) {
+                logger.info("Pegawai already exists for user: {}", adminUser.getUsername());
+                continue;
+            }
+            
+            Pegawai pegawai = Pegawai.builder()
+                .username(adminUser.getUsername())
+                .password(adminUser.getPassword())
+                .fullName(adminUser.getFullName())
+                .email(adminUser.getEmail())
+                .phoneNumber(adminUser.getPhoneNumber())
+                .nip("ADM" + String.format("%08d", adminUser.getId()))
+                .role("ADMIN")
+                .jabatan(defaultJabatan)
+                .status(Pegawai.PegawaiStatus.AKTIF)
+                .build();
+            
+            pegawaiRepository.save(pegawai);
+            logger.info("Created pegawai for admin user: {}", adminUser.getUsername());
+        }
+        
+        logger.info("Successfully seeded pegawai for {} admin users", adminUsers.size());
+    }
+
     private void seedPayments() {
         logger.info("Starting payment seeding...");
         List<User> users = userRepository.findAll();

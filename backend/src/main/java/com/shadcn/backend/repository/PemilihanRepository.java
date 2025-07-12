@@ -91,4 +91,30 @@ public interface PemilihanRepository extends JpaRepository<Pemilihan, Long> {
         @Param("kecamatan") String kecamatan,
         Pageable pageable
     );
+    
+    // Advanced search with all filters including wilayah and pegawai
+    @Query("SELECT DISTINCT p FROM Pemilihan p " +
+           "LEFT JOIN p.pegawaiList pegawai " +
+           "WHERE " +
+           "(:keyword IS NULL OR :keyword = '' OR LOWER(p.namaPemilihan) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(p.deskripsiPemilihan) LIKE LOWER(CONCAT('%', :keyword, '%'))) AND " +
+           "(:tingkat IS NULL OR :tingkat = '' OR LOWER(p.tingkatPemilihan) = LOWER(:tingkat)) AND " +
+           "(:status IS NULL OR :status = '' OR LOWER(p.status) = LOWER(:status)) AND " +
+           "(:provinsi IS NULL OR :provinsi = '' OR p.provinsiId = :provinsi) AND " +
+           "(:kota IS NULL OR :kota = '' OR p.kotaId = :kota) AND " +
+           "(:kecamatan IS NULL OR :kecamatan = '' OR p.kecamatanId = :kecamatan) AND " +
+           "(:pegawaiId IS NULL OR pegawai.id = :pegawaiId)")
+    Page<Pemilihan> findByAdvancedFiltersWithPegawai(
+        @Param("keyword") String keyword,
+        @Param("tingkat") String tingkat,
+        @Param("status") String status,
+        @Param("provinsi") String provinsi,
+        @Param("kota") String kota,
+        @Param("kecamatan") String kecamatan,
+        @Param("pegawaiId") Long pegawaiId,
+        Pageable pageable
+    );
+    
+    // Monthly statistics for dashboard
+    @Query("SELECT COUNT(p) FROM Pemilihan p WHERE YEAR(p.createdAt) = :year AND MONTH(p.createdAt) = :month")
+    Long countByCreatedAtYearAndMonth(@Param("year") int year, @Param("month") int month);
 }

@@ -30,6 +30,7 @@ public class LaporanService {
     private final DetailLaporanRepository detailLaporanRepository;
     private final LampiranLaporanRepository lampiranLaporanRepository;
     private final DetailPemilihanRepository detailPemilihanRepository;
+    private final PemilihanRepository pemilihanRepository;
     private final FileUploadService fileUploadService;
     private final ObjectMapper objectMapper;
     
@@ -550,6 +551,113 @@ public class LaporanService {
             );
         }
         return new LaporanStats(0, 0, 0, 0);
+    }
+    
+    // Get pemilihan dropdown based on user role
+    public List<Map<String, Object>> getPemilihanDropdown(Long userId, boolean isAdmin) {
+        try {
+            List<Pemilihan> pemilihanList;
+            
+            if (isAdmin || userId == null) {
+                // Admin can see all active pemilihan
+                pemilihanList = pemilihanRepository.findByStatus(Pemilihan.StatusPemilihan.AKTIF);
+            } else {
+                // Regular user can only see pemilihan assigned to them through pegawai relationship
+                // Use the existing query method that finds pemilihan by pegawai
+                pemilihanList = pemilihanRepository.findByAdvancedFiltersWithPegawai(
+                    null, null, "AKTIF", null, null, null, userId, 
+                    org.springframework.data.domain.Pageable.unpaged()
+                ).getContent();
+            }
+            
+            return pemilihanList.stream()
+                    .map(pemilihan -> {
+                        Map<String, Object> dropdown = new HashMap<>();
+                        dropdown.put("pemilihanId", pemilihan.getPemilihanId());
+                        dropdown.put("namaPemilihan", pemilihan.getNamaPemilihan());
+                        dropdown.put("deskripsi", pemilihan.getDeskripsiPemilihan());
+                        dropdown.put("tingkatPemilihan", pemilihan.getTingkatPemilihan().name());
+                        dropdown.put("tahun", pemilihan.getTahun());
+                        dropdown.put("provinsiNama", pemilihan.getProvinsiNama());
+                        dropdown.put("kotaNama", pemilihan.getKotaNama());
+                        dropdown.put("kecamatanNama", pemilihan.getKecamatanNama());
+                        dropdown.put("kelurahanNama", pemilihan.getKelurahanNama());
+                        return dropdown;
+                    })
+                    .sorted((a, b) -> ((String) a.get("namaPemilihan"))
+                            .compareToIgnoreCase((String) b.get("namaPemilihan")))
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("Error getting pemilihan dropdown", e);
+            return new ArrayList<>();
+        }
+    }
+    
+    // Get jenis laporan by laporan ID only
+    public List<Map<String, Object>> getJenisLaporanByLaporanId(Long laporanId) {
+        try {
+            // Get all detail laporan for this laporan
+            List<DetailLaporan> detailList = detailLaporanRepository
+                    .findByLaporanLaporanIdOrderByTahapanLaporanUrutanTahapanAsc(laporanId);
+            
+            // Extract unique jenis laporan IDs and get their details
+            Set<Long> jenisLaporanIds = detailList.stream()
+                    .map(detail -> detail.getTahapanLaporan().getJenisLaporan().getJenisLaporanId())
+                    .collect(Collectors.toSet());
+            
+            // Get jenis laporan details
+            List<JenisLaporan> jenisLaporanList = jenisLaporanRepository.findAllById(jenisLaporanIds);
+            
+            return jenisLaporanList.stream()
+                    .map(jenisLaporan -> {
+                        Map<String, Object> jenisLaporanDto = new HashMap<>();
+                        jenisLaporanDto.put("jenisLaporanId", jenisLaporan.getJenisLaporanId());
+                        jenisLaporanDto.put("nama", jenisLaporan.getNama());
+                        jenisLaporanDto.put("deskripsi", jenisLaporan.getDeskripsi());
+                        jenisLaporanDto.put("status", jenisLaporan.getStatus());
+                        jenisLaporanDto.put("createdAt", jenisLaporan.getCreatedAt());
+                        jenisLaporanDto.put("updatedAt", jenisLaporan.getUpdatedAt());
+                        return jenisLaporanDto;
+                    })
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("Error getting jenis laporan by laporan ID", e);
+            return new ArrayList<>();
+        }
+    }
+    
+    // Get jenis laporan by pemilihan ID for dropdown
+    public List<Map<String, Object>> getJenisLaporanByPemilihanId(Long pemilihanId) {
+        try {
+            // Get detail pemilihan for this pemilihan ID
+            List<DetailPemilihan> detailPemilihanList = detailPemilihanRepository
+                    .findByPemilihanIdWithLaporanOrderByUrutan(pemilihanId);
+            
+            // Extract unique jenis laporan IDs from laporan in this pemilihan
+            Set<Long> jenisLaporanIds = detailPemilihanList.stream()
+                    .filter(detail -> detail.getLaporan() != null && detail.getLaporan().getJenisLaporan() != null)
+                    .map(detail -> detail.getLaporan().getJenisLaporan().getJenisLaporanId())
+                    .collect(Collectors.toSet());
+            
+            // Get jenis laporan details
+            List<JenisLaporan> jenisLaporanList = jenisLaporanRepository.findAllById(jenisLaporanIds);
+            
+            return jenisLaporanList.stream()
+                    .map(jenisLaporan -> {
+                        Map<String, Object> jenisLaporanDto = new HashMap<>();
+                        jenisLaporanDto.put("jenisLaporanId", jenisLaporan.getJenisLaporanId());
+                        jenisLaporanDto.put("nama", jenisLaporan.getNama());
+                        jenisLaporanDto.put("deskripsi", jenisLaporan.getDeskripsi());
+                        jenisLaporanDto.put("status", jenisLaporan.getStatus());
+                        return jenisLaporanDto;
+                    })
+                    .sorted((a, b) -> ((String) a.get("nama"))
+                            .compareToIgnoreCase((String) b.get("nama")))
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("Error getting jenis laporan by pemilihan ID", e);
+            return new ArrayList<>();
+        }
     }
     
     // Helper methods

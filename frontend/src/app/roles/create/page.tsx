@@ -56,24 +56,15 @@ export default function CreateRolePage() {
         const data = await response.json();
         setAvailablePermissions(data);
         
-        // Auto-check Public and Other permissions
+        // Auto-check Public and Menu Pegawai permissions
         const autoCheckedPermissions = data.filter((permission: string) => {
-          // Public permissions
+          // Public permissions (always accessible)
           if (permission.includes('home') || permission.includes('berita.read')) {
             return true;
           }
-          // Other permissions - anything that doesn't fit in main categories
-          if (!permission.includes('documents') && !permission.includes('biografi') && 
-              !permission.includes('komunikasi') && !permission.includes('alumni-locations') &&
-              !permission.includes('usulan') && !permission.includes('pelaksanaan') && 
-              !permission.includes('notifikasi.read') && !permission.includes('users') && 
-              !permission.includes('roles') && !permission.includes('admin') && 
-              !permission.includes('birthday') && !permission.includes('invitations') && 
-              !permission.includes('berita.create') && !permission.includes('berita.update') && 
-              !permission.includes('berita.delete') && !permission.includes('notifikasi.create') && 
-              !permission.includes('notifikasi.update') && !permission.includes('notifikasi.delete') && 
-              !permission.includes('master-data') && !permission.includes('home') && 
-              !permission.includes('berita.read')) {
+          // Basic Menu Pegawai permissions for authenticated users
+          if (permission.includes('file-manager') || permission.includes('laporan-saya') || 
+              permission.includes('pegawai.read') || permission.includes('documents.read')) {
             return true;
           }
           return false;
@@ -169,31 +160,38 @@ export default function CreateRolePage() {
 
   const groupPermissions = (permissions: string[]) => {
     const groups: { [key: string]: string[] } = {
-      'Public': [],
-      'User/Alumni': [],
-      'Admin': [],
+      'Menu Pegawai': [],
+      'Administrasi Pegawai': [],
+      'Administrasi Pemilihan': [],
       'Master Data': [],
       'Other': []
     };
     
     permissions.forEach(permission => {
-      if (permission.includes('home') || permission.includes('berita.read')) {
-        groups['Public'].push(permission);
-      } else if (permission.includes('documents') || permission.includes('biografi') || 
-                 permission.includes('komunikasi') || permission.includes('alumni-locations') ||
-                 permission.includes('usulan') || permission.includes('pelaksanaan') || 
-                 permission.includes('notifikasi.read')) {
-        groups['User/Alumni'].push(permission);
-      } else if (permission.includes('users') || permission.includes('roles') || 
-                 permission.includes('admin') || permission.includes('birthday') ||
-                 permission.includes('invitations') || permission.includes('berita.create') ||
-                 permission.includes('berita.update') || permission.includes('berita.delete') ||
-                 permission.includes('notifikasi.create') || permission.includes('notifikasi.update') ||
-                 permission.includes('notifikasi.delete')) {
-        groups['Admin'].push(permission);
-      } else if (permission.includes('master-data')) {
+      // Menu Pegawai permissions (for authenticated users)
+      if (permission.includes('laporan-pengawas') || permission.includes('laporan-saya') || 
+          permission.includes('file-manager') || permission.includes('home.access') ||
+          permission.includes('dashboard.view')) {
+        groups['Menu Pegawai'].push(permission);
+      } 
+      // Administrasi Pegawai permissions - exact match with sidebar order
+      else if (permission.includes('pegawai.') || permission.includes('lokasi-pegawai.') || 
+               permission.includes('roles.') || permission.includes('file-pegawai.')) {
+        groups['Administrasi Pegawai'].push(permission);
+      }
+      // Administrasi Pemilihan permissions  
+      else if (permission.includes('pemilihan.') || permission.includes('laporan.') ||
+               permission.includes('jenis-laporan.') || permission.includes('lokasi-pemilihan.')) {
+        groups['Administrasi Pemilihan'].push(permission);
+      } 
+      // Master Data permissions - exact match with sidebar order
+      else if (permission.includes('kategori-file.') || permission.includes('jabatan.') ||
+               permission.includes('wilayah-provinsi.') || permission.includes('wilayah-kota.') ||
+               permission.includes('wilayah-kecamatan.') || permission.includes('wilayah-kelurahan.')) {
         groups['Master Data'].push(permission);
-      } else {
+      } 
+      // Everything else
+      else {
         groups['Other'].push(permission);
       }
     });
@@ -206,6 +204,55 @@ export default function CreateRolePage() {
     });
 
     return groups;
+  };
+
+  // Sort permissions within each group to match sidebar order
+  const sortPermissions = (permissions: string[], group: string) => {
+    if (group === 'Menu Pegawai') {
+      const order = ['laporan-pengawas', 'laporan-saya', 'file-manager'];
+      return permissions.sort((a, b) => {
+        const aIndex = order.findIndex(o => a.includes(o));
+        const bIndex = order.findIndex(o => b.includes(o));
+        if (aIndex === -1 && bIndex === -1) return a.localeCompare(b);
+        if (aIndex === -1) return 1;
+        if (bIndex === -1) return -1;
+        return aIndex - bIndex;
+      });
+    }
+    if (group === 'Administrasi Pegawai') {
+      const order = ['pegawai', 'lokasi-pegawai', 'roles', 'file-pegawai'];
+      return permissions.sort((a, b) => {
+        const aIndex = order.findIndex(o => a.includes(o));
+        const bIndex = order.findIndex(o => b.includes(o));
+        if (aIndex === -1 && bIndex === -1) return a.localeCompare(b);
+        if (aIndex === -1) return 1;
+        if (bIndex === -1) return -1;
+        return aIndex - bIndex;
+      });
+    }
+    if (group === 'Administrasi Pemilihan') {
+      const order = ['pemilihan', 'laporan', 'jenis-laporan', 'lokasi-pemilihan'];
+      return permissions.sort((a, b) => {
+        const aIndex = order.findIndex(o => a.includes(o));
+        const bIndex = order.findIndex(o => b.includes(o));
+        if (aIndex === -1 && bIndex === -1) return a.localeCompare(b);
+        if (aIndex === -1) return 1;
+        if (bIndex === -1) return -1;
+        return aIndex - bIndex;
+      });
+    }
+    if (group === 'Master Data') {
+      const order = ['kategori-file', 'jabatan', 'wilayah-provinsi', 'wilayah-kota', 'wilayah-kecamatan', 'wilayah-kelurahan'];
+      return permissions.sort((a, b) => {
+        const aIndex = order.findIndex(o => a.includes(o));
+        const bIndex = order.findIndex(o => b.includes(o));
+        if (aIndex === -1 && bIndex === -1) return a.localeCompare(b);
+        if (aIndex === -1) return 1;
+        if (bIndex === -1) return -1;
+        return aIndex - bIndex;
+      });
+    }
+    return permissions.sort();
   };
 
   const formatPermissionName = (permission: string) => {
@@ -386,20 +433,48 @@ export default function CreateRolePage() {
                           <div className="flex items-center justify-between">
                             <h4 className="font-semibold text-sm flex items-center gap-2">
                               <div className={`w-3 h-3 rounded-full ${
-                                group === 'Public' ? 'bg-green-500' :
-                                group === 'User/Alumni' ? 'bg-blue-500' :
-                                group === 'Admin' ? 'bg-red-500' :
+                                group === 'Menu Pegawai' ? 'bg-blue-500' :
+                                group === 'Administrasi Pegawai' ? 'bg-red-500' :
+                                group === 'Administrasi Pemilihan' ? 'bg-orange-500' :
                                 group === 'Master Data' ? 'bg-purple-500' :
                                 'bg-gray-500'
                               }`}></div>
                               {group}
                             </h4>
-                            <Badge variant="secondary" className="text-xs">
-                              {permissions.filter(p => formData.permissions.includes(p)).length}/{permissions.length}
-                            </Badge>
+                            <div className="flex items-center gap-2">
+                              <Checkbox
+                                id={`group-${group}`}
+                                checked={permissions.every(p => formData.permissions.includes(p))}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    // Add all permissions in this group
+                                    setFormData(prev => ({
+                                      ...prev,
+                                      permissions: [...new Set([...prev.permissions, ...permissions])]
+                                    }));
+                                  } else {
+                                    // Remove all permissions in this group
+                                    setFormData(prev => ({
+                                      ...prev,
+                                      permissions: prev.permissions.filter(p => !permissions.includes(p))
+                                    }));
+                                  }
+                                }}
+                                className="mt-0.5"
+                              />
+                              <Label
+                                htmlFor={`group-${group}`}
+                                className="text-xs cursor-pointer"
+                              >
+                                Semua
+                              </Label>
+                              <Badge variant="secondary" className="text-xs">
+                                {permissions.filter(p => formData.permissions.includes(p)).length}/{permissions.length}
+                              </Badge>
+                            </div>
                           </div>
                           <div className="space-y-2 max-h-60 overflow-y-auto">
-                            {permissions.map((permission) => (
+                            {sortPermissions(permissions, group).map((permission) => (
                               <div key={permission} className="flex items-start space-x-2 p-2 rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                                 <Checkbox
                                   id={permission}

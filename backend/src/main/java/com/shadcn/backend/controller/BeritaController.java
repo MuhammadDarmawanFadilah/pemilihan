@@ -16,6 +16,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
@@ -34,6 +35,7 @@ public class BeritaController {
     private final CommentService commentService;
 
     @GetMapping
+    @PreAuthorize("hasAuthority('berita.read')")
     public ResponseEntity<Page<BeritaSummaryDto>> getAllBerita(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -74,6 +76,7 @@ public class BeritaController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('berita.read')")
     public ResponseEntity<Berita> getBeritaById(@PathVariable Long id) {
         Optional<Berita> berita = beritaService.getBeritaById(id);
         if (berita.isPresent()) {
@@ -82,7 +85,9 @@ public class BeritaController {
             return ResponseEntity.ok(berita.get());
         }
         return ResponseEntity.notFound().build();
-    }    @GetMapping("/published")
+    }    
+    
+    @GetMapping("/published")
     public ResponseEntity<Page<BeritaSummaryDto>> getPublishedBerita(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -109,7 +114,9 @@ public class BeritaController {
         Pageable pageable = PageRequest.of(page, size);
         Page<Berita> beritaPage = beritaService.getBeritaByKategori(kategori, pageable);
         return ResponseEntity.ok(beritaPage);
-    }    @GetMapping("/popular")
+    }    
+    
+    @GetMapping("/popular")
     public ResponseEntity<List<BeritaSummaryDto>> getPopularBerita(
             @RequestParam(defaultValue = "5") int limit) {
         List<BeritaSummaryDto> popularBerita = beritaService.getPopularBeritaSummary(limit);
@@ -117,6 +124,7 @@ public class BeritaController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAuthority('berita.write')")
     public ResponseEntity<Berita> createBerita(@Valid @RequestBody BeritaRequest request) {
         try {
             Berita berita = beritaService.createBerita(request);
@@ -127,6 +135,7 @@ public class BeritaController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('berita.write')")
     public ResponseEntity<Berita> updateBerita(
             @PathVariable Long id, 
             @Valid @RequestBody BeritaRequest request) {
@@ -139,6 +148,7 @@ public class BeritaController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('berita.write')")
     public ResponseEntity<Void> deleteBerita(@PathVariable Long id) {
         try {
             beritaService.deleteBerita(id);

@@ -93,4 +93,8 @@ public interface PegawaiRepository extends JpaRepository<Pegawai, Long> {
                                         @Param("status") String status, 
                                         @Param("jabatan") String jabatan, 
                                         Pageable pageable);
+    
+    // Monthly statistics for dashboard
+    @Query("SELECT COUNT(p) FROM Pegawai p WHERE YEAR(p.createdAt) = :year AND MONTH(p.createdAt) = :month")
+    Long countByCreatedAtYearAndMonth(@Param("year") int year, @Param("month") int month);
 }

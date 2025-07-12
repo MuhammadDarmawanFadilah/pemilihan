@@ -61,10 +61,11 @@ export default function LaporanJenisPage() {
   }, [laporanId]);
 
   useEffect(() => {
-    if (laporan) {
+    if (laporanId) {
+      loadLaporan();
       loadJenisLaporan();
     }
-  }, [laporan, currentPage, pageSize]);
+  }, [laporanId, currentPage, pageSize]);
 
   const loadLaporan = async () => {
     try {
@@ -83,50 +84,26 @@ export default function LaporanJenisPage() {
   const loadJenisLaporan = async (filterOverride?: string) => {
     setLoading(true);
     try {
-      // First get the laporan with detail to ensure we only show related jenis laporan
-      if (!laporan) return;
+      // Get jenis laporan directly from the API endpoint 
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/laporan/${laporanId}/jenis-laporan`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch jenis laporan');
+      }
+      
+      const jenisLaporanData = await response.json();
       
       // Use filter override if provided, otherwise use state
       const filterValue = filterOverride !== undefined ? filterOverride : namaJenisFilter;
       
-      // Extract unique jenis laporan IDs from detailLaporanList specific to this laporan
-      let jenisLaporanIds: number[] = [];
-      if (laporan.detailLaporanList && laporan.detailLaporanList.length > 0) {
-        const uniqueJenisLaporanIds = new Set(
-          laporan.detailLaporanList.map(detail => detail.jenisLaporanId)
-        );
-        jenisLaporanIds = Array.from(uniqueJenisLaporanIds);
-      } else if (laporan.jenisLaporanId) {
-        // Fallback to primary jenis laporan if no detail laporan
-        jenisLaporanIds = [laporan.jenisLaporanId];
-      }
-      
-      if (jenisLaporanIds.length === 0) {
-        setJenisLaporan([]);
-        setTotalElements(0);
-        setTotalPages(0);
-        setHasNext(false);
-        setHasPrevious(false);
-        return;
-      }
-      
-      // Load each jenis laporan by ID (only those related to this specific laporan)
-      const jenisLaporanDetails = await Promise.all(
-        jenisLaporanIds.map(async (id) => {
-          try {
-            return await jenisLaporanAPI.getById(id);
-          } catch (error) {
-            console.error(`Error loading jenis laporan ${id}:`, error);
-            return null;
-          }
-        })
-      );
-      
-      // Filter out null results and apply name filter if any
-      let validJenisLaporan = jenisLaporanDetails.filter(jl => jl !== null);
-      
+      // Apply name filter if any
+      let filteredData = jenisLaporanData;
       if (filterValue && filterValue.trim()) {
-        validJenisLaporan = validJenisLaporan.filter(jl => 
+        filteredData = jenisLaporanData.filter((jl: any) => 
           jl.nama.toLowerCase().includes(filterValue.toLowerCase())
         );
       }
@@ -134,12 +111,12 @@ export default function LaporanJenisPage() {
       // Apply client-side pagination
       const startIndex = currentPage * pageSize;
       const endIndex = startIndex + pageSize;
-      const paginatedData = validJenisLaporan.slice(startIndex, endIndex);
+      const paginatedData = filteredData.slice(startIndex, endIndex);
       
       setJenisLaporan(paginatedData);
-      setTotalElements(validJenisLaporan.length);
-      setTotalPages(Math.ceil(validJenisLaporan.length / pageSize));
-      setHasNext(endIndex < validJenisLaporan.length);
+      setTotalElements(filteredData.length);
+      setTotalPages(Math.ceil(filteredData.length / pageSize));
+      setHasNext(endIndex < filteredData.length);
       setHasPrevious(currentPage > 0);
       
     } catch (error: any) {
@@ -159,17 +136,13 @@ export default function LaporanJenisPage() {
 
   const handleSearch = () => {
     setCurrentPage(0);
-    if (laporan) {
-      loadJenisLaporan();
-    }
+    loadJenisLaporan();
   };
 
   const handleClearFilter = async () => {
     setNamaJenisFilter("");
     setCurrentPage(0);
-    if (laporan) {
-      await loadJenisLaporan("");
-    }
+    await loadJenisLaporan("");
   };
 
   const getPageNumbers = () => {

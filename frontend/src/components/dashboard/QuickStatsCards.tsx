@@ -21,14 +21,14 @@ interface QuickStatsCardsProps {
 export default function QuickStatsCards({ quickStats }: QuickStatsCardsProps) {
   const statsData = [
     {
-      title: "Total Anggota",
+      title: "Total Pegawai",
       value: quickStats.totalMembers.toLocaleString(),
       icon: Users,
       color: "text-blue-600",
       bgColor: "bg-blue-100 dark:bg-blue-900",
     },
     {
-      title: "Anggota Aktif",
+      title: "Pegawai Aktif",
       value: quickStats.activeMembers.toLocaleString(),
       icon: UserCheck,
       color: "text-green-600",
@@ -43,7 +43,7 @@ export default function QuickStatsCards({ quickStats }: QuickStatsCardsProps) {
       growth: quickStats.newsGrowthRate,
     },
     {
-      title: "Total Usulan",
+      title: "Total Laporan",
       value: quickStats.totalProposals.toLocaleString(),
       icon: FileText,
       color: "text-orange-600",

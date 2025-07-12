@@ -77,12 +77,53 @@ export default function BuatLaporanPage() {
       loadTahapan();
     }
     
-    // Set lokasi dari data user yang login
+    // Auto-populate location from user data
+    const loadLocationData = async () => {
+      try {
+        const response = await fetch(getApiUrl('auth/me/location'), {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          }
+        });
+        
+        if (response.ok) {
+          const locationData = await response.json();
+          const locationParts = [];
+          
+          if (locationData.kelurahan) locationParts.push(locationData.kelurahan);
+          if (locationData.kecamatan) locationParts.push(locationData.kecamatan);
+          if (locationData.kota) locationParts.push(locationData.kota);
+          if (locationData.provinsi) locationParts.push(locationData.provinsi);
+          
+          const autoLocation = locationParts.length > 0 ? locationParts.join(', ') : locationData.alamat || "";
+          
+          setFormData(prev => ({
+            ...prev,
+            lokasi: autoLocation
+          }));
+        }
+      } catch (error) {
+        console.error('Error loading location data:', error);
+        // Fallback to biografi data if API fails
+        if (user?.biografi) {
+          const locationParts = [];
+          if (user.biografi.kelurahanNama) locationParts.push(user.biografi.kelurahanNama);
+          if (user.biografi.kecamatanNama) locationParts.push(user.biografi.kecamatanNama);
+          if (user.biografi.kotaNama) locationParts.push(user.biografi.kotaNama);
+          if (user.biografi.provinsiNama) locationParts.push(user.biografi.provinsiNama);
+          
+          const autoLocation = locationParts.length > 0 ? locationParts.join(', ') : user.biografi.alamat || "";
+          
+          setFormData(prev => ({
+            ...prev,
+            lokasi: autoLocation
+          }));
+        }
+      }
+    };
+    
     if (user) {
-      setFormData(prev => ({
-        ...prev,
-        lokasi: user.biografi?.alamat || user.biografi?.kota || '' // Gunakan alamat atau kota dari biografi user
-      }));
+      loadLocationData();
     }
   }, [tahapanId, user]);
 
@@ -461,19 +502,25 @@ export default function BuatLaporanPage() {
       const result = await response.json();
       console.log('Submit result:', result);
       
+      // Show professional success notification
       toast({
-        title: "Berhasil",
-        description: "Laporan berhasil dibuat dan disimpan",
+        title: "✅ Laporan Berhasil Dibuat",
+        description: "Laporan pengawasan telah disimpan dengan sukses dan akan diproses oleh tim terkait.",
+        variant: "default",
       });
       
-      // Navigate back to parent page
-      router.push(`/laporan-pengawas/${pemilihanId}/laporan/${laporanId}`);
+      // Navigate to laporan-saya with delay to show toast
+      setTimeout(() => {
+        router.push('/laporan-saya');
+      }, 1000);
       
     } catch (error: any) {
       console.error("Error creating laporan:", error);
+      
+      // Show professional error notification
       toast({
-        title: "Error",
-        description: error.message || "Gagal membuat laporan",
+        title: "❌ Gagal Menyimpan Laporan",
+        description: error.message || "Terjadi kesalahan saat menyimpan laporan. Silakan coba lagi atau hubungi administrator.",
         variant: "destructive",
       });
     } finally {

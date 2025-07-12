@@ -30,7 +30,7 @@ public class FileUploadController {
     private String maxFileSize;
 
     @PostMapping("/photo")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MODERATOR')")
+    @PreAuthorize("hasAuthority('file-pegawai.create')")
     public ResponseEntity<Map<String, Object>> uploadPhoto(@RequestParam("file") MultipartFile file) {
         try {
             // Validate file
@@ -84,6 +84,7 @@ public class FileUploadController {
     }
 
     @GetMapping("/photos/{filename}")
+    @PreAuthorize("hasAuthority('file-pegawai.read')")
     public ResponseEntity<byte[]> getPhoto(@PathVariable String filename) {
         try {
             Path filePath = Paths.get(uploadDir, "photos", filename);

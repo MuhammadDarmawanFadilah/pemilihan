@@ -21,7 +21,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "IDAU - Alumni Unsoed Dashboard",
+  title: "Tren-Silapor - Sistem Pelaporan dan Pengawasan Pemilihan",
   description: "Sistem Informasi Alumni Fakultas Kedokteran Universitas Jenderal Soedirman",
   icons: {
     icon: [
