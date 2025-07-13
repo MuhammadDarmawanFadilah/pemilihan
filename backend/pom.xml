@@ -10,9 +10,9 @@
     </parent>
     <groupId>com.shadcn</groupId>    <artifactId>shadcn-backend</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>shadcn-backend</name>
-    <description>Backend API for Shadcn Dashboard</description>
-    <packaging>jar</packaging>
+    <name>Silapor</name>
+    <description>Backend API for Tren-Silapor</description>
+    <packaging>war</packaging>
 
     <properties>
         <java.version>21</java.version>
@@ -23,6 +23,17 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-tomcat</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-tomcat</artifactId>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -122,6 +133,15 @@
                             <version>${lombok.version}</version>
                         </path>
                     </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+            
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.3.1</version>
+                <configuration>
+                    <failOnMissingWebXml>false</failOnMissingWebXml>
                 </configuration>
             </plugin>
         </plugins>
