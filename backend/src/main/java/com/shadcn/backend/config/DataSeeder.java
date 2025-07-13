@@ -50,11 +50,15 @@ public class DataSeeder implements CommandLineRunner {
         }
         
         // Seed jabatan
-        if (jabatanRepository.count() == 0) {
-            logger.info("No jabatan found, seeding jabatan...");
-            seedJabatan();
+        if (appProperties.getSampleData().getJabatan().isEnabled()) {
+            if (jabatanRepository.count() == 0) {
+                logger.info("No jabatan found, seeding jabatan...");
+                seedJabatan();
+            } else {
+                logger.info("Jabatan already exist, skipping jabatan seeding. Count: {}", jabatanRepository.count());
+            }
         } else {
-            logger.info("Jabatan already exist, skipping jabatan seeding. Count: {}", jabatanRepository.count());
+            logger.info("Jabatan seeding is disabled in configuration");
         }
         
         // Seed pegawai (including admin users)
@@ -200,21 +204,69 @@ public class DataSeeder implements CommandLineRunner {
         logger.info("Starting jabatan seeding...");
         
         List<Jabatan> jabatanList = Arrays.asList(
-            Jabatan.builder().nama("Ketua Bawaslu").deskripsi("Pimpinan tertinggi Bawaslu").sortOrder(1).build(),
-            Jabatan.builder().nama("Wakil Ketua Bawaslu").deskripsi("Wakil pimpinan Bawaslu").sortOrder(2).build(),
-            Jabatan.builder().nama("Anggota Bawaslu").deskripsi("Anggota dewan pengawas pemilu").sortOrder(3).build(),
-            Jabatan.builder().nama("Sekretaris Jenderal").deskripsi("Kepala sekretariat Bawaslu").sortOrder(4).build(),
-            Jabatan.builder().nama("Direktur Teknis").deskripsi("Kepala divisi teknis").sortOrder(5).build(),
-            Jabatan.builder().nama("Direktur Hukum").deskripsi("Kepala divisi hukum").sortOrder(6).build(),
-            Jabatan.builder().nama("Direktur SDM").deskripsi("Kepala divisi sumber daya manusia").sortOrder(7).build(),
-            Jabatan.builder().nama("Kepala Bagian Umum").deskripsi("Kepala bagian urusan umum").sortOrder(8).build(),
-            Jabatan.builder().nama("Kepala Bagian Keuangan").deskripsi("Kepala bagian keuangan").sortOrder(9).build(),
-            Jabatan.builder().nama("Kepala Bagian Humas").deskripsi("Kepala bagian hubungan masyarakat").sortOrder(10).build(),
-            Jabatan.builder().nama("Staf Teknis").deskripsi("Staf teknis pemilu").sortOrder(11).build(),
-            Jabatan.builder().nama("Staf Administrasi").deskripsi("Staf administrasi").sortOrder(12).build(),
-            Jabatan.builder().nama("Staf Hukum").deskripsi("Staf bagian hukum").sortOrder(13).build(),
-            Jabatan.builder().nama("Koordinator Lapangan").deskripsi("Koordinator kegiatan lapangan").sortOrder(14).build(),
-            Jabatan.builder().nama("Pengawas Pemilu").deskripsi("Petugas pengawas pemilu").sortOrder(15).build()
+            // Bawaslu Pusat
+            Jabatan.builder().nama("Ketua Bawaslu RI").deskripsi("Pimpinan tertinggi Badan Pengawas Pemilihan Umum Republik Indonesia").sortOrder(1).build(),
+            Jabatan.builder().nama("Wakil Ketua Bawaslu RI").deskripsi("Wakil pimpinan Badan Pengawas Pemilihan Umum Republik Indonesia").sortOrder(2).build(),
+            Jabatan.builder().nama("Anggota Bawaslu RI").deskripsi("Anggota Badan Pengawas Pemilihan Umum Republik Indonesia").sortOrder(3).build(),
+            Jabatan.builder().nama("Sekretaris Jenderal").deskripsi("Pimpinan Sekretariat Jenderal Bawaslu RI").sortOrder(4).build(),
+            
+            // Direktorat-direktorat di Setjen Bawaslu
+            Jabatan.builder().nama("Direktur Teknis dan Hukum").deskripsi("Kepala Direktorat Teknis dan Hukum").sortOrder(5).build(),
+            Jabatan.builder().nama("Direktur Administrasi dan SDM").deskripsi("Kepala Direktorat Administrasi dan Sumber Daya Manusia").sortOrder(6).build(),
+            Jabatan.builder().nama("Direktur Sosialisasi dan Partisipasi").deskripsi("Kepala Direktorat Sosialisasi dan Partisipasi").sortOrder(7).build(),
+            
+            // Subdirektorat-subdirektorat
+            Jabatan.builder().nama("Subdirektorat Hukum").deskripsi("Kepala Subdirektorat Hukum").sortOrder(8).build(),
+            Jabatan.builder().nama("Subdirektorat Teknis Pemilu").deskripsi("Kepala Subdirektorat Teknis Pemilu").sortOrder(9).build(),
+            Jabatan.builder().nama("Subdirektorat Administrasi").deskripsi("Kepala Subdirektorat Administrasi").sortOrder(10).build(),
+            Jabatan.builder().nama("Subdirektorat SDM").deskripsi("Kepala Subdirektorat Sumber Daya Manusia").sortOrder(11).build(),
+            Jabatan.builder().nama("Subdirektorat Sosialisasi").deskripsi("Kepala Subdirektorat Sosialisasi").sortOrder(12).build(),
+            Jabatan.builder().nama("Subdirektorat Partisipasi Masyarakat").deskripsi("Kepala Subdirektorat Partisipasi Masyarakat").sortOrder(13).build(),
+            
+            // Bawaslu Provinsi
+            Jabatan.builder().nama("Ketua Bawaslu Provinsi").deskripsi("Pimpinan Badan Pengawas Pemilihan Umum Provinsi").sortOrder(14).build(),
+            Jabatan.builder().nama("Anggota Bawaslu Provinsi").deskripsi("Anggota Badan Pengawas Pemilihan Umum Provinsi").sortOrder(15).build(),
+            Jabatan.builder().nama("Sekretaris Bawaslu Provinsi").deskripsi("Kepala Sekretariat Bawaslu Provinsi").sortOrder(16).build(),
+            
+            // Bawaslu Kabupaten/Kota
+            Jabatan.builder().nama("Ketua Bawaslu Kabupaten/Kota").deskripsi("Pimpinan Badan Pengawas Pemilihan Umum Kabupaten/Kota").sortOrder(17).build(),
+            Jabatan.builder().nama("Anggota Bawaslu Kabupaten/Kota").deskripsi("Anggota Badan Pengawas Pemilihan Umum Kabupaten/Kota").sortOrder(18).build(),
+            Jabatan.builder().nama("Sekretaris Bawaslu Kabupaten/Kota").deskripsi("Kepala Sekretariat Bawaslu Kabupaten/Kota").sortOrder(19).build(),
+            
+            // Panwaslu
+            Jabatan.builder().nama("Ketua Panwaslu Kecamatan").deskripsi("Ketua Panitia Pengawas Pemilihan Umum Kecamatan").sortOrder(20).build(),
+            Jabatan.builder().nama("Anggota Panwaslu Kecamatan").deskripsi("Anggota Panitia Pengawas Pemilihan Umum Kecamatan").sortOrder(21).build(),
+            Jabatan.builder().nama("Ketua Panwaslu Kelurahan/Desa").deskripsi("Ketua Panitia Pengawas Pemilihan Umum Kelurahan/Desa").sortOrder(22).build(),
+            Jabatan.builder().nama("Anggota Panwaslu Kelurahan/Desa").deskripsi("Anggota Panitia Pengawas Pemilihan Umum Kelurahan/Desa").sortOrder(23).build(),
+            
+            // Pengawas TPS
+            Jabatan.builder().nama("Pengawas TPS").deskripsi("Pengawas Tempat Pemungutan Suara").sortOrder(24).build(),
+            
+            // Staf Fungsional dan Struktural
+            Jabatan.builder().nama("Kepala Bagian Umum").deskripsi("Kepala Bagian Urusan Umum").sortOrder(25).build(),
+            Jabatan.builder().nama("Kepala Bagian Keuangan").deskripsi("Kepala Bagian Keuangan").sortOrder(26).build(),
+            Jabatan.builder().nama("Kepala Bagian Program").deskripsi("Kepala Bagian Program dan Pelaporan").sortOrder(27).build(),
+            Jabatan.builder().nama("Kepala Bagian Hukum").deskripsi("Kepala Bagian Hukum dan Hubungan Masyarakat").sortOrder(28).build(),
+            
+            // Staf Teknis
+            Jabatan.builder().nama("Staf Teknis Pemilu").deskripsi("Staf bidang teknis pemilihan umum").sortOrder(29).build(),
+            Jabatan.builder().nama("Staf Administrasi").deskripsi("Staf bidang administrasi").sortOrder(30).build(),
+            Jabatan.builder().nama("Staf Hukum").deskripsi("Staf bidang hukum").sortOrder(31).build(),
+            Jabatan.builder().nama("Staf Keuangan").deskripsi("Staf bidang keuangan").sortOrder(32).build(),
+            Jabatan.builder().nama("Staf Hubungan Masyarakat").deskripsi("Staf bidang hubungan masyarakat").sortOrder(33).build(),
+            Jabatan.builder().nama("Staf IT dan Sistem Informasi").deskripsi("Staf bidang teknologi informasi dan sistem informasi").sortOrder(34).build(),
+            
+            // Koordinator
+            Jabatan.builder().nama("Koordinator Lapangan").deskripsi("Koordinator kegiatan lapangan").sortOrder(35).build(),
+            Jabatan.builder().nama("Koordinator Pengawasan").deskripsi("Koordinator kegiatan pengawasan").sortOrder(36).build(),
+            Jabatan.builder().nama("Koordinator Sosialisasi").deskripsi("Koordinator kegiatan sosialisasi").sortOrder(37).build(),
+            
+            // Jabatan Tambahan Pemerintahan
+            Jabatan.builder().nama("Sekretaris Daerah").deskripsi("Sekretaris Daerah Provinsi/Kabupaten/Kota").sortOrder(38).build(),
+            Jabatan.builder().nama("Kepala Dinas").deskripsi("Kepala Dinas Pemerintah Daerah").sortOrder(39).build(),
+            Jabatan.builder().nama("Camat").deskripsi("Kepala Kecamatan").sortOrder(40).build(),
+            Jabatan.builder().nama("Lurah/Kepala Desa").deskripsi("Kepala Kelurahan atau Kepala Desa").sortOrder(41).build(),
+            Jabatan.builder().nama("Staf Pemerintah Daerah").deskripsi("Pegawai Negeri Sipil Daerah").sortOrder(42).build()
         );
         
         jabatanRepository.saveAll(jabatanList);
@@ -224,52 +276,64 @@ public class DataSeeder implements CommandLineRunner {
     private void seedAdminPegawai() {
         logger.info("Starting admin pegawai seeding...");
         
-        List<User> adminUsers = userRepository.findByStatus(User.UserStatus.ACTIVE)
-            .stream()
-            .filter(user -> user.getRole() != null && "ADMIN".equals(user.getRole().getRoleName()))
-            .toList();
-        
-        List<Jabatan> jabatanList = jabatanRepository.findAll();
-        
-        if (adminUsers.isEmpty()) {
-            logger.warn("No admin users found for pegawai seeding");
+        // Create default admin if no roles exist
+        Role adminRole = roleRepository.findByRoleName("ADMIN").orElse(null);
+        if (adminRole == null) {
+            logger.warn("No ADMIN role found, skipping admin pegawai seeding");
             return;
         }
         
+        List<Jabatan> jabatanList = jabatanRepository.findAll();
         if (jabatanList.isEmpty()) {
             logger.warn("No jabatan found for pegawai seeding");
             return;
         }
         
         Jabatan defaultJabatan = jabatanList.stream()
-            .filter(j -> "Ketua Bawaslu".equals(j.getNama()))
+            .filter(j -> "Ketua Bawaslu RI".equals(j.getNama()))
             .findFirst()
             .orElse(jabatanList.get(0));
         
-        for (User adminUser : adminUsers) {
-            // Check if pegawai already exists for this user
-            if (pegawaiRepository.existsByUsername(adminUser.getUsername())) {
-                logger.info("Pegawai already exists for user: {}", adminUser.getUsername());
-                continue;
-            }
-            
-            Pegawai pegawai = Pegawai.builder()
-                .username(adminUser.getUsername())
-                .password(adminUser.getPassword())
-                .fullName(adminUser.getFullName())
-                .email(adminUser.getEmail())
-                .phoneNumber(adminUser.getPhoneNumber())
-                .nip("ADM" + String.format("%08d", adminUser.getId()))
+        // Create default admin pegawai directly instead of from users
+        if (!pegawaiRepository.existsByUsername("admin")) {
+            Pegawai adminPegawai = Pegawai.builder()
+                .username("admin")
+                .password(passwordEncoder.encode("admin123"))
+                .fullName("Administrator Sistem")
+                .email("muhammad.df@gmail.com")
+                .phoneNumber("085352073620")
+                .nip("ADM00000001")
                 .role("ADMIN")
                 .jabatan(defaultJabatan)
                 .status(Pegawai.PegawaiStatus.AKTIF)
                 .build();
             
-            pegawaiRepository.save(pegawai);
-            logger.info("Created pegawai for admin user: {}", adminUser.getUsername());
+            pegawaiRepository.save(adminPegawai);
+            logger.info("Created default admin pegawai: admin");
         }
         
-        logger.info("Successfully seeded pegawai for {} admin users", adminUsers.size());
+        // Create additional sample pegawai
+        if (!pegawaiRepository.existsByUsername("jane_smith")) {
+            Pegawai userPegawai = Pegawai.builder()
+                .username("jane_smith")
+                .password(passwordEncoder.encode("password123"))
+                .fullName("Jane Smith")
+                .email("jane@example.com")
+                .phoneNumber("+1234567891")
+                .nip("PEG00000002")
+                .role("USER")
+                .jabatan(jabatanList.stream()
+                    .filter(j -> "Staf Teknis Pemilu".equals(j.getNama()))
+                    .findFirst()
+                    .orElse(defaultJabatan))
+                .status(Pegawai.PegawaiStatus.AKTIF)
+                .build();
+            
+            pegawaiRepository.save(userPegawai);
+            logger.info("Created sample user pegawai: jane_smith");
+        }
+        
+        logger.info("Successfully seeded admin pegawai");
     }
 
     private void seedPayments() {

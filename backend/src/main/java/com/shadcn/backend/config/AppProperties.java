@@ -138,6 +138,7 @@ public class AppProperties {
     
     public static class SampleData {
         private boolean enabled = true;
+        private Jabatan jabatan = new Jabatan();
         
         public boolean isEnabled() {
             return enabled;
@@ -145,6 +146,26 @@ public class AppProperties {
         
         public void setEnabled(boolean enabled) {
             this.enabled = enabled;
+        }
+        
+        public Jabatan getJabatan() {
+            return jabatan;
+        }
+        
+        public void setJabatan(Jabatan jabatan) {
+            this.jabatan = jabatan;
+        }
+        
+        public static class Jabatan {
+            private boolean enabled = true;
+            
+            public boolean isEnabled() {
+                return enabled;
+            }
+            
+            public void setEnabled(boolean enabled) {
+                this.enabled = enabled;
+            }
         }
     }
 }
