@@ -158,7 +158,7 @@ public class DashboardService {
             activity.setTitle("Pegawai Baru");
             activity.setDescription(pegawai.getFullName() + " telah terdaftar sebagai pegawai");
             activity.setUserName(pegawai.getFullName());
-            activity.setUserAvatar("/images/default-profile.jpg");
+            activity.setUserAvatar("/images/default-avatar.svg");
             activity.setTimestamp(pegawai.getCreatedAt() != null ? 
                 pegawai.getCreatedAt().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) : "");
             activity.setItemUrl("/admin/pegawai");
@@ -178,7 +178,7 @@ public class DashboardService {
             activity.setTitle("Pemilihan Baru");
             activity.setDescription("Pemilihan '" + pemilihan.getNamaPemilihan() + "' telah dibuat");
             activity.setUserName("Admin");
-            activity.setUserAvatar("/images/default-profile.jpg");
+            activity.setUserAvatar("/images/default-avatar.svg");
             activity.setTimestamp(pemilihan.getCreatedAt() != null ? 
                 pemilihan.getCreatedAt().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) : "");
             activity.setItemUrl("/admin/pemilihan");

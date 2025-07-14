@@ -2,17 +2,19 @@ package com.shadcn.backend.config;
 
 import com.shadcn.backend.model.*;
 import com.shadcn.backend.repository.*;
+import com.shadcn.backend.entity.WilayahKodepos;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import java.io.*;
 import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.List;
-import java.util.HashSet;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 
 @Component
 public class DataSeeder implements CommandLineRunner {
@@ -32,7 +34,10 @@ public class DataSeeder implements CommandLineRunner {
     private PasswordEncoder passwordEncoder;
     @Autowired
     private AppProperties appProperties;
-      @Override
+    @Autowired
+    private WilayahKodeposRepository wilayahKodeposRepository;
+    
+    @Override
     public void run(String... args) throws Exception {
         logger.info("Starting data seeding process...");
         
@@ -83,6 +88,21 @@ public class DataSeeder implements CommandLineRunner {
         } else {
             logger.info("Payments already exist, skipping payment seeding. Count: {}", paymentRepository.count());
         }
+        
+        // Seed wilayah kodepos
+        long existingKodeposCount = wilayahKodeposRepository.count();
+        if (existingKodeposCount == 0) {
+            logger.info("No wilayah kodepos found, seeding wilayah kodepos...");
+            seedWilayahKodepos();
+        } else {
+            logger.info("Wilayah kodepos already exist, skipping seeding. Count: {}", existingKodeposCount);
+            
+            // Verify if we have the expected complete dataset
+            if (existingKodeposCount < 83000) {
+                logger.warn("Expected around 83,724 postal codes but found only {}. Consider clearing and reseeding.", existingKodeposCount);
+            }
+        }
+        
         logger.info("Data seeding process completed.");
     }
       private void seedUsers() {
@@ -400,5 +420,173 @@ public class DataSeeder implements CommandLineRunner {
         } else {
             logger.info("All existing users already have roles assigned");
         }
+    }
+
+    private void seedWilayahKodepos() {
+        logger.info("Starting complete wilayah kodepos seeding from SQL file...");
+        
+        // Load complete postal codes from wilayah_kodepos_complete.sql
+        try {
+            List<WilayahKodepos> kodeposList = loadKodeposFromSqlFile();
+            
+            if (!kodeposList.isEmpty()) {
+                logger.info("Loaded {} postal codes from SQL file", kodeposList.size());
+                
+                // Remove duplicates by kode (just in case)
+                Map<String, WilayahKodepos> uniqueKodepos = new LinkedHashMap<>();
+                for (WilayahKodepos kodepos : kodeposList) {
+                    if (!uniqueKodepos.containsKey(kodepos.getKode())) {
+                        uniqueKodepos.put(kodepos.getKode(), kodepos);
+                    }
+                }
+                
+                List<WilayahKodepos> finalList = new ArrayList<>(uniqueKodepos.values());
+                logger.info("After deduplication: {} unique postal codes", finalList.size());
+                
+                if (finalList.size() != kodeposList.size()) {
+                    logger.warn("Removed {} duplicate entries", kodeposList.size() - finalList.size());
+                }
+                
+                // Save in batches for better performance
+                int batchSize = 1000;
+                int totalBatches = (finalList.size() + batchSize - 1) / batchSize;
+                
+                for (int i = 0; i < finalList.size(); i += batchSize) {
+                    int endIndex = Math.min(i + batchSize, finalList.size());
+                    List<WilayahKodepos> batch = finalList.subList(i, endIndex);
+                    
+                    try {
+                        wilayahKodeposRepository.saveAll(batch);
+                        int currentBatch = (i / batchSize) + 1;
+                        logger.info("Saved batch {}/{} - {} entries (Total progress: {}/{})", 
+                            currentBatch, totalBatches, batch.size(), endIndex, finalList.size());
+                    } catch (Exception e) {
+                        logger.error("Error saving batch {}: {}", (i / batchSize) + 1, e.getMessage());
+                        // Continue with next batch
+                    }
+                }
+                
+                // Final verification
+                long finalCount = wilayahKodeposRepository.count();
+                logger.info("Successfully completed postal codes seeding. Final count in database: {}", finalCount);
+                
+                if (finalCount != finalList.size()) {
+                    logger.warn("Expected {} entries but database contains {}. Some entries may have failed to save.", 
+                        finalList.size(), finalCount);
+                }
+                
+            } else {
+                logger.warn("No postal codes loaded from SQL file, using fallback sample data");
+                seedFallbackKodepos();
+            }
+        } catch (Exception e) {
+            logger.error("Error loading postal codes from SQL file: {}", e.getMessage(), e);
+            logger.info("Using fallback sample data instead");
+            seedFallbackKodepos();
+        }
+    }
+    
+    private List<WilayahKodepos> loadKodeposFromSqlFile() {
+        List<WilayahKodepos> kodeposList = new ArrayList<>();
+        
+        try {
+            // Try to load from classpath first
+            ClassPathResource resource = new ClassPathResource("wilayah_kodepos_complete.sql");
+            InputStream inputStream;
+            
+            if (resource.exists()) {
+                inputStream = resource.getInputStream();
+                logger.info("Loading postal codes from classpath resource");
+            } else {
+                // Try to load from file system (development environment)
+                File sqlFile = new File("wilayah_kodepos_complete.sql");
+                if (sqlFile.exists()) {
+                    inputStream = new FileInputStream(sqlFile);
+                    logger.info("Loading postal codes from file system");
+                } else {
+                    logger.warn("SQL file not found in classpath or file system");
+                    return kodeposList;
+                }
+            }
+            
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
+                String line;
+                int lineCount = 0;
+                int parsedCount = 0;
+                int errorCount = 0;
+                
+                logger.info("Starting to parse SQL file...");
+                
+                while ((line = reader.readLine()) != null) {
+                    lineCount++;
+                    line = line.trim();
+                    
+                    // Progress logging every 10000 lines
+                    if (lineCount % 10000 == 0) {
+                        logger.info("Processed {} lines, parsed {} postal codes", lineCount, parsedCount);
+                    }
+                    
+                    // Parse lines like: ('11.01.01.2001', '23773'),
+                    if (line.matches("^\\('.*', '.*'\\),$")) {
+                        try {
+                            // Extract kode and kodepos using regex
+                            String pattern = "^\\('([^']+)', '([^']+)'\\),$";
+                            if (line.matches(pattern)) {
+                                String kode = line.replaceAll(pattern, "$1");
+                                String kodepos = line.replaceAll(pattern, "$2");
+                                
+                                // Validate data
+                                if (kode.length() >= 10 && kodepos.length() == 5) {
+                                    kodeposList.add(new WilayahKodepos(kode, kodepos));
+                                    parsedCount++;
+                                } else {
+                                    logger.debug("Invalid data format on line {}: kode={}, kodepos={}", lineCount, kode, kodepos);
+                                    errorCount++;
+                                }
+                            }
+                        } catch (Exception e) {
+                            logger.debug("Error parsing line {}: {} - {}", lineCount, line, e.getMessage());
+                            errorCount++;
+                        }
+                    }
+                }
+                
+                logger.info("Completed parsing SQL file:");
+                logger.info("- Total lines processed: {}", lineCount);
+                logger.info("- Successfully parsed: {} postal codes", parsedCount);
+                logger.info("- Parse errors: {}", errorCount);
+                logger.info("- Expected count: ~83,724");
+                
+                if (parsedCount < 80000) {
+                    logger.warn("Parsed count ({}) is significantly lower than expected (~83,724). Check SQL file format.", parsedCount);
+                }
+            }
+            
+        } catch (Exception e) {
+            logger.error("Error reading SQL file: {}", e.getMessage(), e);
+        }
+        
+        return kodeposList;
+    }
+    
+    private void seedFallbackKodepos() {
+        logger.info("Seeding fallback sample postal codes...");
+        
+        List<WilayahKodepos> fallbackList = Arrays.asList(
+            // Sample data for major cities across Indonesia
+            new WilayahKodepos("11.01.01.2001", "23773"), // Aceh
+            new WilayahKodepos("12.71.01.1001", "20213"), // Medan
+            new WilayahKodepos("31.71.01.1001", "10110"), // Jakarta Pusat
+            new WilayahKodepos("32.73.01.1001", "40111"), // Bandung
+            new WilayahKodepos("33.74.01.1001", "50111"), // Semarang
+            new WilayahKodepos("34.71.01.1001", "55111"), // Yogyakarta
+            new WilayahKodepos("35.78.01.1001", "60111"), // Surabaya
+            new WilayahKodepos("51.71.01.1001", "80111"), // Denpasar
+            new WilayahKodepos("73.71.01.1001", "90111"), // Makassar
+            new WilayahKodepos("94.71.01.1001", "99111")  // Jayapura
+        );
+        
+        wilayahKodeposRepository.saveAll(fallbackList);
+        logger.info("Successfully seeded {} fallback postal codes", fallbackList.size());
     }
 }

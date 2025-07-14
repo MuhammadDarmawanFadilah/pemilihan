@@ -7,17 +7,19 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { cookies } from "next/headers";
-import NetworkInitializer from "@/components/NetworkInitializer";
 import { Toaster } from "@/components/ui/sonner";
+import NetworkInitializer from "@/components/NetworkInitializer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+  variable: "--font-geist-mono", 
   subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -58,12 +60,15 @@ export default async function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <AuthProvider>            <NetworkInitializer />
+          <AuthProvider>            
+            {process.env.NODE_ENV === 'development' && <NetworkInitializer />}
             <SidebarProvider defaultOpen={defaultOpen}>
-              <ClientSidebarWrapper />              <main className="flex-1 min-h-screen bg-gray-50 dark:bg-gray-900">
+              <ClientSidebarWrapper />              
+              <main className="flex-1 min-h-screen bg-gray-50 dark:bg-gray-900">
                 <Navbar />
                 <div className="w-full">{children}</div>
-              </main></SidebarProvider>
+              </main>
+            </SidebarProvider>
           </AuthProvider>
         </ThemeProvider>
         <Toaster />

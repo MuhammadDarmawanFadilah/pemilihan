@@ -20,6 +20,7 @@ import {
   WilayahVillage,
   convertWilayahToComboboxOptions 
 } from "@/lib/wilayah-api";
+import { getKodeposByWilayah } from "@/lib/kodepos-api";
 import { MapPin, Building, Home, Mail, Search } from "lucide-react";
 import { toast } from "sonner";
 
@@ -54,6 +55,27 @@ export default function WilayahForm({ control, setValue, watch, disabled = false
   const watchKecamatan = watch("kecamatan");
   const watchKelurahan = watch("kelurahan");
 
+  // Auto-fill postal code when villages are loaded and kelurahan is already selected
+  useEffect(() => {
+    const autoFillKodepos = async () => {
+      if (watchKelurahan) {
+        try {
+          const kodepos = await getKodeposByWilayah(watchKelurahan);
+          if (kodepos) {
+            const currentKodePos = watch("kodePos");
+            if (!currentKodePos || currentKodePos !== kodepos) {
+              setValue("kodePos", kodepos);
+            }
+          }
+        } catch (error) {
+          console.error("Error auto-filling kodepos:", error);
+        }
+      }
+    };
+
+    autoFillKodepos();
+  }, [watchKelurahan, setValue, watch]);
+
   // Load provinces saat component mount
   useEffect(() => {
     loadProvinces();
@@ -74,18 +96,11 @@ export default function WilayahForm({ control, setValue, watch, disabled = false
       }
 
       setIsPerformingLookup(true);
-      console.log('🔍 [LOOKUP] Starting complete wilayah lookup...', {
-        provinsi: watchProvinsi,
-        kota: watchKota,
-        kecamatan: watchKecamatan,
-        kelurahan: watchKelurahan
-      });
 
       try {
         // Step 1: Lookup regencies berdasarkan provinsi yang ada
         if (needsRegencyLookup) {
           setLookupProgress("Mencari kota/kabupaten...");
-          console.log('📍 [LOOKUP] Loading regencies for:', watchProvinsi);
           await loadRegencies(watchProvinsi);
           
           // Wait sebentar agar state ter-update
@@ -95,7 +110,6 @@ export default function WilayahForm({ control, setValue, watch, disabled = false
         // Step 2: Lookup districts berdasarkan kota yang ada
         if (needsDistrictLookup && watchKota) {
           setLookupProgress("Mencari kecamatan...");
-          console.log('🏘️ [LOOKUP] Loading districts for:', watchKota);
           await loadDistricts(watchKota);
           
           await new Promise(resolve => setTimeout(resolve, 100));
@@ -104,12 +118,10 @@ export default function WilayahForm({ control, setValue, watch, disabled = false
         // Step 3: Lookup villages berdasarkan kecamatan yang ada
         if (needsVillageLookup && watchKecamatan) {
           setLookupProgress("Mencari kelurahan/desa...");
-          console.log('🏡 [LOOKUP] Loading villages for:', watchKecamatan);
           await loadVillages(watchKecamatan);
         }
 
         setLookupProgress("Selesai");
-        console.log('✅ [LOOKUP] Complete lookup finished successfully');
         
         onDataLoad?.();
       } catch (error) {
@@ -128,8 +140,6 @@ export default function WilayahForm({ control, setValue, watch, disabled = false
 
   // Handle perubahan provinsi user
   const handleProvinsiChange = useCallback(async (value: string) => {
-    console.log('🔄 [USER] Provinsi changed to:', value);
-    
     // Reset all dependent fields
     setValue("kota", "");
     setValue("kecamatan", "");
@@ -148,8 +158,6 @@ export default function WilayahForm({ control, setValue, watch, disabled = false
 
   // Handle perubahan kota user
   const handleKotaChange = useCallback(async (value: string) => {
-    console.log('🔄 [USER] Kota changed to:', value);
-    
     // Reset dependent fields
     setValue("kecamatan", "");
     setValue("kelurahan", "");
@@ -166,8 +174,6 @@ export default function WilayahForm({ control, setValue, watch, disabled = false
 
   // Handle perubahan kecamatan user
   const handleKecamatanChange = useCallback(async (value: string) => {
-    console.log('🔄 [USER] Kecamatan changed to:', value);
-    
     // Reset dependent fields
     setValue("kelurahan", "");
     setValue("kodePos", "");
@@ -181,28 +187,31 @@ export default function WilayahForm({ control, setValue, watch, disabled = false
   }, [setValue]);
 
   // Handle perubahan kelurahan user
-  const handleKelurahanChange = useCallback((value: string) => {
-    console.log('🔄 [USER] Kelurahan changed to:', value);
-    
-    if (value && villages.length > 0) {
-      const selectedVillage = villages.find(v => v.code === value);
-      if (selectedVillage && selectedVillage.postal_code) {
-        setValue("kodePos", selectedVillage.postal_code);
-        console.log('📮 [AUTO] Postal code set to:', selectedVillage.postal_code);
+  const handleKelurahanChange = useCallback(async (value: string) => {
+    if (value) {
+      try {
+        // Ambil kode pos dari backend berdasarkan kode wilayah
+        const kodepos = await getKodeposByWilayah(value);
+        if (kodepos) {
+          setValue("kodePos", kodepos);
+        } else {
+          setValue("kodePos", "");
+        }
+      } catch (error) {
+        console.error("Error fetching kodepos:", error);
+        setValue("kodePos", "");
       }
     } else {
       setValue("kodePos", "");
     }
-  }, [villages, setValue]);
+  }, [setValue]);
 
   // Load provinces function
   const loadProvinces = async () => {
     setLoadingProvinces(true);
     try {
-      console.log('🌍 Loading provinces...');
       const data = await cachedWilayahAPI.getProvinces();
       setProvinces(data);
-      console.log('✅ Provinces loaded:', data.length);
     } catch (error) {
       console.error("❌ Error loading provinces:", error);
       toast.error("Gagal memuat data provinsi");
@@ -215,10 +224,8 @@ export default function WilayahForm({ control, setValue, watch, disabled = false
   const loadRegencies = async (provinceCode: string) => {
     setLoadingRegencies(true);
     try {
-      console.log('🏢 Loading regencies for province:', provinceCode);
       const data = await cachedWilayahAPI.getRegencies(provinceCode);
       setRegencies(data);
-      console.log('✅ Regencies loaded:', data.length);
     } catch (error) {
       console.error("❌ Error loading regencies:", error);
       toast.error("Gagal memuat data kota/kabupaten");
@@ -231,10 +238,8 @@ export default function WilayahForm({ control, setValue, watch, disabled = false
   const loadDistricts = async (regencyCode: string) => {
     setLoadingDistricts(true);
     try {
-      console.log('🏘️ Loading districts for regency:', regencyCode);
       const data = await cachedWilayahAPI.getDistricts(regencyCode);
       setDistricts(data);
-      console.log('✅ Districts loaded:', data.length);
     } catch (error) {
       console.error("❌ Error loading districts:", error);
       toast.error("Gagal memuat data kecamatan");
@@ -247,10 +252,21 @@ export default function WilayahForm({ control, setValue, watch, disabled = false
   const loadVillages = async (districtCode: string) => {
     setLoadingVillages(true);
     try {
-      console.log('🏡 Loading villages for district:', districtCode);
       const data = await cachedWilayahAPI.getVillages(districtCode);
       setVillages(data);
-      console.log('✅ Villages loaded:', data.length);
+      
+      // Auto-fill kode pos jika kelurahan sudah dipilih
+      const currentKelurahan = watch("kelurahan");
+      if (currentKelurahan && data.length > 0) {
+        try {
+          const kodepos = await getKodeposByWilayah(currentKelurahan);
+          if (kodepos) {
+            setValue("kodePos", kodepos);
+          }
+        } catch (error) {
+          console.error("Error loading kodepos:", error);
+        }
+      }
     } catch (error) {
       console.error("❌ Error loading villages:", error);
       toast.error("Gagal memuat data kelurahan/desa");
@@ -268,23 +284,7 @@ export default function WilayahForm({ control, setValue, watch, disabled = false
   // Debug log untuk development
   useEffect(() => {
     if (process.env.NODE_ENV === 'development') {
-      console.log('🔧 [DEBUG] WilayahForm state:', {
-        isPerformingLookup,
-        lookupProgress,
-        formValues: { watchProvinsi, watchKota, watchKecamatan, watchKelurahan },
-        dataLengths: {
-          provinces: provinces.length,
-          regencies: regencies.length,
-          districts: districts.length,
-          villages: villages.length
-        },
-        loadingStates: {
-          loadingProvinces,
-          loadingRegencies,
-          loadingDistricts,
-          loadingVillages
-        }
-      });
+      // Debug log removed for cleaner code
     }
   }, [
     isPerformingLookup, lookupProgress,
@@ -458,15 +458,29 @@ export default function WilayahForm({ control, setValue, watch, disabled = false
             <FormLabel className="flex items-center gap-2">
               <Mail className="h-4 w-4" />
               Kode Pos
+              {watchKelurahan && (
+                <span className="text-xs text-blue-600">(Auto dari database)</span>
+              )}
             </FormLabel>
             <FormControl>
               <Input 
-                placeholder="Kode pos akan terisi otomatis"
+                placeholder={
+                  !watchKelurahan 
+                    ? "Pilih kelurahan terlebih dahulu untuk auto-fill" 
+                    : villages.length === 0
+                      ? "Kode pos akan terisi otomatis setelah data kelurahan dimuat"
+                      : "Kode pos akan terisi otomatis atau isi manual"
+                }
                 disabled={disabled}
                 {...field} 
               />
             </FormControl>
             <FormMessage />
+            {watchKelurahan && (
+              <p className="text-xs text-gray-500">
+                Kode pos diambil dari database resmi berdasarkan kelurahan yang dipilih
+              </p>
+            )}
           </FormItem>
         )}
       />

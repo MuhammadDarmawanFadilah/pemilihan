@@ -25,11 +25,7 @@ import {
   Database,
   Briefcase,
   MapPin,
-  Stethoscope,
-  Heart,
   Building,
-  CreditCard,
-  MessageCircle, // Added for Komunikasi Kita
   Vote, // Added for Pemilihan
 } from "lucide-react";
 import {
@@ -102,54 +98,10 @@ const AppSidebar = () => {
       url: "/",
       icon: Home,
     },
-    // {
-    //   title: "Portal Berita",
-    //   url: "/berita",
-    //   icon: Newspaper,
-    //   badge: "New",
-    // },
   ];
 
   // User items (accessible when logged in)
   const userItems = [
-    // {
-    //   title: "Dokumen",
-    //   url: "/documents",
-    //   icon: FolderOpen,
-    // },
-    // {
-    //   title: "Biografi Alumni",
-    //   url: "/biografi",
-    //   icon: UserCircle,
-    // },
-    // {
-    //   title: "Komunikasi Kita",
-    //   url: "/komunikasi",
-    //   icon: MessageCircle,
-    //   badge: "New",
-    // },
-    // {
-    //   title: "Lokasi Alumni",
-    //   url: "/alumni-locations",
-    //   icon: MapPin,
-    // },
-    // {
-    //   title: "Usulan Kegiatan",
-    //   url: "/usulan",
-    //   icon: Lightbulb,
-    //   badge: "New",
-    // },
-    // {
-    //   title: "Pelaksanaan",
-    //   url: "/pelaksanaan",
-    //   icon: CheckCircle,
-    //   badge: "New",
-    // },
-    // {
-    //   title: "Notifikasi",
-    //   url: "/notifikasi",
-    //   icon: Bell,
-    // },
     {
       title: "Laporan Pengawas",
       url: "/laporan-pengawas",
@@ -215,43 +167,8 @@ const AppSidebar = () => {
       url: "/admin/pemilihan/lokasi",
       icon: MapPin,
     },
-    // {
-    //   title: "Berita Management",
-    //   url: "/admin/berita",
-    //   icon: Newspaper,
-    // },
-    // {
-    //   title: "Dokumen Management",
-    //   url: "/admin/documents",
-    //   icon: FileText,
-    // },
-    // {
-    //   title: "Biografi Management",
-    //   url: "/admin/biografi",
-    //   icon: UserCircle,
-    // },
-    // {
-    //   title: "Histori Undangan",
-    //   url: "/admin/invitations/history",
-    //   icon: Mail,
-    // },
-    // {
-    //   title: "Approval Undangan",
-    //   url: "/admin/approvals",
-    //   icon: UserCheck,
-    // },
-    // {
-    //   title: "Birthday Admin",
-    //   url: "/admin/birthday",
-    //   icon: Gift,
-    // },
   ];// Master Data items (accessible to admin/moderator)
   const masterDataItems = [
-    // {
-    //   title: "Spesialisasi Kedokteran",
-    //   url: "/admin/master-data/spesialisasi",
-    //   icon: Stethoscope,
-    // },
     {
       title: "Kategori File",
       url: "/admin/master-data/file-kategori",
@@ -282,21 +199,6 @@ const AppSidebar = () => {
       url: "/admin/master-data/wilayah-kelurahan",
       icon: MapPin,
     },
-    // {
-    //   title: "Posisi & Pekerjaan",
-    //   url: "/admin/master-data/posisi",
-    //   icon: Briefcase,
-    // },
-    // {
-    //   title: "Hobi & Minat",
-    //   url: "/admin/master-data/hobi",
-    //   icon: Heart,
-    // },
-    // {
-    //   title: "Agama",
-    //   url: "/admin/master-data/agama",
-    //   icon: Shield,
-    // },
   ];
 
   const isAdmin = user?.role?.roleName === 'ADMIN' || user?.role?.roleName === 'MODERATOR';
@@ -441,25 +343,6 @@ const AppSidebar = () => {
                           <span className="hidden md:inline truncate">Edit Pegawai</span>
                           <span className="md:hidden text-xs truncate">Edit</span>
                         </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>                    <SidebarMenuItem>                      <SidebarMenuButton asChild className="w-full">
-                        {/* {user?.biografi?.biografiId ? (
-                          <Link 
-                            href={`/alumni-card/${encodeId(user.biografi.biografiId)}`}
-                            onClick={handleMenuClick}
-                            className="flex items-center gap-3 px-3 py-2 text-sm font-medium transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-md group"
-                          >
-                            <CreditCard className="h-4 w-4 flex-shrink-0" />
-                            <span className="hidden md:inline truncate">Kartu Alumni</span>
-                            <span className="md:hidden text-xs truncate">Kartu</span>
-                          </Link>
-                        ) : (
-                          <div className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-400 cursor-not-allowed rounded-md">
-                            <CreditCard className="h-4 w-4 flex-shrink-0" />
-                            <span className="hidden md:inline truncate">Kartu Alumni</span>
-                            <span className="md:hidden text-xs truncate">Kartu</span>
-                          </div>
-                        )} */}
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                     <SidebarMenuItem>

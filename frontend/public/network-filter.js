@@ -21,17 +21,17 @@
   // Get backend URL dynamically
   const getBackendUrl = () => {
     // Try to get from window.ENV if available
-    if (typeof window !== 'undefined' && window.ENV?.NEXT_PUBLIC_API_URL) {
-      return window.ENV.NEXT_PUBLIC_API_URL;
+    if (typeof window !== 'undefined' && window.ENV?.NEXT_PUBLIC_BACKEND_URL) {
+      return window.ENV.NEXT_PUBLIC_BACKEND_URL + '/api';
     }
     
     // Try to get from process.env if available (might not work in browser but good fallback)
-    if (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_API_URL) {
-      return process.env.NEXT_PUBLIC_API_URL;
+    if (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_BACKEND_URL) {
+      return process.env.NEXT_PUBLIC_BACKEND_URL + '/api';
     }
     
-    // Fallback to relative API path (will use Next.js rewrites)
-    return '/api';
+    // Hardcoded fallback to backend server
+    return 'http://localhost:8080/api';
   };
 
   const backendUrl = getBackendUrl();
@@ -67,7 +67,7 @@
   window.testAPI = async function() {
     console.group('%c🧪 Testing Backend API', styles.info);
     try {
-      const testUrl = `${backendUrl}/roles`;
+      const testUrl = `${backendUrl}/dashboard/health`;
       console.log(`Testing: GET ${testUrl} (ringan)`);
       const response = await fetch(testUrl);
       
@@ -75,9 +75,9 @@
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
       
-      const data = await response.json();
+      const data = await response.text();
       console.log('%c✅ Success!', styles.success);
-      console.log('Roles found:', data?.length || 0);
+      console.log('Health response:', data);
       console.log('%c👆 Lihat di Network tab - hanya request ini yang penting!', styles.warning);
     } catch (error) {
       console.error('❌ Error:', error.message);

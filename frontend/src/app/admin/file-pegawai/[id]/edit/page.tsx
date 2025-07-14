@@ -41,13 +41,14 @@ interface FilePegawaiResponse {
 export default function EditFilePegawaiPage({
   params,
 }: {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }) {
   const router = useRouter()
   const { user } = useAuth()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [paramId, setParamId] = useState<string>('')
   
   const [formData, setFormData] = useState({
     judul: '',
@@ -68,16 +69,27 @@ export default function EditFilePegawaiPage({
 
   useEffect(() => {
     setMounted(true)
-    if (params.id) {
+    
+    // Handle async params
+    const initializeParams = async () => {
+      const resolvedParams = await params
+      setParamId(resolvedParams.id)
+    }
+    
+    initializeParams()
+  }, [params])
+
+  useEffect(() => {
+    if (paramId) {
       loadFileData()
       loadOptions()
     }
-  }, [params.id])
+  }, [paramId])
 
   const loadFileData = async () => {
     try {
       setLoading(true)
-      const response = await fetch(getApiUrl(`admin/file-pegawai/${params.id}`), {
+      const response = await fetch(getApiUrl(`admin/file-pegawai/${paramId}`), {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
         }
@@ -203,7 +215,7 @@ export default function EditFilePegawaiPage({
         isActive: true
       }
 
-      const response = await fetch(getApiUrl(`admin/file-pegawai/${params.id}`), {
+      const response = await fetch(getApiUrl(`admin/file-pegawai/${paramId}`), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -214,7 +226,7 @@ export default function EditFilePegawaiPage({
 
       if (response.ok) {
         showSuccessToast('File pegawai berhasil diperbarui')
-        router.push(`/admin/file-pegawai/${params.id}`)
+        router.push(`/admin/file-pegawai/${paramId}`)
       } else {
         const errorData = await response.json()
         showErrorToast(errorData.message || 'Gagal memperbarui file pegawai')
@@ -262,7 +274,7 @@ export default function EditFilePegawaiPage({
         <div className="flex items-center gap-4 mb-6">
           <Button
             variant="outline"
-            onClick={() => router.push(`/admin/file-pegawai/${params.id}`)}
+            onClick={() => router.push(`/admin/file-pegawai/${paramId}`)}
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Kembali
@@ -404,7 +416,7 @@ export default function EditFilePegawaiPage({
             <Button
               type="button"
               variant="outline"
-              onClick={() => router.push(`/admin/file-pegawai/${params.id}`)}
+              onClick={() => router.push(`/admin/file-pegawai/${paramId}`)}
             >
               Batal
             </Button>

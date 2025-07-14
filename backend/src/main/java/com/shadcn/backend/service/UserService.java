@@ -68,9 +68,7 @@ public class UserService {
     public List<User> getAllUsers() {
         return userRepository.findAll();
     }
-      public Optional<User> getUserById(Long id) {
-        return userRepository.findByIdWithBiografi(id);
-    }
+
       public Optional<User> getUserByUsername(String username) {
         return userRepository.findByUsernameOrEmailWithBiografi(username);
     }

@@ -199,7 +199,7 @@ export default function LaporanDetailPage() {
                 Kembali
               </Button>
               <div>
-                <h1 className="text-3xl font-bold tracking-tight">{laporan.nama}</h1>
+                <h1 className="text-3xl font-bold tracking-tight">{laporan.namaLaporan}</h1>
                 <p className="text-muted-foreground">
                   Detail informasi laporan
                 </p>
@@ -242,7 +242,7 @@ export default function LaporanDetailPage() {
                       <AlertDialogHeader>
                         <AlertDialogTitle>Konfirmasi Penghapusan</AlertDialogTitle>
                         <AlertDialogDescription>
-                          Apakah Anda yakin ingin menghapus laporan "{laporan.nama}"? 
+                          Apakah Anda yakin ingin menghapus laporan "{laporan.namaLaporan}"? 
                           Tindakan ini tidak dapat dibatalkan.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
@@ -288,7 +288,7 @@ export default function LaporanDetailPage() {
               </CardHeader>
               <CardContent className="space-y-6">
                 <div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">{laporan.nama}</h3>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-2">{laporan.namaLaporan}</h3>
                   <div className="flex items-center gap-3 mb-4">
                     <div className="flex items-center gap-2">
                       {getStatusIcon(laporan.status)}
@@ -544,7 +544,7 @@ export default function LaporanDetailPage() {
                     <AlertDialogHeader>
                       <AlertDialogTitle>Konfirmasi Penghapusan</AlertDialogTitle>
                       <AlertDialogDescription>
-                        Apakah Anda yakin ingin menghapus laporan "{laporan.nama}"? 
+                        Apakah Anda yakin ingin menghapus laporan "{laporan.namaLaporan}"? 
                         Tindakan ini tidak dapat dibatalkan.
                       </AlertDialogDescription>
                     </AlertDialogHeader>

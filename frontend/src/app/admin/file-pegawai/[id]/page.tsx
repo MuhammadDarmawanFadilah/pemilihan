@@ -30,24 +30,35 @@ interface FilePegawaiResponse {
 export default function DetailFilePegawaiPage({
   params,
 }: {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }) {
   const router = useRouter()
   const { user } = useAuth()
   const [file, setFile] = useState<FilePegawaiResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
+  const [paramId, setParamId] = useState<string>('')
 
   useEffect(() => {
-    if (params.id) {
+    // Handle async params
+    const initializeParams = async () => {
+      const resolvedParams = await params
+      setParamId(resolvedParams.id)
+    }
+    
+    initializeParams()
+  }, [params])
+
+  useEffect(() => {
+    if (paramId) {
       loadFileData()
     }
-  }, [params.id])
+  }, [paramId])
 
   const loadFileData = async () => {
     try {
       setLoading(true)
-      const response = await fetch(getApiUrl(`admin/file-pegawai/${params.id}`), {
+      const response = await fetch(getApiUrl(`admin/file-pegawai/${paramId}`), {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
         }
@@ -101,7 +112,7 @@ export default function DetailFilePegawaiPage({
   }
 
   const handleEdit = () => {
-    router.push(`/admin/file-pegawai/${params.id}/edit`)
+    router.push(`/admin/file-pegawai/${paramId}/edit`)
   }
 
   const handleDelete = () => {

@@ -81,12 +81,6 @@ export const userAPI = {
   // Get all users
   getAllUsers: (): Promise<User[]> => apiCall<User[]>('/users'),
   
-  // Get user by ID
-  getUserById: (id: number): Promise<User> => apiCall<User>(`/users/${id}`),
-  
-  // Get user by username
-  getUserByUsername: (username: string): Promise<User> => apiCall<User>(`/users/username/${username}`),
-
   // Check if username exists
   checkUsernameExists: (username: string): Promise<boolean> => apiCall<boolean>(`/users/exists/username/${username}`),  
   // Check if email exists
@@ -574,66 +568,7 @@ export const formatDate = (dateString: string) => {
 // React hooks untuk data fetching - MOVED to separate client component file
 // See /src/hooks/useApiData.ts for client-side hooks
 
-// Notification interfaces
-export interface NotificationRequest {
-  title: string;
-  message: string;
-  recipients: string[];
-  type: 'text' | 'image';
-  image?: File | null;
-}
 
-export interface WhatsAppResponse {
-  success: boolean;
-  message: string;
-  data?: any;
-}
-
-// Notification API functions
-export const notifikasiAPI = {  // Send WhatsApp notification
-  sendWhatsAppNotification: async (notification: NotificationRequest): Promise<WhatsAppResponse> => {
-    const formData = new FormData();
-    formData.append('title', notification.title);
-    formData.append('message', notification.message);
-    // Send recipients as comma-separated string instead of JSON
-    formData.append('recipients', notification.recipients.join(','));
-    formData.append('type', notification.type);
-    
-    if (notification.image && notification.type === 'image') {
-      formData.append('image', notification.image);
-    }
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/notifications/whatsapp`, {
-        method: 'POST',
-        body: formData,
-        mode: 'cors',
-        credentials: 'omit',
-      });
-
-      if (!response.ok) {
-        let errorMessage = `HTTP ${response.status}`;
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.error || errorData.message || errorMessage;
-        } catch {
-          const errorText = await response.text();
-          errorMessage = errorText || errorMessage;
-        }
-        throw new Error(errorMessage);
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error('WhatsApp notification error:', error);
-      throw error;
-    }
-  },
-
-  // Get notification history
-  getNotificationHistory: (page = 0, size = 10): Promise<PagedResponse<any>> =>
-    apiCall<PagedResponse<any>>(`/notifications/history?page=${page}&size=${size}`),
-};
 
 // Optimized endpoint for recipient selection
 export const getRecipientsForSelection = async (filterRequest: BiografiFilterRequest): Promise<PagedResponse<RecipientSummary>> => {
@@ -1188,47 +1123,7 @@ export const publicInvitationLinkAPI = {  // Generate public invitation link
     apiCall<any>('/public-invitation-links/statistics'),
 };
 
-// User Approval API functions
-export const userApprovalAPI = {  // Get users waiting for approval
-  getUsersWaitingApproval: (): Promise<User[]> =>
-    apiCall<User[]>('/user-approvals/pending'),
-  // Get users waiting for approval with pagination
-  getUsersWaitingApprovalPaginated: (params: string): Promise<any> =>
-    apiCall<any>(`/user-approvals/pending/paginated?${params}`),
 
-  // Get approved users with pagination
-  getApprovedUsersPaginated: (params: string): Promise<any> =>
-    apiCall<any>(`/user-approvals/approved/paginated?${params}`),
-
-  // Get rejected users with pagination
-  getRejectedUsersPaginated: (params: string): Promise<any> =>
-    apiCall<any>(`/user-approvals/rejected/paginated?${params}`),
-
-  // Get all users with pagination
-  getAllUsersPaginated: (params: string): Promise<any> =>
-    apiCall<any>(`/user-approvals/all/paginated?${params}`),
-
-  // Approve user
-  approveUser: (userId: number): Promise<{ message: string; user: User }> =>
-    apiCall<{ message: string; user: User }>(`/user-approvals/${userId}/approve`, {
-      method: 'POST',
-    }),
-
-  // Reject user
-  rejectUser: (userId: number, reason?: string): Promise<{ message: string; user: User }> =>
-    apiCall<{ message: string; user: User }>(`/user-approvals/${userId}/reject`, {
-      method: 'POST',
-      body: JSON.stringify({ reason }),
-    }),
-
-  // Get approval statistics
-  getApprovalStatistics: (): Promise<any> =>
-    apiCall<any>('/user-approvals/statistics'),
-
-  // Get count of users waiting approval
-  getUsersWaitingApprovalCount: (): Promise<{ count: number }> =>
-    apiCall<{ count: number }>('/user-approvals/pending/count'),
-};
 
 // Auth API - Add public registration
 export const authAPI = {
@@ -1290,187 +1185,13 @@ interface BirthdayStatistics {
   year: number;
 }
 
-interface OldBirthdaySettings {
-  enabled: boolean;
-  time: string;
-  timezone: string;
-  message: string;
-  daysAhead: number;
-}
 
-interface BirthdayNotificationFilter {
-  year?: number;
-  status?: string;
-  isExcluded?: string;
-  nama?: string;
-  startDate?: string;
-  endDate?: string;
-  page?: number;
-  size?: number;
-  sortBy?: string;
-  sortDirection?: string;
-}
 
-interface PageResponse<T> {
-  content: T[];
-  totalPages: number;
-  totalElements: number;
-  size: number;
-  number: number;
-  first: boolean;
-  last: boolean;
-}
 
-// Birthday API functions
-export const birthdayAPI = {
-  // Get birthday notifications with pagination and filters
-  getBirthdayNotifications: (filter: BirthdayNotificationFilter): Promise<PageResponse<BirthdayNotification>> => {
-    const params = new URLSearchParams();
-    Object.entries(filter).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== '') {
-        params.append(key, value.toString());
-      }
-    });
-    return apiCall<PageResponse<BirthdayNotification>>(`/admin/birthday/notifications?${params}`);
-  },
 
-  // Get upcoming birthdays
-  getUpcomingBirthdays: (days: number = 30): Promise<BirthdayNotification[]> =>
-    apiCall<BirthdayNotification[]>(`/admin/birthday/upcoming?days=${days}`),
 
-  // Get past birthdays
-  getPastBirthdays: (days: number = 30): Promise<BirthdayNotification[]> =>
-    apiCall<BirthdayNotification[]>(`/admin/birthday/past?days=${days}`),
 
-  // Get birthday statistics
-  getBirthdayStatistics: (year?: number): Promise<BirthdayStatistics> => {
-    const params = year ? `?year=${year}` : '';
-    return apiCall<BirthdayStatistics>(`/admin/birthday/statistics${params}`);
-  },
-  // Get birthday settings (old format)
-  getBirthdaySettings: (): Promise<OldBirthdaySettings> =>
-    apiCall<OldBirthdaySettings>('/admin/birthday/settings'),
 
-  // Generate birthday notifications for a year
-  generateBirthdayNotifications: (year: number): Promise<void> =>
-    apiCall<void>(`/admin/birthday/generate/${year}`, {
-      method: 'POST',
-    }),
-
-  // Resend birthday notification
-  resendBirthdayNotification: (id: number): Promise<void> =>
-    apiCall<void>(`/admin/birthday/resend/${id}`, {
-      method: 'POST',
-    }),
-  // Exclude/include birthday notification
-  toggleBirthdayExclusion: (id: number, exclude: boolean): Promise<void> =>
-    apiCall<void>(`/admin/birthday/exclude/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify({ exclude }),
-    }),
-
-  // Exclude/include biografi birthday notification
-  toggleBiografiBirthdayExclusion: (biografiId: number, exclude: boolean): Promise<void> =>
-    apiCall<void>(`/admin/birthday/exclude-biografi/${biografiId}`, {
-      method: 'PUT',
-      body: JSON.stringify({ exclude }),
-    }),// Reset biografi notification status to pending
-  resetBiografiNotificationToPending: (biografiId: number): Promise<void> =>
-    apiCall<void>(`/admin/birthday/reset-biografi-to-pending/${biografiId}`, {
-      method: 'PUT',
-    }),
-
-  // Test birthday notification
-  testBirthdayNotification: (biografiId: number): Promise<void> =>
-    apiCall<void>(`/admin/birthday/test/${biografiId}`, {
-      method: 'POST',
-    }),
-
-  // Send birthday notification for biografi (create notification and send)
-  sendBirthdayNotificationForBiografi: (biografiId: number): Promise<void> =>
-    apiCall<void>(`/admin/birthday/send-biografi/${biografiId}`, {
-      method: 'POST',
-    }),
-
-  // Send today's birthday notifications
-  sendTodayBirthdays: (): Promise<void> =>
-    apiCall<void>('/admin/birthday/send-today', {
-      method: 'POST',
-    }),
-};
-
-// Birthday Settings API functions
-export const birthdaySettingsAPI = {
-  // Get current birthday settings
-  getCurrentSettings: (): Promise<BirthdaySettings> => 
-    apiCall<BirthdaySettings>('/birthday-settings'),
-  
-  // Update birthday settings
-  updateSettings: (settings: Partial<BirthdaySettings>): Promise<BirthdaySettingsResponse> =>
-    apiCall<BirthdaySettingsResponse>('/birthday-settings', {
-      method: 'PUT',
-      body: JSON.stringify(settings)
-    }),
-  
-  // Upload attachment image
-  uploadImage: async (file: File): Promise<ImageUploadResponse> => {
-    const formData = new FormData();
-    formData.append('image', file);
-    
-    const response = await fetch(`${API_BASE_URL}/birthday-settings/upload-image`, {
-      method: 'POST',
-      body: formData,
-      mode: 'cors',
-      credentials: 'omit',
-    });
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`HTTP ${response.status}: ${errorText}`);
-    }
-    
-    return response.json();
-  },
-  
-  // Reset to default settings
-  resetToDefaults: (): Promise<BirthdaySettingsResponse> =>
-    apiCall<BirthdaySettingsResponse>('/birthday-settings/reset-defaults', {
-      method: 'POST'
-    }),
-    // Test notification
-  testNotification: (phoneNumber: string): Promise<{ success: boolean; message: string }> =>
-    apiCall<{ success: boolean; message: string }>('/birthday-settings/test-notification', {
-      method: 'POST',
-      body: JSON.stringify({ phoneNumber })
-    })
-};
-
-// Birthday Settings interfaces
-export interface BirthdaySettings {
-  id?: number;
-  enabled: boolean;
-  notificationTime: string; // Cron expression
-  timezone: string;
-  message: string;
-  daysAhead: number;
-  includeAge?: boolean;
-  attachmentImageUrl?: string;
-  createdAt?: string;
-  updatedAt?: string;
-  updatedBy?: string;
-}
-
-export interface BirthdaySettingsResponse {
-  success: boolean;
-  message: string;
-  data: BirthdaySettings;
-}
-
-export interface ImageUploadResponse {
-  success: boolean;
-  message: string;
-  imageUrl: string;
-}
 
 // Invitation interfaces
 export interface Invitation {

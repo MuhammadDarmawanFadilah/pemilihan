@@ -7,9 +7,9 @@ import com.shadcn.backend.dto.UserSummaryDto;
 import com.shadcn.backend.dto.UserRequest;
 import com.shadcn.backend.dto.UpdateUserRequest;
 import com.shadcn.backend.model.User;
-import com.shadcn.backend.model.Role;
+
 import com.shadcn.backend.service.UserService;
-import com.shadcn.backend.service.RoleService;
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,7 +31,6 @@ import java.util.stream.Collectors;
 public class UserController {
     
     private final UserService userService;
-    private final RoleService roleService;
 
     @GetMapping
     @PreAuthorize("hasAuthority('pegawai.read')")
@@ -78,31 +77,7 @@ public class UserController {
         }
     }
       
-    @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('pegawai.read')")
-    public ResponseEntity<UserSummaryDto> getUserById(@PathVariable Long id) {
-        try {
-            Optional<User> user = userService.getUserById(id);
-            return user.map(u -> ResponseEntity.ok(new UserSummaryDto(u)))
-                      .orElse(ResponseEntity.notFound().build());
-        } catch (Exception e) {
-            log.error("Error getting user by ID: " + id, e);
-            return ResponseEntity.internalServerError().build();
-        }
-    }
-      
-    @GetMapping("/username/{username}")
-    @PreAuthorize("hasAuthority('pegawai.read')")
-    public ResponseEntity<UserSummaryDto> getUserByUsername(@PathVariable String username) {
-        try {
-            Optional<User> user = userService.getUserByUsername(username);
-            return user.map(u -> ResponseEntity.ok(new UserSummaryDto(u)))
-                      .orElse(ResponseEntity.notFound().build());
-        } catch (Exception e) {
-            log.error("Error getting user by username: " + username, e);
-            return ResponseEntity.internalServerError().build();
-        }
-    }    
+    
 
     @GetMapping("/email/{email}")
     @PreAuthorize("hasAuthority('pegawai.read')")

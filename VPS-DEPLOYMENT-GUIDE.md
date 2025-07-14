@@ -1,264 +1,93 @@
-# VPS DEPLOYMENT GUIDE - ALUMNI ELECTION SYSTEM
-## Complete Production Deployment on Ubuntu 25.04 VPS
+# VPS DEPLOYMENT GUIDE - OPTIMIZED ALUMNI ELECTION SYSTEM
+## Production Deployment with Balanced Performance
 
-### 📋 STEP-BY-STEP DEPLOYMENT
+### � ONE-COMMAND DEPLOYMENT (Optimized for High Performance)
 
-#### **STEP 1: System Update & Basic Tools**
+#### **STAGE 1: System & Dependencies Setup**
 ```bash
-sudo apt update && sudo apt upgrade -y
-sudo apt install -y curl wget git unzip
+sudo apt update && sudo apt upgrade -y && \
+sudo apt install -y openjdk-21-jdk mysql-server nginx maven git curl wget unzip nodejs npm && \
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash - && \
+sudo apt install -y nodejs && \
+sudo npm install -g pnpm && \
+sudo systemctl start mysql nginx && \
+sudo systemctl enable mysql nginx
 ```
 
-#### **STEP 2: Install Java 21**
+#### **STAGE 2: MySQL & Database Setup**
 ```bash
-sudo apt install -y openjdk-21-jdk
-export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
-java -version
-echo "JAVA_HOME=$JAVA_HOME" | sudo tee -a /etc/environment
-source /etc/environment
+sudo mysql_secure_installation --use-default && \
+sudo mysql -e "INSTALL PLUGIN mysql_native_password SONAME 'mysql_native_password.so';" && \
+sudo mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'root123';" && \
+sudo mysql -e "CREATE DATABASE pemilihan;" && \
+sudo mysql -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' WITH GRANT OPTION;" && \
+sudo mysql -e "FLUSH PRIVILEGES;" && \
+sudo tee -a /etc/mysql/mysql.conf.d/mysqld.cnf > /dev/null << 'EOF'
+innodb_buffer_pool_size = 4G
+innodb_log_file_size = 512M
+max_connections = 500
+query_cache_size = 256M
+key_buffer_size = 256M
+tmp_table_size = 256M
+max_heap_table_size = 256M
+EOF
+sudo systemctl restart mysql
 ```
 
-#### **STEP 3: Install MySQL Server**
+#### **STAGE 3: Tomcat Setup & Configuration**
 ```bash
-sudo apt install -y mysql-server
-sudo systemctl start mysql
-sudo systemctl enable mysql
-sudo systemctl status mysql
-```
-
-#### **STEP 4: Configure MySQL Database**
-```bash
-sudo mysql_secure_installation
-sudo mysql -e "CREATE DATABASE pemilihan;"
-sudo mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED BY 'root123';"
-sudo mysql -e "FLUSH PRIVILEGES;"
-mysql -u root -proot123 -e "SHOW DATABASES;"
-```
-
-#### **STEP 5: Install Maven**
-```bash
-sudo apt install -y maven
-mvn -version
-```
-
-#### **STEP 6: Download & Install Tomcat**
-```bash
-cd /tmp
-sudo wget https://downloads.apache.org/tomcat/tomcat-10/v10.1.43/bin/apache-tomcat-10.1.43.tar.gz
-sudo tar -xzf apache-tomcat-10.1.43.tar.gz -C /opt
-sudo mv /opt/apache-tomcat-10.1.43 /opt/tomcat
-```
-
-#### **STEP 7: Configure Tomcat User & Permissions**
-```bash
-sudo useradd -r -s /bin/false tomcat
-sudo chown -R tomcat:tomcat /opt/tomcat
-sudo chmod +x /opt/tomcat/bin/*.sh
-```
-
-#### **STEP 8: Create Optimized Tomcat Service (90% Resources)**
-```bash
+cd /tmp && \
+wget -q https://downloads.apache.org/tomcat/tomcat-10/v10.1.43/bin/apache-tomcat-10.1.43.tar.gz && \
+sudo tar -xzf apache-tomcat-10.1.43.tar.gz -C /opt && \
+sudo mv /opt/apache-tomcat-10.1.43 /opt/tomcat && \
+sudo useradd -r -s /bin/false tomcat && \
+sudo chown -R tomcat:tomcat /opt/tomcat && \
+sudo chmod +x /opt/tomcat/bin/*.sh && \
+sudo mkdir -p /opt/tomcat/storage/{images,documents,temp} && \
+sudo chown -R tomcat:tomcat /opt/tomcat/storage && \
 sudo tee /etc/systemd/system/tomcat.service > /dev/null << 'EOF'
 [Unit]
 Description=Apache Tomcat Web Application Container
-After=network.target
+After=network.target mysql.service
 
 [Service]
 Type=forking
 User=tomcat
 Group=tomcat
 Environment="JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64"
-Environment="CATALINA_PID=/opt/tomcat/temp/tomcat.pid"
 Environment="CATALINA_HOME=/opt/tomcat"
-Environment="CATALINA_BASE=/opt/tomcat"
-Environment="CATALINA_OPTS=-Xms12G -Xmx14G -server -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:G1HeapRegionSize=16m -XX:+G1UseAdaptiveIHOP -XX:G1MixedGCCountTarget=16 -XX:+UseStringDeduplication -XX:+OptimizeStringConcat"
-Environment="JAVA_OPTS=-Djava.awt.headless=true -Djava.security.egd=file:/dev/./urandom -Dspring.profiles.active=prod -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Jakarta -Djava.net.preferIPv4Stack=true"
+Environment="CATALINA_OPTS=-Xms8G -Xmx12G -server -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
+Environment="JAVA_OPTS=-Dspring.profiles.active=prod -Dfile.encoding=UTF-8"
 ExecStart=/opt/tomcat/bin/startup.sh
 ExecStop=/opt/tomcat/bin/shutdown.sh
-RestartSec=10
 Restart=always
 LimitNOFILE=65536
-LimitNPROC=65536
 
 [Install]
 WantedBy=multi-user.target
 EOF
+sudo systemctl daemon-reload && sudo systemctl enable tomcat
 ```
 
-#### **STEP 9: Enable Tomcat Service**
+#### **STAGE 4: Build & Deploy Backend**
 ```bash
-sudo systemctl daemon-reload
-sudo systemctl enable tomcat
+sudo git clone https://github.com/MuhammadDarmawanFadilah/pemilihan.git /tmp/pemilihan && \
+cd /tmp/pemilihan/backend && \
+sudo cp src/main/resources/application-prod.properties src/main/resources/application.properties && \
+sudo mvn clean package -DskipTests -Dspring.profiles.active=prod && \
+sudo cp target/backend.war /opt/tomcat/webapps/silapor.war && \
 sudo systemctl start tomcat
-sudo systemctl status tomcat
 ```
 
-#### **STEP 10: Install Node.js**
+#### **STAGE 5: Build & Deploy Frontend**
 ```bash
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt install -y nodejs
-node --version
-npm --version
-```
-
-#### **STEP 11: Install Nginx**
-```bash
-sudo apt install -y nginx
-sudo systemctl start nginx
-sudo systemctl enable nginx
-sudo systemctl status nginx
-```
-
-#### **STEP 12: Create Web Directories**
-```bash
-sudo mkdir -p /var/www/trensilapor.my.id
-sudo mkdir -p /var/www/mdarmawanf.my.id
-sudo mkdir -p /var/www/ikafk.my.id
-sudo mkdir -p /var/www/pesanbus.my.id
-sudo mkdir -p /var/www/absenkantor.my.id
-```
-
-#### **STEP 13: Clone Project Repository**
-```bash
-cd /tmp
-sudo git clone https://github.com/MuhammadDarmawanFadilah/pemilihan.git
-cd pemilihan
-ls -la
-```
-
-#### **STEP 14: Build Backend Application**
-```bash
-cd /tmp/pemilihan/backend
-sudo mvn clean package -DskipTests
-ls -la target/
-```
-
-#### **STEP 15: Deploy Backend to Tomcat**
-```bash
-sudo cp /tmp/pemilihan/backend/target/backend.war /opt/tomcat/webapps/ROOT.war
-sudo systemctl restart tomcat
-sleep 10
-sudo systemctl status tomcat
-```
-
-#### **STEP 16: Build Frontend Application**
-```bash
-cd /tmp/pemilihan/frontend
-sudo npm install
-sudo npm run build
-ls -la .next/
-```
-
-#### **STEP 17: Deploy Frontend Files (Universal)**
-```bash
-sudo cp -r /tmp/pemilihan/frontend/.next/standalone/* /var/www/trensilapor.my.id/
-sudo cp -r /tmp/pemilihan/frontend/.next/static /var/www/trensilapor.my.id/.next/
-sudo cp -r /tmp/pemilihan/frontend/public /var/www/trensilapor.my.id/
-
-# Set ownership based on distro
-if [ -f /etc/debian_version ]; then
-    # Ubuntu/Debian
-    sudo chown -R www-data:www-data /var/www
-    WEB_USER="www-data"
-elif [ -f /etc/redhat-release ]; then
-    # RHEL/CentOS/Fedora
-    sudo chown -R nginx:nginx /var/www
-    WEB_USER="nginx"
-else
-    # Default fallback
-    sudo chown -R www-data:www-data /var/www
-    WEB_USER="www-data"
-fi
-
-echo "Web user set to: $WEB_USER"
-```
-
-#### **STEP 18: Configure Main Nginx Site (Universal)**
-```bash
-# Create sites directories for RHEL/CentOS if they don't exist
-sudo mkdir -p /etc/nginx/sites-available /etc/nginx/sites-enabled
-
-# Add sites-enabled include to nginx.conf if not present
-if ! grep -q "sites-enabled" /etc/nginx/nginx.conf; then
-    sudo sed -i '/include \/etc\/nginx\/conf.d\/\*.conf;/a\    include /etc/nginx/sites-enabled/*;' /etc/nginx/nginx.conf
-fi
-
-sudo tee /etc/nginx/sites-available/trensilapor.my.id > /dev/null << 'EOF'
-server {
-    listen 80;
-    server_name trensilapor.my.id www.trensilapor.my.id;
-    root /var/www/trensilapor.my.id;
-    index index.html;
-    
-    client_max_body_size 100M;
-    
-    location / {
-        try_files $uri $uri/ @nextjs;
-    }
-    
-    location @nextjs {
-        proxy_pass http://localhost:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_cache_bypass $http_upgrade;
-        proxy_read_timeout 86400;
-    }
-    
-    location /api {
-        proxy_pass http://localhost:8080/api;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_read_timeout 300;
-        proxy_connect_timeout 300;
-        proxy_send_timeout 300;
-    }
-}
-EOF
-```
-
-#### **STEP 19: Configure Additional Domain Sites**
-```bash
-for domain in mdarmawanf.my.id ikafk.my.id pesanbus.my.id absenkantor.my.id; do
-sudo tee /etc/nginx/sites-available/$domain > /dev/null << EOF
-server {
-    listen 80;
-    server_name $domain www.$domain;
-    root /var/www/$domain;
-    index index.html;
-    
-    location / {
-        try_files \$uri \$uri/ =404;
-    }
-}
-EOF
-done
-```
-
-#### **STEP 20: Enable Nginx Sites**
-```bash
-sudo ln -sf /etc/nginx/sites-available/trensilapor.my.id /etc/nginx/sites-enabled/
-sudo ln -sf /etc/nginx/sites-available/mdarmawanf.my.id /etc/nginx/sites-enabled/
-sudo ln -sf /etc/nginx/sites-available/ikafk.my.id /etc/nginx/sites-enabled/
-sudo ln -sf /etc/nginx/sites-available/pesanbus.my.id /etc/nginx/sites-enabled/
-sudo ln -sf /etc/nginx/sites-available/absenkantor.my.id /etc/nginx/sites-enabled/
-sudo rm -f /etc/nginx/sites-enabled/default
-```
-
-#### **STEP 21: Test Nginx Configuration**
-```bash
-sudo nginx -t
-sudo systemctl reload nginx
-```
-
-#### **STEP 22: Create Optimized Frontend Service (10% Resources)**
-```bash
+sudo mkdir -p /var/www/trensilapor.my.id && \
+cd /tmp/pemilihan/frontend && \
+sudo cp .env.prod .env.local && \
+sudo pnpm install --frozen-lockfile && \
+sudo pnpm run build && \
+sudo cp -r .next public package.json next.config.ts .env.local node_modules /var/www/trensilapor.my.id/ && \
+sudo chown -R root:root /var/www && \
 sudo tee /etc/systemd/system/trensilapor-frontend.service > /dev/null << 'EOF'
 [Unit]
 Description=Trensilapor Frontend Next.js Application
@@ -266,470 +95,206 @@ After=network.target
 
 [Service]
 Type=simple
-User=www-data
+User=root
 WorkingDirectory=/var/www/trensilapor.my.id
-ExecStart=/usr/bin/node --max-old-space-size=1536 server.js
+ExecStart=/usr/bin/npx next start
 Restart=always
 Environment=NODE_ENV=production
 Environment=PORT=3000
-Environment=UV_THREADPOOL_SIZE=4
+Environment=NODE_OPTIONS=--max-old-space-size=4096
 LimitNOFILE=65536
-CPUQuota=25%
-MemoryLimit=1.5G
 
 [Install]
 WantedBy=multi-user.target
 EOF
+sudo systemctl daemon-reload && sudo systemctl enable trensilapor-frontend && sudo systemctl start trensilapor-frontend
 ```
 
-#### **STEP 23: Enable Frontend Service**
+#### **STAGE 6: Nginx Configuration & HTTPS**
 ```bash
-sudo systemctl daemon-reload
-sudo systemctl enable trensilapor-frontend
-sudo systemctl start trensilapor-frontend
-sudo systemctl status trensilapor-frontend
-```
-
-#### **STEP 24: Final Verification**
-```bash
-sudo systemctl status mysql tomcat trensilapor-frontend nginx
-netstat -tlnp | grep :80
-netstat -tlnp | grep :8080
-netstat -tlnp | grep :3000
-netstat -tlnp | grep :3306
-```
-
-#### **STEP 25: Deployment Summary**
-```bash
-echo "🎉 DEPLOYMENT COMPLETE! 🎉"
-echo "✅ Backend: http://localhost:8080"
-echo "✅ Frontend: http://trensilapor.my.id"
-echo "✅ Database: MySQL running on port 3306"
-echo "✅ Other domains ready: mdarmawanf.my.id, ikafk.my.id, pesanbus.my.id, absenkantor.my.id"
-echo "🔧 Configure your domain DNS to point to this server IP"
-```
-
-### 🚀 OPTIMIZED ONE-COMMAND DEPLOYMENT (Ubuntu 25.04)
-
-```bash
-# High-Performance VPS Deployment - 90% Backend, 10% Frontend
-sudo apt update && sudo apt upgrade -y && sudo apt install -y openjdk-21-jdk mysql-server nginx maven git curl wget unzip && \
-sudo systemctl start mysql && sudo systemctl enable mysql nginx && \
-sudo mysql_secure_installation --use-default && \
-sudo mysql -e "CREATE DATABASE pemilihan; ALTER USER 'root'@'localhost' IDENTIFIED BY 'root123'; FLUSH PRIVILEGES;" && \
-cd /tmp && sudo wget https://downloads.apache.org/tomcat/tomcat-10/v10.1.43/bin/apache-tomcat-10.1.43.tar.gz && \
-sudo tar -xzf apache-tomcat-10.1.43.tar.gz -C /opt && sudo mv /opt/apache-tomcat-10.1.43 /opt/tomcat && \
-sudo useradd -r -s /bin/false tomcat && sudo chown -R tomcat:tomcat /opt/tomcat && sudo chmod +x /opt/tomcat/bin/*.sh && \
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash - && sudo apt install -y nodejs && \
-sudo mkdir -p /var/www/{trensilapor.my.id,mdarmawanf.my.id,ikafk.my.id,pesanbus.my.id,absenkantor.my.id} && \
-sudo git clone https://github.com/MuhammadDarmawanFadilah/pemilihan.git /tmp/pemilihan && \
-sudo tee /etc/systemd/system/tomcat.service > /dev/null << 'EOF'
-[Unit]
-Description=Apache Tomcat Web Application Container
-After=network.target
-
-[Service]
-Type=forking
-User=tomcat
-Group=tomcat
-Environment="JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64"
-Environment="CATALINA_PID=/opt/tomcat/temp/tomcat.pid"
-Environment="CATALINA_HOME=/opt/tomcat"
-Environment="CATALINA_BASE=/opt/tomcat"
-Environment="CATALINA_OPTS=-Xms12G -Xmx14G -server -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:G1HeapRegionSize=16m -XX:+G1UseAdaptiveIHOP -XX:G1MixedGCCountTarget=16 -XX:+UseStringDeduplication -XX:+OptimizeStringConcat"
-Environment="JAVA_OPTS=-Djava.awt.headless=true -Djava.security.egd=file:/dev/./urandom -Dspring.profiles.active=prod -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Jakarta -Djava.net.preferIPv4Stack=true"
-ExecStart=/opt/tomcat/bin/startup.sh
-ExecStop=/opt/tomcat/bin/shutdown.sh
-RestartSec=10
-Restart=always
-LimitNOFILE=65536
-LimitNPROC=65536
-
-[Install]
-WantedBy=multi-user.target
-EOF
-cd /tmp/pemilihan/backend && sudo mvn clean package -DskipTests && \
-sudo cp target/backend.war /opt/tomcat/webapps/ROOT.war && \
-cd /tmp/pemilihan/frontend && sudo npm install --production && sudo npm run build && \
-sudo cp -r .next/standalone/* /var/www/trensilapor.my.id/ && \
-sudo cp -r .next/static /var/www/trensilapor.my.id/.next/ && \
-sudo cp -r public /var/www/trensilapor.my.id/ && \
-sudo chown -R www-data:www-data /var/www && \
+sudo mkdir -p /var/www/{mdarmawanf.my.id,ikafk.my.id,pesanbus.my.id,absenkantor.my.id} && \
 sudo tee /etc/nginx/sites-available/trensilapor.my.id > /dev/null << 'EOF'
 server {
     listen 80;
-    server_name trensilapor.my.id www.trensilapor.my.id;
-    root /var/www/trensilapor.my.id;
-    index index.html;
-    
+    server_name trensilapor.my.id;
     client_max_body_size 100M;
     
     location / {
-        try_files $uri $uri/ @nextjs;
-    }
-    
-    location @nextjs {
         proxy_pass http://localhost:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_cache_bypass $http_upgrade;
-        proxy_read_timeout 86400;
-    }
-    
-    location /api {
-        proxy_pass http://localhost:8080/api;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_read_timeout 300;
-        proxy_connect_timeout 300;
-        proxy_send_timeout 300;
+    }
+    
+    location /api {
+        proxy_pass http://localhost:8080/silapor/api;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 300;
     }
 }
 EOF
-for domain in mdarmawanf.my.id ikafk.my.id pesanbus.my.id absenkantor.my.id; do sudo tee /etc/nginx/sites-available/$domain > /dev/null << EOF
+for domain in mdarmawanf.my.id ikafk.my.id pesanbus.my.id absenkantor.my.id; do \
+sudo tee /etc/nginx/sites-available/$domain > /dev/null << EOF
 server {
     listen 80;
-    server_name $domain www.$domain;
+    server_name $domain;
     root /var/www/$domain;
     index index.html;
     location / { try_files \$uri \$uri/ =404; }
 }
 EOF
-sudo ln -sf /etc/nginx/sites-available/$domain /etc/nginx/sites-enabled/; done && \
+sudo ln -sf /etc/nginx/sites-available/$domain /etc/nginx/sites-enabled/; \
+done && \
 sudo ln -sf /etc/nginx/sites-available/trensilapor.my.id /etc/nginx/sites-enabled/ && \
 sudo rm -f /etc/nginx/sites-enabled/default && \
-sudo tee /etc/systemd/system/trensilapor-frontend.service > /dev/null << 'EOF'
-[Unit]
-Description=Trensilapor Frontend Next.js Application
-After=network.target
-
-[Service]
-Type=simple
-User=www-data
-WorkingDirectory=/var/www/trensilapor.my.id
-ExecStart=/usr/bin/node --max-old-space-size=1536 server.js
-Restart=always
-Environment=NODE_ENV=production
-Environment=PORT=3000
-Environment=UV_THREADPOOL_SIZE=4
-LimitNOFILE=65536
-CPUQuota=25%
-MemoryLimit=1.5G
-
-[Install]
-WantedBy=multi-user.target
-EOF
-sudo systemctl daemon-reload && sudo systemctl enable tomcat trensilapor-frontend && \
-sudo nginx -t && sudo systemctl start mysql tomcat trensilapor-frontend nginx && \
-echo "🎉 HIGH-PERFORMANCE DEPLOYMENT COMPLETE! 🎉" && \
-echo "💪 Backend (Tomcat): 14GB RAM, 3.6 vCPU (90%)" && \
-echo "⚡ Frontend (Node.js): 1.5GB RAM, 0.4 vCPU (10%)" && \
-echo "✅ Backend: http://localhost:8080" && \
-echo "✅ Frontend: http://trensilapor.my.id" && \
-echo "✅ Database: MySQL (optimized)" && \
-echo "📊 Resource allocation optimized for high-load production" && \
-sudo systemctl status mysql tomcat trensilapor-frontend nginx --no-pager
+sudo nginx -t && sudo systemctl reload nginx
 ```
 
-### � UBUNTU 25.04 OPTIMIZATION
-
-#### **MySQL Performance Tuning for Ubuntu 25.04:**
+#### **STAGE 7: SSL Certificates & Final Configuration**
 ```bash
-sudo tee -a /etc/mysql/mysql.conf.d/mysqld.cnf > /dev/null << 'EOF'
-# Performance Optimization for 16GB RAM Ubuntu 25.04
-innodb_buffer_pool_size = 4G
-innodb_log_file_size = 512M
-innodb_log_buffer_size = 64M
-innodb_flush_log_at_trx_commit = 2
-innodb_file_per_table = 1
-innodb_open_files = 65535
-max_connections = 500
-max_connect_errors = 1000000
-connect_timeout = 60
-wait_timeout = 28800
-query_cache_type = 1
-query_cache_size = 256M
-query_cache_limit = 2M
-key_buffer_size = 256M
-sort_buffer_size = 4M
-read_buffer_size = 2M
-read_rnd_buffer_size = 8M
-myisam_sort_buffer_size = 64M
-table_open_cache = 4000
-table_definition_cache = 4000
-tmp_table_size = 256M
-max_heap_table_size = 256M
-general_log = 0
-slow_query_log = 1
-slow_query_log_file = /var/log/mysql/slow.log
-long_query_time = 2
-EOF
-sudo systemctl restart mysql
-```
-
-#### **System Optimization for Ubuntu 25.04:**
-```bash
-sudo tee -a /etc/sysctl.conf > /dev/null << 'EOF'
-# Network Performance for Ubuntu 25.04
-net.core.rmem_max = 134217728
-net.core.wmem_max = 134217728
-net.ipv4.tcp_rmem = 4096 65536 134217728
-net.ipv4.tcp_wmem = 4096 65536 134217728
-net.core.netdev_max_backlog = 5000
-fs.file-max = 2097152
-fs.nr_open = 1048576
-vm.swappiness = 10
-vm.dirty_ratio = 15
-vm.dirty_background_ratio = 5
-EOF
-sudo sysctl -p
-
-sudo tee /etc/security/limits.conf > /dev/null << 'EOF'
-* soft nofile 65536
-* hard nofile 65536
-* soft nproc 65536
-* hard nproc 65536
-www-data soft nofile 65536
-www-data hard nofile 65536
-tomcat soft nofile 65536
-tomcat hard nofile 65536
-EOF
-```
-
-### � TROUBLESHOOTING GUIDE
-
-#### **Common Errors & Solutions:**
-
-**Error 1: Java Not Found**
-```bash
-# Check Java installation
-java -version
-# If not found, reinstall
-sudo apt install -y openjdk-21-jdk
-update-alternatives --list java
-```
-
-**Error 2: MySQL Connection Refused**
-```bash
-# Check MySQL status
-sudo systemctl status mysql
-# Restart if needed
-sudo systemctl restart mysql
-# Check if port is listening
-netstat -tlnp | grep 3306
-```
-
-**Error 3: Tomcat Won't Start**
-```bash
-# Check logs
-sudo journalctl -u tomcat -f
-# Check permissions
-sudo chown -R tomcat:tomcat /opt/tomcat
-# Verify Java home
-echo $JAVA_HOME
-```
-
-**Error 4: Frontend Build Fails**
-```bash
-# Clear npm cache
-sudo npm cache clean --force
-# Remove node_modules
-sudo rm -rf node_modules package-lock.json
-# Reinstall
-sudo npm install
-```
-
-**Error 5: Nginx Configuration Error**
-```bash
-# Test configuration
-sudo nginx -t
-# Check error logs
-sudo tail -f /var/log/nginx/error.log
-# Reload configuration
-sudo systemctl reload nginx
-```
-
-**Error 6: Port Already in Use**
-```bash
-# Check what's using the port
-sudo netstat -tlnp | grep :80
-sudo netstat -tlnp | grep :8080
-sudo netstat -tlnp | grep :3000
-# Kill process if needed
-sudo kill -9 PID_NUMBER
-```
-
-**Error 7: Permission Denied**
-```bash
-# Fix ownership
-sudo chown -R www-data:www-data /var/www
-sudo chown -R tomcat:tomcat /opt/tomcat
-# Fix permissions
-sudo chmod -R 755 /var/www
-sudo chmod +x /opt/tomcat/bin/*.sh
-```
-
-### 🔄 RESTART ALL SERVICES
-```bash
-sudo systemctl restart mysql
-sudo systemctl restart tomcat
-sudo systemctl restart trensilapor-frontend
-sudo systemctl restart nginx
-```
-
-### 📊 RESOURCE MONITORING
-```bash
-# Real-time system monitoring
-htop
-# Memory usage
-free -h
-# Disk usage
-df -h
-# Service resource usage
-systemctl status tomcat --no-pager
-systemctl status trensilapor-frontend --no-pager
-# Java process monitoring
-ps aux | grep java
-# Database connections
-mysql -u root -proot123 -e "SHOW PROCESSLIST;"
-```
-
-### 🎯 PERFORMANCE BENCHMARKS (4 vCPU, 16GB RAM)
-```
-Backend (Tomcat):
-- Memory: 12-14GB heap
-- CPU: ~3.6 cores (90%)
-- Concurrent users: 500+
-- Response time: <200ms
-
-Frontend (Node.js):
-- Memory: 1.5GB max
-- CPU: ~0.4 cores (10%)
-- Static files: Nginx direct
-- API proxy: Optimized
-
-Database (MySQL):
-- Buffer pool: 4GB
-- Connections: 500 max
-- Query cache: 256MB
-- Optimized for read-heavy loads
-```
-
-### 🔧 SERVICE CONFIGURATIONS
-
-#### **Tomcat Service** (`/etc/systemd/system/tomcat.service`)
-```ini
-[Unit]
-Description=Apache Tomcat Web Application Container
-After=network.target
-
-[Service]
-Type=forking
-User=tomcat
-Group=tomcat
-Environment="JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64"
-Environment="CATALINA_HOME=/opt/tomcat"
-Environment="JAVA_OPTS=-Dspring.profiles.active=prod"
-ExecStart=/opt/tomcat/bin/startup.sh
-ExecStop=/opt/tomcat/bin/shutdown.sh
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
-```
-
-#### **Frontend Service** (`/etc/systemd/system/trensilapor-frontend.service`)
-```ini
-[Unit]
-Description=Trensilapor Frontend Next.js Application
-After=network.target
-
-[Service]
-Type=simple
-User=www-data
-WorkingDirectory=/var/www/trensilapor.my.id
-ExecStart=/usr/bin/node server.js
-Restart=always
-Environment=NODE_ENV=production
-Environment=PORT=3000
-
-[Install]
-WantedBy=multi-user.target
-```
-
-### 🌐 NGINX CONFIGURATIONS
-
-#### **Main Domain** (`/etc/nginx/sites-available/trensilapor.my.id`)
-```nginx
+sudo apt install -y certbot python3-certbot-nginx php8.1-fpm php8.1-mysql && \
+sudo systemctl stop nginx && \
+sudo certbot certonly --standalone -d trensilapor.my.id -d mdarmawanf.my.id -d ikafk.my.id -d pesanbus.my.id -d absenkantor.my.id --email admin@trensilapor.my.id --agree-tos --non-interactive && \
+sudo tee /etc/nginx/sites-available/trensilapor.my.id > /dev/null << 'EOF'
 server {
     listen 80;
-    server_name trensilapor.my.id www.trensilapor.my.id;
-    root /var/www/trensilapor.my.id;
+    server_name trensilapor.my.id;
+    return 301 https://$server_name$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name trensilapor.my.id;
+    
+    ssl_certificate /etc/letsencrypt/live/trensilapor.my.id/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/trensilapor.my.id/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    
+    client_max_body_size 100M;
     
     location / {
-        try_files $uri $uri/ @nextjs;
-    }
-    
-    location @nextjs {
         proxy_pass http://localhost:3000;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 300;
     }
     
     location /api {
-        proxy_pass http://localhost:8080/api;
+        proxy_pass http://localhost:8080/silapor/api;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 300;
     }
 }
+EOF
+for domain in mdarmawanf.my.id ikafk.my.id pesanbus.my.id absenkantor.my.id; do \
+sudo tee /etc/nginx/sites-available/$domain > /dev/null << EOF
+server {
+    listen 80;
+    server_name $domain;
+    return 301 https://\$server_name\$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name $domain;
+    
+    ssl_certificate /etc/letsencrypt/live/$domain/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/$domain/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    
+    root /var/www/$domain;
+    index index.html index.php;
+    client_max_body_size 100M;
+    
+    location / { try_files \$uri \$uri/ =404; }
+    location ~ \.php$ { include snippets/fastcgi-php.conf; fastcgi_pass unix:/var/run/php/php8.1-fpm.sock; }
+}
+EOF
+done && \
+echo "0 2 * * * root certbot renew --quiet && systemctl reload nginx" | sudo tee -a /etc/crontab && \
+sudo systemctl enable php8.1-fpm && sudo systemctl start php8.1-fpm nginx && \
+sudo systemctl restart tomcat trensilapor-frontend
 ```
 
-#### **Additional Domains** (Ready for future projects)
-- `mdarmawanf.my.id` → `/var/www/mdarmawanf.my.id`
-- `ikafk.my.id` → `/var/www/ikafk.my.id`
-- `pesanbus.my.id` → `/var/www/pesanbus.my.id`
-- `absenkantor.my.id` → `/var/www/absenkantor.my.id`
-
-### 🚀 SERVICES STATUS CHECK
+#### **STAGE 8: System Optimization & Verification**
 ```bash
-sudo systemctl status mysql tomcat trensilapor-frontend nginx
+sudo tee -a /etc/sysctl.conf > /dev/null << 'EOF'
+net.core.rmem_max = 134217728
+net.core.wmem_max = 134217728
+fs.file-max = 2097152
+vm.swappiness = 10
+EOF
+sudo sysctl -p && \
+sudo tee /etc/security/limits.conf > /dev/null << 'EOF'
+* soft nofile 65536
+* hard nofile 65536
+tomcat soft nofile 65536
+tomcat hard nofile 65536
+EOF
+echo "🎉 DEPLOYMENT COMPLETE!" && \
+echo "✅ Frontend: https://trensilapor.my.id" && \
+echo "✅ Backend: https://trensilapor.my.id/api" && \
+echo "✅ Database: MySQL (optimized)" && \
+echo "🌐 Additional domains: https://mdarmawanf.my.id, https://ikafk.my.id, https://pesanbus.my.id, https://absenkantor.my.id" && \
+echo "🔒 SSL auto-renewal enabled" && \
+echo "📊 Performance: Backend 12GB, Frontend 4GB" && \
+sudo systemctl status mysql tomcat trensilapor-frontend nginx --no-pager && \
+mysql -u root -proot123 -e "SHOW DATABASES;"
 ```
 
-### 📱 ACCESS POINTS
-- **Frontend**: http://trensilapor.my.id
-- **Backend API**: http://trensilapor.my.id/api
-- **Database**: MySQL on localhost:3306
+### 🔧 QUICK FIX COMMANDS
 
-### 🔒 SECURITY NOTES
-- Ubuntu 25.04 VPS optimized
-- Database password: `root123`
-- Frontend environment: Production (`.env.prod`)
-- Backend profile: `prod`
-- All services auto-start on boot
+#### **Service Restart:**
+```bash
+sudo systemctl restart mysql tomcat trensilapor-frontend nginx
+```
 
-### 🌍 DNS CONFIGURATION
-Point your domains to your VPS IP address:
+#### **Status Check:**
+```bash
+sudo systemctl status mysql tomcat trensilapor-frontend nginx --no-pager
 ```
-A     trensilapor.my.id     → YOUR_VPS_IP
-A     www.trensilapor.my.id → YOUR_VPS_IP
-A     mdarmawanf.my.id      → YOUR_VPS_IP
-A     ikafk.my.id           → YOUR_VPS_IP
-A     pesanbus.my.id        → YOUR_VPS_IP
-A     absenkantor.my.id     → YOUR_VPS_IP
+
+#### **Port Verification:**
+```bash
+netstat -tlnp | grep -E ':(80|8080|3000|3306)'
 ```
+
+#### **MySQL Connection Test:**
+```bash
+mysql -u root -proot123 -e "SHOW DATABASES;"
+```
+
+#### **Frontend Rebuild (if needed):**
+```bash
+sudo systemctl stop trensilapor-frontend
+cd /tmp/pemilihan/frontend && sudo pnpm run build
+sudo cp -r .next /var/www/trensilapor.my.id/
+sudo systemctl start trensilapor-frontend
+```
+
+### 📊 PERFORMANCE SPECS
+- **Backend**: 12GB RAM, G1GC optimized
+- **Frontend**: 4GB RAM, Node.js optimized  
+- **Database**: 4GB buffer pool, 500 connections
+- **SSL**: Auto-renewal enabled
+- **Domains**: 5 domains ready
+
+### 🌐 ACCESS POINTS
+- **Main App**: https://trensilapor.my.id
+- **API**: https://trensilapor.my.id/api  
+- **Additional**: https://mdarmawanf.my.id, https://ikafk.my.id, https://pesanbus.my.id, https://absenkantor.my.id
 
 ---
-**Created**: July 13, 2025  
-**System**: Alumni Election System  
-**Environment**: Production Ubuntu 25.04 VPS
+**Optimized for**: Ubuntu 25.04 VPS  
+**Resource Allocation**: Balanced Performance  
+**Deployment Time**: ~10 minutes

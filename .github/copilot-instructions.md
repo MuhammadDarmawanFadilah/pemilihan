@@ -15,6 +15,20 @@
 - When creating frontend features, corresponding backend API endpoints must also be implemented
 - ONLY respond with "Selesai" when task is completed - nothing else
 
+**🚨 CRITICAL - Windows PowerShell Command Requirements:**
+- ALL terminal commands MUST use PowerShell syntax - NEVER bash/Unix commands
+- Use semicolon (;) for command separation, NEVER && operator
+- File paths MUST use Windows backslash format (c:\path\to\file)
+- Use PowerShell-compatible syntax for all operations:
+  - File operations: `Get-Content`, `Set-Content`, `Copy-Item`, `Remove-Item`
+  - Directory navigation: `cd c:\path`
+  - Multiple commands: `command1; command2` not `command1 && command2`
+- String handling: Use PowerShell escaping for quotes and special characters
+- Environment variables: Use `$env:VARIABLE_NAME` format
+- Always test PowerShell compatibility before executing commands
+- Create .ps1 scripts for complex multi-line operations
+- Use `powershell -ExecutionPolicy Bypass -File "script.ps1"` for script execution
+
 **Configuration Management:**
 - Never hardcode URLs, ports, or environment-specific values
 - Frontend: Always use environment variables from `.env` files

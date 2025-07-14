@@ -46,7 +46,7 @@ export default function CreatePemilihanPage() {
     kota: '',
     kecamatan: '',
     kelurahan: '',
-    detailPemilihan: []
+    detailLaporan: []
   })
 
   // Wilayah options
@@ -278,7 +278,7 @@ export default function CreatePemilihanPage() {
         ...formData,
         status: 'DRAFT',
         tingkatPemilihan,
-        detailPemilihan
+        detailLaporan: detailPemilihan
       }
 
       await pemilihanApi.create(submitData)

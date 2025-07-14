@@ -23,6 +23,7 @@ import { showErrorToast, showSuccessToast } from "@/components/ui/toast-utils"
 import { SortableHeader } from '@/components/ui/sortable-header'
 import { ServerPagination } from '@/components/ServerPagination'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
+import { PegawaiSearchDropdown } from '@/components/PegawaiSearchDropdown'
 import { Plus, MoreHorizontal, Edit, FileText, Eye, Download, Upload, Trash2 } from 'lucide-react'
 import { AdminPageHeader } from "@/components/AdminPageHeader"
 import AdminFilters from "@/components/AdminFilters"
@@ -71,6 +72,7 @@ export default function FileManagerPage() {
   const [selectedFile, setSelectedFile] = useState<FilePegawaiGroupResponse | null>(null)
   const [kategoriOptions, setKategoriOptions] = useState<KategoriOption[]>([])
   const [selectedKategori, setSelectedKategori] = useState<number | null>(null)
+  const [selectedPegawaiId, setSelectedPegawaiId] = useState<string>('')
   
   const { toast } = useToast()
   const router = useRouter()
@@ -93,7 +95,7 @@ export default function FileManagerPage() {
       fetchFiles()
       loadKategoriOptions()
     }
-  }, [mounted, currentPage, pageSize, searchTerm, selectedKategori, sortBy, sortDir])
+  }, [mounted, currentPage, pageSize, searchTerm, selectedKategori, selectedPegawaiId, sortBy, sortDir])
 
   const fetchFiles = async () => {
     try {
@@ -103,14 +105,20 @@ export default function FileManagerPage() {
         page: currentPage.toString(),
         size: pageSize.toString(),
         sortBy,
-        sortDir,
-        pegawaiId: user?.id?.toString() || '' // Filter by current user's ID
+        sortDir
       })
+      
+      // For ADMIN role, show all files; for others, filter by current user's ID
+      if (user?.role?.roleName !== 'ADMIN') {
+        params.append('pegawaiId', user?.id?.toString() || '')
+      } else if (selectedPegawaiId) {
+        // Admin can filter by specific pegawai
+        params.append('pegawaiId', selectedPegawaiId)
+      }
       
       if (searchTerm) params.append('search', searchTerm)
       if (selectedKategori) params.append('kategoriId', selectedKategori.toString())
       
-      // Use the same endpoint as admin but filter by current user's pegawaiId
       const endpoint = `api/admin/file-pegawai?${params.toString()}`
       
       const response = await fetch(getApiUrl(endpoint), {
@@ -126,7 +134,6 @@ export default function FileManagerPage() {
 
       const data = await response.json()
       
-      // Use the file-pegawai data directly
       setFileList(data.content || [])
       setTotalElements(data.totalElements || 0)
       setTotalPages(data.totalPages || 0)
@@ -291,7 +298,7 @@ export default function FileManagerPage() {
       <div className="min-h-screen bg-background">
         <AdminPageHeader
           title="File Manager"
-          description="Kelola file pribadi Anda"
+          description={user?.role?.roleName === 'ADMIN' ? "Kelola file pegawai" : "Kelola file pribadi Anda"}
           icon={FileText}
           primaryAction={{
             label: "Upload File",
@@ -323,15 +330,34 @@ export default function FileManagerPage() {
           <Card>
             <CardContent className="pt-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Pegawai</label>
-                  <input 
-                    type="text"
-                    className="w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-800 cursor-not-allowed"
-                    value={user?.fullName || user?.username || 'Tidak diketahui'}
-                    disabled
-                  />
-                </div>
+                {user?.role?.roleName === 'ADMIN' ? (
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Pilih Pegawai</label>
+                    <PegawaiSearchDropdown
+                      value={selectedPegawaiId}
+                      onValueChange={(value) => {
+                        setSelectedPegawaiId(value)
+                        setCurrentPage(0)
+                      }}
+                      onPegawaiIdChange={(pegawaiId) => {
+                        setSelectedPegawaiId(pegawaiId)
+                        setCurrentPage(0)
+                      }}
+                      placeholder="Pilih pegawai atau kosongkan untuk semua"
+                      includeAllOption={true}
+                    />
+                  </div>
+                ) : (
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Pegawai</label>
+                    <input 
+                      type="text"
+                      className="w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-800 cursor-not-allowed"
+                      value={user?.fullName || user?.username || 'Tidak diketahui'}
+                      disabled
+                    />
+                  </div>
+                )}
                 <div>
                   <label className="text-sm font-medium mb-2 block">Filter Kategori</label>
                   <select 
@@ -354,15 +380,19 @@ export default function FileManagerPage() {
             </CardContent>
           </Card>
 
-          <Card>          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              File Saya
-            </CardTitle>
-            <CardDescription>
-              File yang sudah diupload oleh Anda
-            </CardDescription>
-          </CardHeader>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                {user?.role?.roleName === 'ADMIN' ? 'File Pegawai' : 'File Saya'}
+              </CardTitle>
+              <CardDescription>
+                {user?.role?.roleName === 'ADMIN' 
+                  ? 'File yang telah diupload oleh pegawai'
+                  : 'File yang sudah diupload oleh Anda'
+                }
+              </CardDescription>
+            </CardHeader>
           
           <CardContent>
             {/* Table */}

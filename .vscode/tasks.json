@@ -8,11 +8,27 @@
 			"args": [
 				"spring-boot:run"
 			],
+			"options": {
+				"cwd": "c:\\PROJEK\\pemilihan\\backend"
+			},
 			"group": "build",
 			"isBackground": true,
-			"problemMatcher": [
-				"$tsc"
-			]
+			"problemMatcher": []
+		},
+		{
+			"label": "Frontend Dev Server",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"dev"
+			],
+			"options": {
+				"cwd": "c:\\PROJEK\\pemilihan\\frontend"
+			},
+			"group": "build",
+			"isBackground": true,
+			"problemMatcher": []
 		}
 	]
 }

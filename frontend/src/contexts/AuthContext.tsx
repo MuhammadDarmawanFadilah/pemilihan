@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { User } from '@/lib/api';
 import { config, getApiUrl } from '@/lib/config';
 
@@ -32,29 +32,32 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  // Load token and user from localStorage on mount
-  useEffect(() => {
-    const loadAuthFromStorage = () => {
+  
+  // Optimized storage loader
+  const loadAuthFromStorage = useCallback(() => {
+    try {
       const storedToken = localStorage.getItem('auth_token');
       const storedUser = localStorage.getItem('auth_user');
       
       if (storedToken && storedUser) {
         setToken(storedToken);
-        try {
-          setUser(JSON.parse(storedUser));
-        } catch (error) {
-          console.error('Error parsing stored user:', error);
-          localStorage.removeItem('auth_token');
-          localStorage.removeItem('auth_user');
-        }
+        const parsedUser = JSON.parse(storedUser);
+        setUser(parsedUser);
       }
-      
+    } catch (error) {
+      console.error('Error loading auth from storage:', error);
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('auth_user');
+    } finally {
       setIsLoading(false);
-    };
+    }
+  }, []);
 
-    // Initial load
+  // Load token and user from localStorage on mount
+  useEffect(() => {
     loadAuthFromStorage();
-      // Set up event listener to handle storage changes from other tabs
+      
+    // Set up event listener to handle storage changes from other tabs
     const handleStorageChange = (event: StorageEvent) => {
       if (event.key === 'auth_token' || event.key === 'auth_user') {
         loadAuthFromStorage();
@@ -74,9 +77,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('auth:token-expired', handleTokenExpired);
     };
-  }, []);
+  }, [loadAuthFromStorage]);
 
-  const login = async (username: string, password: string): Promise<void> => {
+  const login = useCallback(async (username: string, password: string): Promise<void> => {
     try {
       const response = await fetch(getApiUrl(config.authLoginEndpoint), {
         method: 'POST',
@@ -103,17 +106,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.error('Login error:', error);
       throw error;
     }
-  };
-  const logout = () => {
+  }, []);
+  
+  const logout = useCallback(() => {
     localStorage.removeItem('auth_token');
     localStorage.removeItem('auth_user');
     setToken(null);
     setUser(null);
-  };
+  }, []);
 
-  const isAuthenticated = !!user && !!token;
+  const isAuthenticated = useMemo(() => !!user && !!token, [user, token]);
 
-  const value: AuthContextType = {
+  const value = useMemo(() => ({
     user,
     token,
     isLoading,
@@ -121,7 +125,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     logout,
     setUser,
     isAuthenticated,
-  };
+  }), [user, token, isLoading, login, logout, isAuthenticated]);
 
   return (
     <AuthContext.Provider value={value}>

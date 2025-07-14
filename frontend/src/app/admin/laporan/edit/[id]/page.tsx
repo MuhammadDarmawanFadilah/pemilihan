@@ -169,7 +169,7 @@ export default function EditLaporanPage() {
       
       // Set form data
       setFormData({
-        nama: laporan.nama,
+        nama: laporan.namaLaporan,
         deskripsi: laporan.deskripsi,
         status: laporan.status,
         selectedJenisLaporanId: laporan.jenisLaporanId
@@ -469,7 +469,7 @@ export default function EditLaporanPage() {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                     <div>
                       <span className="text-gray-600">Nama:</span>
-                      <p className="font-medium">{originalLaporan.nama}</p>
+                      <p className="font-medium">{originalLaporan.namaLaporan}</p>
                     </div>
                     <div>
                       <span className="text-gray-600">Status:</span>
@@ -786,8 +786,8 @@ export default function EditLaporanPage() {
                         <div>
                           <p className="text-sm text-gray-600">Nama Laporan</p>
                           <p className="font-semibold text-gray-900">{formData.nama}</p>
-                          {originalLaporan && formData.nama !== originalLaporan.nama && (
-                            <p className="text-xs text-gray-500">Sebelumnya: {originalLaporan.nama}</p>
+                          {originalLaporan && formData.nama !== originalLaporan.namaLaporan && (
+                            <p className="text-xs text-gray-500">Sebelumnya: {originalLaporan.namaLaporan}</p>
                           )}
                         </div>
                         <Badge className={getStatusColor(formData.status)}>
@@ -833,10 +833,10 @@ export default function EditLaporanPage() {
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-3">
-                        {formData.nama !== originalLaporan.nama && (
+                        {formData.nama !== originalLaporan.namaLaporan && (
                           <div className="flex justify-between">
                             <span className="font-medium">Nama:</span>
-                            <span>{originalLaporan.nama} → {formData.nama}</span>
+                            <span>{originalLaporan.namaLaporan} → {formData.nama}</span>
                           </div>
                         )}
                         {formData.status !== originalLaporan.status && (

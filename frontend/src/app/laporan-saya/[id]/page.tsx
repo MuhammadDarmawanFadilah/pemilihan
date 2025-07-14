@@ -30,24 +30,35 @@ interface SubmissionLaporan {
 export default function DetailLaporanSayaPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
   const router = useRouter();
   const { user } = useAuth();
   const { toast } = useToast();
   const [submission, setSubmission] = useState<SubmissionLaporan | null>(null);
   const [loading, setLoading] = useState(true);
+  const [paramId, setParamId] = useState<string>('');
 
   useEffect(() => {
-    if (user?.id && params.id) {
+    // Handle async params
+    const initializeParams = async () => {
+      const resolvedParams = await params;
+      setParamId(resolvedParams.id);
+    };
+    
+    initializeParams();
+  }, [params]);
+
+  useEffect(() => {
+    if (user?.id && paramId) {
       loadSubmission();
     }
-  }, [user, params.id]);
+  }, [user, paramId]);
 
   const loadSubmission = async () => {
     setLoading(true);
     try {
-      const response = await fetch(getApiUrl(`detail-laporan/${params.id}/user/${user?.id}`), {
+      const response = await fetch(getApiUrl(`detail-laporan/${paramId}/user/${user?.id}`), {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
         }
@@ -83,7 +94,7 @@ export default function DetailLaporanSayaPage({
     }
 
     try {
-      const response = await fetch(getApiUrl(`detail-laporan/${params.id}/user/${user?.id}`), {
+      const response = await fetch(getApiUrl(`detail-laporan/${paramId}/user/${user?.id}`), {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('auth_token')}`

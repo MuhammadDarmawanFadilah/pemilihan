@@ -22,7 +22,7 @@ export interface WilayahDistrict {
 export interface WilayahVillage {
   code: string;
   name: string;
-  postal_code: string;
+  postal_code?: string;
 }
 
 export interface WilayahResponse<T> {
