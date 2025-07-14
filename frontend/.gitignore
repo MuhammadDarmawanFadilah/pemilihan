@@ -6,6 +6,4 @@
 out/
 
 # Frontend-specific env files
-.env.local
-.env.production
 node_modules

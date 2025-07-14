@@ -290,7 +290,7 @@ export default function PublicRegistrationPage() {
             <p className="text-lg text-gray-600 dark:text-gray-300 mb-1">
               Calon Alumni
             </p>            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Lengkapi pendaftaran Anda untuk bergabung dengan Sistem Ikatan Dokter Alumni Unsoed
+              Lengkapi pendaftaran Anda untuk bergabung dengan Sistem Pelaporan Terpadu Berbasis Elektronik
             </p>
           </div>          {/* Compact Progress */}
           <div className="flex items-center justify-center mb-8">

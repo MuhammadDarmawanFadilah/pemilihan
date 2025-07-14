@@ -16,12 +16,38 @@ sudo systemctl enable mysql nginx
 
 #### **STAGE 2: MySQL & Database Setup**
 ```bash
-sudo mysql_secure_installation --use-default && \
-sudo mysql -e "INSTALL PLUGIN mysql_native_password SONAME 'mysql_native_password.so';" && \
-sudo mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'root123';" && \
-sudo mysql -e "CREATE DATABASE pemilihan;" && \
+sudo systemctl stop mysql && \
+sudo apt purge -y mysql-server mysql-client mysql-common mysql-server-core-* mysql-client-core-* && \
+sudo rm -rf /var/lib/mysql /var/log/mysql /etc/mysql && \
+sudo apt autoremove -y && \
+sudo apt autoclean && \
+sudo apt update && \
+sudo debconf-set-selections <<< 'mysql-server mysql-server/root_password password ' && \
+sudo debconf-set-selections <<< 'mysql-server mysql-server/root_password_again password ' && \
+sudo DEBIAN_FRONTEND=noninteractive apt install -y mysql-server && \
+sudo mysqld --initialize-insecure --user=mysql --datadir=/var/lib/mysql && \
+sudo systemctl enable mysql && \
+sudo systemctl start mysql && \
+sleep 5 && \
+sudo mysql -e "UPDATE mysql.user SET authentication_string = NULL WHERE User = 'root' AND Host = 'localhost';" && \
+sudo mysql -e "UPDATE mysql.user SET plugin = 'mysql_native_password' WHERE User = 'root' AND Host = 'localhost';" && \
+sudo mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '';" && \
+sudo mysql -e "CREATE DATABASE IF NOT EXISTS pemilihan;" && \
 sudo mysql -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' WITH GRANT OPTION;" && \
 sudo mysql -e "FLUSH PRIVILEGES;" && \
+sudo tee /etc/mysql/mysql.conf.d/skip-grant.cnf > /dev/null << 'EOF'
+[mysqld]
+skip-grant-tables
+skip-networking=0
+bind-address=127.0.0.1
+EOF
+sudo systemctl restart mysql && \
+sleep 3 && \
+sudo mysql -e "UPDATE mysql.user SET authentication_string = NULL, plugin = 'mysql_native_password' WHERE User = 'root' AND Host = 'localhost';" && \
+sudo mysql -e "FLUSH PRIVILEGES;" && \
+sudo rm /etc/mysql/mysql.conf.d/skip-grant.cnf && \
+sudo systemctl restart mysql && \
+sleep 3 && \
 sudo tee -a /etc/mysql/mysql.conf.d/mysqld.cnf > /dev/null << 'EOF'
 innodb_buffer_pool_size = 4G
 innodb_log_file_size = 512M
@@ -37,14 +63,13 @@ sudo systemctl restart mysql
 #### **STAGE 3: Tomcat Setup & Configuration**
 ```bash
 cd /tmp && \
-wget -q https://downloads.apache.org/tomcat/tomcat-10/v10.1.43/bin/apache-tomcat-10.1.43.tar.gz && \
+wget --progress=bar:force http://downloads.apache.org/tomcat/tomcat-10/v10.1.43/bin/apache-tomcat-10.1.43.tar.gz && \
 sudo tar -xzf apache-tomcat-10.1.43.tar.gz -C /opt && \
 sudo mv /opt/apache-tomcat-10.1.43 /opt/tomcat && \
-sudo useradd -r -s /bin/false tomcat && \
-sudo chown -R tomcat:tomcat /opt/tomcat && \
+sudo chown -R root:root /opt/tomcat && \
 sudo chmod +x /opt/tomcat/bin/*.sh && \
 sudo mkdir -p /opt/tomcat/storage/{images,documents,temp} && \
-sudo chown -R tomcat:tomcat /opt/tomcat/storage && \
+sudo chown -R root:root /opt/tomcat/storage && \
 sudo tee /etc/systemd/system/tomcat.service > /dev/null << 'EOF'
 [Unit]
 Description=Apache Tomcat Web Application Container
@@ -52,8 +77,8 @@ After=network.target mysql.service
 
 [Service]
 Type=forking
-User=tomcat
-Group=tomcat
+User=root
+Group=root
 Environment="JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64"
 Environment="CATALINA_HOME=/opt/tomcat"
 Environment="CATALINA_OPTS=-Xms8G -Xmx12G -server -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
@@ -157,9 +182,10 @@ sudo nginx -t && sudo systemctl reload nginx
 
 #### **STAGE 7: SSL Certificates & Final Configuration**
 ```bash
-sudo apt install -y certbot python3-certbot-nginx php8.1-fpm php8.1-mysql && \
+sudo apt install -y certbot python3-certbot-nginx && \
 sudo systemctl stop nginx && \
-sudo certbot certonly --standalone -d trensilapor.my.id -d mdarmawanf.my.id -d ikafk.my.id -d pesanbus.my.id -d absenkantor.my.id --email admin@trensilapor.my.id --agree-tos --non-interactive && \
+sudo certbot certonly --standalone -d trensilapor.my.id --email admin@trensilapor.my.id --agree-tos --non-interactive; \
+if [ -f "/etc/letsencrypt/live/trensilapor.my.id/fullchain.pem" ]; then \
 sudo tee /etc/nginx/sites-available/trensilapor.my.id > /dev/null << 'EOF'
 server {
     listen 80;
@@ -196,51 +222,55 @@ server {
     }
 }
 EOF
+else \
+sudo tee /etc/nginx/sites-available/trensilapor.my.id > /dev/null << 'EOF'
+server {
+    listen 80;
+    server_name trensilapor.my.id;
+    client_max_body_size 100M;
+    
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 300;
+    }
+    
+    location /api {
+        proxy_pass http://localhost:8080/silapor/api;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 300;
+    }
+}
+EOF
+fi && \
 for domain in mdarmawanf.my.id ikafk.my.id pesanbus.my.id absenkantor.my.id; do \
 sudo tee /etc/nginx/sites-available/$domain > /dev/null << EOF
 server {
     listen 80;
     server_name $domain;
-    return 301 https://\$server_name\$request_uri;
-}
-
-server {
-    listen 443 ssl http2;
-    server_name $domain;
-    
-    ssl_certificate /etc/letsencrypt/live/$domain/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/$domain/privkey.pem;
-    ssl_protocols TLSv1.2 TLSv1.3;
-    
     root /var/www/$domain;
-    index index.html index.php;
+    index index.html;
     client_max_body_size 100M;
-    
     location / { try_files \$uri \$uri/ =404; }
-    location ~ \.php$ { include snippets/fastcgi-php.conf; fastcgi_pass unix:/var/run/php/php8.1-fpm.sock; }
 }
 EOF
+sudo ln -sf /etc/nginx/sites-available/$domain /etc/nginx/sites-enabled/; \
 done && \
-echo "0 2 * * * root certbot renew --quiet && systemctl reload nginx" | sudo tee -a /etc/crontab && \
-sudo systemctl enable php8.1-fpm && sudo systemctl start php8.1-fpm nginx && \
+sudo ln -sf /etc/nginx/sites-available/trensilapor.my.id /etc/nginx/sites-enabled/ && \
+echo "0 2 */2 * * root certbot renew --quiet && systemctl reload nginx" | sudo tee -a /etc/crontab && \
+sudo nginx -t && \
+sudo systemctl start nginx && \
 sudo systemctl restart tomcat trensilapor-frontend
 ```
 
 #### **STAGE 8: System Optimization & Verification**
 ```bash
-sudo tee -a /etc/sysctl.conf > /dev/null << 'EOF'
-net.core.rmem_max = 134217728
-net.core.wmem_max = 134217728
-fs.file-max = 2097152
-vm.swappiness = 10
-EOF
-sudo sysctl -p && \
-sudo tee /etc/security/limits.conf > /dev/null << 'EOF'
-* soft nofile 65536
-* hard nofile 65536
-tomcat soft nofile 65536
-tomcat hard nofile 65536
-EOF
 echo "🎉 DEPLOYMENT COMPLETE!" && \
 echo "✅ Frontend: https://trensilapor.my.id" && \
 echo "✅ Backend: https://trensilapor.my.id/api" && \
@@ -249,7 +279,7 @@ echo "🌐 Additional domains: https://mdarmawanf.my.id, https://ikafk.my.id, ht
 echo "🔒 SSL auto-renewal enabled" && \
 echo "📊 Performance: Backend 12GB, Frontend 4GB" && \
 sudo systemctl status mysql tomcat trensilapor-frontend nginx --no-pager && \
-mysql -u root -proot123 -e "SHOW DATABASES;"
+mysql -u root -e "SHOW DATABASES;"
 ```
 
 ### 🔧 QUICK FIX COMMANDS
@@ -271,7 +301,7 @@ netstat -tlnp | grep -E ':(80|8080|3000|3306)'
 
 #### **MySQL Connection Test:**
 ```bash
-mysql -u root -proot123 -e "SHOW DATABASES;"
+mysql -u root -e "SHOW DATABASES;"
 ```
 
 #### **Frontend Rebuild (if needed):**

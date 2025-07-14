@@ -91,7 +91,7 @@ function LoginForm() {
               Selamat Datang
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-2">
-              Masuk ke Sistem Ikatan Dokter Alumni Unsoed
+              Masuk ke Sistem Pelaporan Terpadu Berbasis Elektronik
             </p>
           </div>
         </div>
