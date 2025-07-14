@@ -179,7 +179,7 @@ export default function InvitationRegistrationPage() {
 
       const user = await invitationAPI.registerFromInvitation(registrationData);
         toast.success("🎉 Pendaftaran berhasil!", {
-        description: "Selamat bergabung dengan Sistem Ikatan Dokter Alumni Unsoed. Anda akan otomatis login.",
+        description: "Selamat bergabung dengan Sistem Pelaporan Terpadu Berbasis Elektronik. Anda akan otomatis login.",
         duration: 3000,
       });
 
@@ -274,7 +274,7 @@ export default function InvitationRegistrationPage() {
             <p className="text-lg text-gray-600 dark:text-gray-300 mb-1">
               {invitation?.namaLengkap}
             </p>            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Lengkapi pendaftaran Anda untuk bergabung dengan Sistem Ikatan Dokter Alumni Unsoed
+              Lengkapi pendaftaran Anda untuk bergabung dengan Sistem Pelaporan Terpadu Berbasis Elektronik
             </p>
           </div>
 
