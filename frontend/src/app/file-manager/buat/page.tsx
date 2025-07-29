@@ -30,6 +30,11 @@ interface KategoriOption {
   nama: string
 }
 
+interface PegawaiOption {
+  id: number
+  fullName: string
+}
+
 // File Preview Modal Component
 function FilePreviewModal({ 
   tempFileName, 
@@ -195,7 +200,9 @@ export default function FileUploadPage() {
   const [previewFile, setPreviewFile] = useState<{tempFileName: string, originalName: string} | null>(null)
   
   // Step 1 data
+  const [selectedPegawai, setSelectedPegawai] = useState<number | null>(null)
   const [selectedKategori, setSelectedKategori] = useState<number | null>(null)
+  const [pegawaiOptions, setPegawaiOptions] = useState<PegawaiOption[]>([])
   const [kategoriOptions, setKategoriOptions] = useState<KategoriOption[]>([])
   
   // Step 2 data
@@ -203,30 +210,65 @@ export default function FileUploadPage() {
     { id: '1', judul: '', deskripsi: '', tempFileName: null, originalName: null, fileSize: null, fileType: null }
   ])
 
+  // Check if user is admin
+  const isAdmin = user?.role?.roleName === 'ADMIN' || user?.role?.roleName === 'MODERATOR'
+
   useEffect(() => {
     setMounted(true)
-    loadKategoriOptions()
-  }, [])
+    loadOptions()
+    
+    // If user is not admin, auto-select current user as pegawai
+    if (user && !isAdmin) {
+      setSelectedPegawai(user.id)
+    }
+  }, [user, isAdmin])
 
-  const loadKategoriOptions = async () => {
+  const loadOptions = async () => {
     try {
-      const response = await fetch(getApiUrl('api/admin/master-data/file-kategori/active'), {
+      // Load pegawai options (only for admin)
+      if (isAdmin) {
+        const pegawaiResponse = await fetch(getApiUrl('api/pegawai/active'), {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          }
+        })
+        
+        if (pegawaiResponse.ok) {
+          const pegawaiData = await pegawaiResponse.json()
+          console.log('Pegawai data loaded:', pegawaiData)
+          setPegawaiOptions(pegawaiData.map((pegawai: any) => ({
+            id: pegawai.id,
+            fullName: pegawai.fullName
+          })))
+        } else {
+          console.error('Failed to load pegawai data:', pegawaiResponse.status)
+        }
+      }
+
+      // Load kategori options
+      const kategoriResponse = await fetch(getApiUrl('api/admin/master-data/file-kategori/active'), {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
         }
       })
       
-      if (response.ok) {
-        const data = await response.json()
-        setKategoriOptions(data)
+      if (kategoriResponse.ok) {
+        const kategoriData = await kategoriResponse.json()
+        setKategoriOptions(kategoriData)
       }
     } catch (error) {
-      console.error('Error loading kategori options:', error)
-      showErrorToast('Gagal memuat kategori file')
+      console.error('Error loading options:', error)
+      showErrorToast('Gagal memuat data')
     }
   }
 
   const handleStep1Next = () => {
+    // Check pegawai selection for admin
+    if (isAdmin && !selectedPegawai) {
+      showErrorToast('Pegawai harus dipilih')
+      return
+    }
+    
     if (!selectedKategori) {
       showErrorToast('Kategori file harus dipilih')
       return
@@ -408,14 +450,19 @@ export default function FileUploadPage() {
       console.log('Starting file submission process...')
       console.log('Total files to submit:', fileItems.length)
       
-      // Get user pegawai ID - for file-manager, user uploads their own files
+      // Get user pegawai ID - for file-manager, user uploads their own files or admin selects pegawai
       if (!user?.id) {
         throw new Error('User ID tidak ditemukan')
       }
       
+      // For admin users, check if pegawai is selected
+      if (isAdmin && !selectedPegawai) {
+        throw new Error('Pegawai harus dipilih')
+      }
+      
       // Prepare batch data using the same format as admin/file-pegawai/buat
       const batchData = {
-        pegawaiId: user.id, // Use current user's ID as pegawai
+        pegawaiId: isAdmin && selectedPegawai ? selectedPegawai : user.id,
         kategoriId: selectedKategori,
         files: fileItems.map(fileItem => ({
           judul: fileItem.judul.trim(),
@@ -581,6 +628,33 @@ export default function FileUploadPage() {
               </CardHeader>
               <CardContent className="p-10">
                 <div className="max-w-md mx-auto space-y-8">
+                  {/* Pegawai Selection for Admin */}
+                  {isAdmin && (
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Label htmlFor="pegawai" className="text-lg font-semibold text-gray-800">
+                          Pegawai
+                        </Label>
+                        <span className="text-red-500 text-sm">*</span>
+                      </div>
+                      <div className="relative">
+                        <SearchableSelectObject
+                          options={pegawaiOptions.map(pegawai => ({
+                            id: pegawai.id,
+                            label: pegawai.fullName
+                          }))}
+                          value={selectedPegawai}
+                          placeholder="👤 Cari dan pilih pegawai..."
+                          searchPlaceholder="Ketik nama pegawai..."
+                          emptyText="Tidak ada pegawai ditemukan"
+                          onValueChange={setSelectedPegawai}
+                          className="h-14 text-base border-2 border-gray-200 focus:border-blue-500 rounded-xl"
+                        />
+                      </div>
+
+                    </div>
+                  )}
+                  
                   <div className="space-y-4">
                     <div className="flex items-center gap-2 mb-3">
                       <Label htmlFor="kategori" className="text-lg font-semibold text-gray-800">
@@ -602,9 +676,7 @@ export default function FileUploadPage() {
                         className="h-14 text-base border-2 border-gray-200 focus:border-blue-500 rounded-xl"
                       />
                     </div>
-                    <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
-                      💡 <strong>Tips:</strong> Pilih kategori yang sesuai dengan jenis dokumen yang akan diupload
-                    </div>
+
                   </div>
 
                   <div className="flex justify-end">

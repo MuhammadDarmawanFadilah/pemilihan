@@ -32,25 +32,17 @@ import { useAuth } from "@/contexts/AuthContext"
 import { useRouter } from "next/navigation"
 import { getApiUrl } from "@/lib/config"
 
-interface FilePegawaiGroupResponse {
-  id: number
-  pegawaiId: number
-  pegawaiNama: string
-  kategoriId: number
-  kategoriNama: string
-  isActive: boolean
-  createdAt: string
-  updatedAt: string
-  files: FilePegawaiFileInfo[]
-}
-
-interface FilePegawaiFileInfo {
+interface FilePegawaiResponse {
   id: number
   judul: string
   deskripsi?: string
   fileName: string
   fileType?: string
   fileSize?: number
+  pegawaiId: number
+  pegawaiNama: string
+  kategoriId: number
+  kategoriNama: string
   isActive: boolean
   createdAt: string
   updatedAt: string
@@ -67,7 +59,7 @@ interface KategoriOption {
 }
 
 export default function FilePegawaiPage() {
-  const [fileList, setFileList] = useState<FilePegawaiGroupResponse[]>([])
+  const [fileList, setFileList] = useState<FilePegawaiResponse[]>([])
   const [loading, setLoading] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
@@ -75,7 +67,7 @@ export default function FilePegawaiPage() {
   const [selectedKategori, setSelectedKategori] = useState<number | null>(null)
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
   const [isToggleOpen, setIsToggleOpen] = useState(false)
-  const [selectedFile, setSelectedFile] = useState<FilePegawaiGroupResponse | null>(null)
+  const [selectedFile, setSelectedFile] = useState<FilePegawaiResponse | null>(null)
   const [pegawaiOptions, setPegawaiOptions] = useState<PegawaiOption[]>([])
   const [kategoriOptions, setKategoriOptions] = useState<KategoriOption[]>([])
   
@@ -83,7 +75,7 @@ export default function FilePegawaiPage() {
   const { user } = useAuth()
   const router = useRouter()
 
-  const handleViewDetail = (file: FilePegawaiGroupResponse) => {
+  const handleViewDetail = (file: FilePegawaiResponse) => {
     router.push(`/admin/file-pegawai/${file.id}`)
   }
   
@@ -205,27 +197,23 @@ export default function FilePegawaiPage() {
     router.push('/admin/file-pegawai/buat')
   }
   
-  const handleEdit = (file: FilePegawaiGroupResponse) => {
+  const handleEdit = (file: FilePegawaiResponse) => {
     router.push(`/admin/file-pegawai/${file.id}/edit`)
   }
   
-  const handleDelete = (file: FilePegawaiGroupResponse) => {
+  const handleDelete = (file: FilePegawaiResponse) => {
     setSelectedFile(file)
     setIsDeleteOpen(true)
   }
 
-  const handleToggle = (file: FilePegawaiGroupResponse) => {
+  const handleToggle = (file: FilePegawaiResponse) => {
     setSelectedFile(file)
     setIsToggleOpen(true)
   }
 
-  const handleDownload = async (file: FilePegawaiGroupResponse) => {
+  const handleDownload = async (file: FilePegawaiResponse) => {
     try {
-      // For grouped files, download the first file or show a selection dialog
-      const firstFile = file.files[0]
-      if (!firstFile) return
-      
-      const response = await fetch(getApiUrl(`files/download/documents/${firstFile.fileName}`), {
+      const response = await fetch(getApiUrl(`admin/file-pegawai/download/${file.fileName}`), {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
         }
@@ -236,13 +224,13 @@ export default function FilePegawaiPage() {
         const url = window.URL.createObjectURL(blob)
         const a = document.createElement('a')
         a.href = url
-        a.download = firstFile.fileName
+        a.download = file.fileName
         document.body.appendChild(a)
         a.click()
         window.URL.revokeObjectURL(url)
         document.body.removeChild(a)
         
-        showSuccessToast(`File ${firstFile.fileName} berhasil diunduh`)
+        showSuccessToast(`File ${file.fileName} berhasil diunduh`)
       } else {
         showErrorToast('Gagal mengunduh file')
       }
@@ -342,7 +330,7 @@ export default function FilePegawaiPage() {
         }}
         stats={[
           {
-            label: "Total Grup File",
+            label: "Total File",
             value: totalElements,
             variant: "secondary"
           }
@@ -409,7 +397,7 @@ export default function FilePegawaiPage() {
           <CardHeader>
             <CardTitle>Data File Pegawai</CardTitle>
             <CardDescription>
-              Daftar grup file pegawai yang tersedia dalam sistem. File dengan pegawai dan kategori yang sama akan digrup menjadi satu data.
+              Daftar file pegawai yang tersedia dalam sistem dengan tampilan individual setiap file.
             </CardDescription>
           </CardHeader>
           
@@ -425,7 +413,7 @@ export default function FilePegawaiPage() {
                         currentSort={{ sortBy, sortDir }}
                         onSort={handleSort}
                       >
-                        File/Grup File
+                        Judul File
                       </SortableHeader>
                     </TableHead>
                     <TableHead>
@@ -446,7 +434,7 @@ export default function FilePegawaiPage() {
                         Kategori
                       </SortableHeader>
                     </TableHead>
-                    <TableHead>File</TableHead>
+                    <TableHead>File Info</TableHead>
                     <TableHead>
                       <SortableHeader
                         sortKey="createdAt"
@@ -474,29 +462,20 @@ export default function FilePegawaiPage() {
                         <div className="flex flex-col items-center gap-2">
                           <FileText className="h-8 w-8 text-muted-foreground" />
                           <span className="text-muted-foreground">
-                            {searchTerm || selectedPegawai || selectedKategori ? 'Tidak ada grup file yang ditemukan' : 'Belum ada data file pegawai'}
+                            {searchTerm || selectedPegawai || selectedKategori ? 'Tidak ada file yang ditemukan' : 'Belum ada data file pegawai'}
                           </span>
                         </div>
                       </TableCell>
                     </TableRow>
                   ) : (
-                    fileList.map((file: FilePegawaiGroupResponse) => (
+                    fileList.map((file: FilePegawaiResponse) => (
                       <TableRow key={file.id}>
                         <TableCell>
                           <div>
-                            <div className="font-medium">
-                              {file.files.length > 1 
-                                ? `${file.files.length} File` 
-                                : file.files[0]?.judul || 'Tidak ada file'}
-                            </div>
-                            {file.files.length === 1 && file.files[0]?.deskripsi && (
+                            <div className="font-medium">{file.judul}</div>
+                            {file.deskripsi && (
                               <div className="text-sm text-muted-foreground truncate max-w-xs">
-                                {file.files[0].deskripsi}
-                              </div>
-                            )}
-                            {file.files.length > 1 && (
-                              <div className="text-sm text-muted-foreground">
-                                {file.files.map(f => f.judul).join(', ').slice(0, 100)}...
+                                {file.deskripsi}
                               </div>
                             )}
                           </div>
@@ -507,21 +486,10 @@ export default function FilePegawaiPage() {
                         </TableCell>
                         <TableCell>
                           <div>
-                            {file.files.length > 1 ? (
-                              <div>
-                                <div className="text-sm font-medium">{file.files.length} Files</div>
-                                <div className="text-xs text-muted-foreground">
-                                  Various formats
-                                </div>
-                              </div>
-                            ) : (
-                              <div>
-                                <div className="text-sm font-medium">{file.files[0]?.fileName}</div>
-                                <div className="text-xs text-muted-foreground">
-                                  {file.files[0]?.fileType} • {formatFileSize(file.files[0]?.fileSize)}
-                                </div>
-                              </div>
-                            )}
+                            <div className="text-sm font-medium">{file.fileName}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {file.fileType} • {formatFileSize(file.fileSize)}
+                            </div>
                           </div>
                         </TableCell>
                         <TableCell>
@@ -555,12 +523,10 @@ export default function FilePegawaiPage() {
                                 <Eye className="h-4 w-4 mr-2" />
                                 Detail
                               </DropdownMenuItem>
-                              {file.files.length === 1 && (
-                                <DropdownMenuItem onClick={() => handleDownload(file)}>
-                                  <Download className="h-4 w-4 mr-2" />
-                                  Download
-                                </DropdownMenuItem>
-                              )}
+                              <DropdownMenuItem onClick={() => handleDownload(file)}>
+                                <Download className="h-4 w-4 mr-2" />
+                                Download
+                              </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => handleEdit(file)}>
                                 <Edit className="h-4 w-4 mr-2" />
                                 Edit
@@ -603,7 +569,7 @@ export default function FilePegawaiPage() {
           open={isDeleteOpen}
           onOpenChange={setIsDeleteOpen}
           title="Hapus File Pegawai"
-          description={`Apakah Anda yakin ingin menghapus ${selectedFile?.files.length === 1 ? 'file' : `${selectedFile?.files.length} file`} untuk "${selectedFile?.pegawaiNama}"? Tindakan ini tidak dapat dibatalkan.`}
+          description={`Apakah Anda yakin ingin menghapus file "${selectedFile?.judul}" untuk "${selectedFile?.pegawaiNama}"? Tindakan ini tidak dapat dibatalkan.`}
           confirmText="Hapus"
           cancelText="Batal"
           variant="destructive"
@@ -616,7 +582,7 @@ export default function FilePegawaiPage() {
           open={isToggleOpen}
           onOpenChange={setIsToggleOpen}
           title={`${selectedFile?.isActive ? 'Nonaktifkan' : 'Aktifkan'} File`}
-          description={`Apakah Anda yakin ingin ${selectedFile?.isActive ? 'menonaktifkan' : 'mengaktifkan'} ${selectedFile?.files.length === 1 ? 'file' : `${selectedFile?.files.length} file`} untuk "${selectedFile?.pegawaiNama}"?`}
+          description={`Apakah Anda yakin ingin ${selectedFile?.isActive ? 'menonaktifkan' : 'mengaktifkan'} file "${selectedFile?.judul}" untuk "${selectedFile?.pegawaiNama}"?`}
           confirmText={selectedFile?.isActive ? 'Nonaktifkan' : 'Aktifkan'}
           cancelText="Batal"
           variant={selectedFile?.isActive ? "destructive" : "default"}

@@ -21,8 +21,8 @@ import java.util.ArrayList;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(exclude = {"user", "tahapanLaporan", "jenisLaporan", "lampiran"})
-@ToString(exclude = {"user", "tahapanLaporan", "jenisLaporan", "lampiran"})
+@EqualsAndHashCode(exclude = {"pegawai", "tahapanLaporan", "jenisLaporan", "lampiran"})
+@ToString(exclude = {"pegawai", "tahapanLaporan", "jenisLaporan", "lampiran"})
 public class SubmissionLaporan {
     
     @Id
@@ -52,7 +52,7 @@ public class SubmissionLaporan {
     // Relations
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    private Pegawai pegawai;
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tahapan_laporan_id", nullable = false)

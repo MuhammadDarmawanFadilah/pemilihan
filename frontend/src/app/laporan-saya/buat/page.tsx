@@ -227,7 +227,8 @@ function FileUploadComponent({
   accept = "*",
   multiple = false,
   maxFiles = 10,
-  currentFiles = []
+  currentFiles = [],
+  allowedTypes = []
 }: { 
   onFileSelect: (fileName: string) => void;
   onFileRemove: () => void;
@@ -235,12 +236,49 @@ function FileUploadComponent({
   multiple?: boolean;
   maxFiles?: number;
   currentFiles?: string[];
+  allowedTypes?: string[];
 }) {
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const { toast } = useToast();
   const fileInputId = `file-upload-${Math.random().toString(36).substr(2, 9)}`;
 
+  const validateFileType = (file: File): boolean => {
+    if (!allowedTypes || allowedTypes.length === 0) {
+      return true; // If no restrictions, allow all files
+    }
+
+    const fileExtension = file.name.split('.').pop()?.toLowerCase();
+    const isAllowedType = allowedTypes.includes(fileExtension || '');
+    
+    if (!isAllowedType) {
+      toast({
+        title: "Error",
+        description: `File ${file.name} tidak sesuai tipe yang diizinkan. Tipe yang diizinkan: ${allowedTypes.map(t => t.toUpperCase()).join(', ')}`,
+        variant: "destructive",
+      });
+      return false;
+    }
+    
+    return true;
+  };
+
   const uploadToServer = async (file: File): Promise<string> => {
+    // Validate file size (10MB limit)
+    if (file.size > 10 * 1024 * 1024) {
+      toast({
+        title: "Error",
+        description: `File ${file.name} terlalu besar. Maksimal 10MB per file.`,
+        variant: "destructive",
+      });
+      throw new Error('File too large');
+    }
+
+    // Validate file type
+    if (!validateFileType(file)) {
+      throw new Error('Invalid file type');
+    }
+
     const formData = new FormData();
     formData.append('file', file);
 
@@ -343,7 +381,11 @@ function FileUploadComponent({
         }
       </p>
       <p className="text-xs text-gray-400 mt-1">
-        Format yang didukung: PDF, Word, Excel, Image, Video • Maksimal {maxFiles} file
+        {allowedTypes && allowedTypes.length > 0 ? (
+          `File yang diizinkan: ${allowedTypes.map(ext => ext.toUpperCase()).join(', ')} • Maksimal {maxFiles} file`
+        ) : (
+          `Format yang didukung: PDF, Word, Excel, Image, Video • Maksimal ${maxFiles} file`
+        )}
       </p>
     </div>
   );
@@ -490,6 +532,9 @@ export default function BuatLaporanSayaPage() {
   const [laporanOptions, setLaporanOptions] = useState<LaporanOption[]>([]);
   const [jenisLaporanOptions, setJenisLaporanOptions] = useState<JenisLaporanOption[]>([]);
   const [tahapanLaporanOptions, setTahapanLaporanOptions] = useState<TahapanLaporanOption[]>([]);
+  
+  // Template data for file validation
+  const [templateData, setTemplateData] = useState<any>(null);
 
   // Form data
   const [submissionData, setSubmissionData] = useState<SubmissionData>({
@@ -686,6 +731,32 @@ export default function BuatLaporanSayaPage() {
       setTahapanLaporanOptions([]);
     }
   }, [submissionData.jenisLaporanId]);
+
+  // Load template data when tahapanLaporanId changes
+  useEffect(() => {
+    const loadTemplateData = async () => {
+      try {
+        if (submissionData.tahapanLaporanId) {
+          const response = await fetch(getApiUrl(`tahapan-laporan/${submissionData.tahapanLaporanId}`), {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+            }
+          });
+          if (response.ok) {
+            const data = await response.json();
+            setTemplateData(data);
+          }
+        } else {
+          setTemplateData(null);
+        }
+      } catch (error) {
+        console.error('Error loading template data:', error);
+        setTemplateData(null);
+      }
+    };
+
+    loadTemplateData();
+  }, [submissionData.tahapanLaporanId]);
 
   const loadPemilihanOptions = async () => {
     try {
@@ -1146,10 +1217,11 @@ export default function BuatLaporanSayaPage() {
                         });
                       }}
                       onFileRemove={() => {}}
-                      accept="*"
+                      accept={templateData?.jenisFileIzin?.map((ext: string) => `.${ext}`).join(',') || '*/*'}
                       multiple={true}
                       maxFiles={10}
                       currentFiles={submissionData.uploadedFiles}
+                      allowedTypes={templateData?.jenisFileIzin || []}
                     />
 
                     {submissionData.uploadedFiles.length > 0 && (

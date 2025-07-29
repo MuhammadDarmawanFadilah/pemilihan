@@ -33,25 +33,17 @@ import { useRouter } from "next/navigation"
 import { getApiUrl } from "@/lib/config"
 import ProtectedRoute from "@/components/ProtectedRoute"
 
-interface FilePegawaiGroupResponse {
-  id: number
-  pegawaiId: number
-  pegawaiNama: string
-  kategoriId: number
-  kategoriNama: string
-  isActive: boolean
-  createdAt: string
-  updatedAt: string
-  files: FilePegawaiFileInfo[]
-}
-
-interface FilePegawaiFileInfo {
+interface FilePegawaiResponse {
   id: number
   judul: string
   deskripsi?: string
   fileName: string
   fileType?: string
   fileSize?: number
+  pegawaiId: number
+  pegawaiNama: string
+  kategoriId: number
+  kategoriNama: string
   isActive: boolean
   createdAt: string
   updatedAt: string
@@ -64,12 +56,12 @@ interface KategoriOption {
 
 export default function FileManagerPage() {
   const { user, isAuthenticated } = useAuth()
-  const [fileList, setFileList] = useState<FilePegawaiGroupResponse[]>([])
+  const [fileList, setFileList] = useState<FilePegawaiResponse[]>([])
   const [loading, setLoading] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
-  const [selectedFile, setSelectedFile] = useState<FilePegawaiGroupResponse | null>(null)
+  const [selectedFile, setSelectedFile] = useState<FilePegawaiResponse | null>(null)
   const [kategoriOptions, setKategoriOptions] = useState<KategoriOption[]>([])
   const [selectedKategori, setSelectedKategori] = useState<number | null>(null)
   const [selectedPegawaiId, setSelectedPegawaiId] = useState<string>('')
@@ -183,30 +175,27 @@ export default function FileManagerPage() {
   }
 
   const handleCreate = () => {
-    router.push('/file-manager/upload')
+    router.push('/file-manager/buat')
   }
   
-  const handleEdit = (file: FilePegawaiGroupResponse) => {
+  const handleEdit = (file: FilePegawaiResponse) => {
     router.push(`/file-manager/${file.id}/edit`)
   }
   
-  const handleViewDetail = (file: FilePegawaiGroupResponse) => {
+  const handleViewDetail = (file: FilePegawaiResponse) => {
     router.push(`/file-manager/${file.id}`)
   }
 
-  const handleDelete = (file: FilePegawaiGroupResponse) => {
+  const handleDelete = (file: FilePegawaiResponse) => {
     setSelectedFile(file)
     setIsDeleteOpen(true)
   }
 
-  const handleDownload = async (file: FilePegawaiGroupResponse) => {
+  const handleDownload = async (file: FilePegawaiResponse) => {
     try {
       const token = localStorage.getItem('auth_token')
-      // For grouped files, download the first file or show a selection dialog
-      const firstFile = file.files[0]
-      if (!firstFile) return
       
-      const response = await fetch(getApiUrl(`api/files/download/documents/${firstFile.fileName}`), {
+      const response = await fetch(getApiUrl(`api/files/download/documents/${file.fileName}`), {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -221,7 +210,7 @@ export default function FileManagerPage() {
       const a = document.createElement('a')
       a.style.display = 'none'
       a.href = url
-      a.download = firstFile.fileName
+      a.download = file.fileName
       document.body.appendChild(a)
       a.click()
       window.URL.revokeObjectURL(url)
@@ -264,7 +253,7 @@ export default function FileManagerPage() {
   }
 
   const formatFileSize = (bytes?: number) => {
-    if (!bytes) return 'N/A'
+    if (!bytes || bytes === 0) return '0 B'
     const sizes = ['B', 'KB', 'MB', 'GB']
     const i = Math.floor(Math.log(bytes) / Math.log(1024))
     return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i]
@@ -406,7 +395,7 @@ export default function FileManagerPage() {
                         currentSort={{ sortBy, sortDir }}
                         onSort={handleSort}
                       >
-                        File/Grup File
+                        Judul File
                       </SortableHeader>
                     </TableHead>
                     <TableHead>
@@ -418,7 +407,7 @@ export default function FileManagerPage() {
                         Kategori
                       </SortableHeader>
                     </TableHead>
-                    <TableHead>File</TableHead>
+                    <TableHead>Nama File</TableHead>
                     <TableHead>
                       <SortableHeader
                         sortKey="createdAt"
@@ -452,23 +441,16 @@ export default function FileManagerPage() {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    fileList.map((file: FilePegawaiGroupResponse) => (
+                    fileList.map((file: FilePegawaiResponse) => (
                       <TableRow key={file.id}>
                         <TableCell>
                           <div>
                             <div className="font-medium">
-                              {file.files.length > 1 
-                                ? `${file.files.length} File` 
-                                : file.files[0]?.judul || 'Tidak ada file'}
+                              {file.judul || 'Tanpa Judul'}
                             </div>
-                            {file.files.length === 1 && file.files[0]?.deskripsi && (
+                            {file.deskripsi && (
                               <div className="text-sm text-muted-foreground truncate max-w-xs">
-                                {file.files[0].deskripsi}
-                              </div>
-                            )}
-                            {file.files.length > 1 && (
-                              <div className="text-sm text-muted-foreground">
-                                {file.files.map(f => f.judul).join(', ').slice(0, 100)}...
+                                {file.deskripsi}
                               </div>
                             )}
                           </div>
@@ -478,21 +460,10 @@ export default function FileManagerPage() {
                         </TableCell>
                         <TableCell>
                           <div>
-                            {file.files.length > 1 ? (
-                              <div>
-                                <div className="text-sm font-medium">{file.files.length} Files</div>
-                                <div className="text-xs text-muted-foreground">
-                                  Various formats
-                                </div>
-                              </div>
-                            ) : (
-                              <div>
-                                <div className="text-sm font-medium">{file.files[0]?.fileName}</div>
-                                <div className="text-xs text-muted-foreground">
-                                  {file.files[0]?.fileType} • {formatFileSize(file.files[0]?.fileSize)}
-                                </div>
-                              </div>
-                            )}
+                            <div className="text-sm font-medium">{file.fileName}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {file.fileType} • {formatFileSize(file.fileSize)}
+                            </div>
                           </div>
                         </TableCell>
                         <TableCell>
@@ -517,12 +488,10 @@ export default function FileManagerPage() {
                                 <Eye className="mr-2 h-4 w-4" />
                                 Detail
                               </DropdownMenuItem>
-                              {file.files.length === 1 && (
-                                <DropdownMenuItem onClick={() => handleDownload(file)}>
-                                  <Download className="mr-2 h-4 w-4" />
-                                  Unduh
-                                </DropdownMenuItem>
-                              )}
+                              <DropdownMenuItem onClick={() => handleDownload(file)}>
+                                <Download className="mr-2 h-4 w-4" />
+                                Unduh
+                              </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => handleEdit(file)}>
                                 <Edit className="mr-2 h-4 w-4" />
                                 Edit
@@ -565,7 +534,7 @@ export default function FileManagerPage() {
             open={isDeleteOpen}
             onOpenChange={setIsDeleteOpen}
             title="Hapus File"
-            description={`Apakah Anda yakin ingin menghapus ${selectedFile?.files.length === 1 ? 'file' : `${selectedFile?.files.length} file`} untuk kategori "${selectedFile?.kategoriNama}"? Tindakan ini tidak dapat dibatalkan.`}
+            description={`Apakah Anda yakin ingin menghapus file "${selectedFile?.judul}" dengan kategori "${selectedFile?.kategoriNama}"? Tindakan ini tidak dapat dibatalkan.`}
             confirmText="Hapus"
             cancelText="Batal"
             variant="destructive"

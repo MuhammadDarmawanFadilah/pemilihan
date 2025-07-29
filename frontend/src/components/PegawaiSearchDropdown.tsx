@@ -93,7 +93,7 @@ export function PegawaiSearchDropdown({
     );
   });
 
-  const selectedPegawai = pegawaiList.find(pegawai => pegawai.fullName === value);
+  const selectedPegawai = value === "all" ? null : pegawaiList.find(pegawai => pegawai.id.toString() === value);
   const isAllSelected = value === "all";
 
   const formatPegawaiDisplay = (pegawai: PegawaiDTO) => {
@@ -162,9 +162,12 @@ export function PegawaiSearchDropdown({
                 value={pegawai.fullName}
                 onSelect={(currentValue) => {
                   const selectedPegawai = pegawaiList.find(p => p.fullName === currentValue);
-                  onValueChange(currentValue === value ? "" : currentValue);
-                  if (onPegawaiIdChange && selectedPegawai) {
-                    onPegawaiIdChange(currentValue === value ? "" : selectedPegawai.id.toString());
+                  if (selectedPegawai) {
+                    const newValue = selectedPegawai.id.toString();
+                    onValueChange(newValue);
+                    if (onPegawaiIdChange) {
+                      onPegawaiIdChange(newValue);
+                    }
                   }
                   setOpen(false);
                   setSearchValue('');
@@ -174,7 +177,7 @@ export function PegawaiSearchDropdown({
                 <Check
                   className={cn(
                     "mr-2 h-4 w-4",
-                    value === pegawai.fullName ? "opacity-100" : "opacity-0"
+                    value === pegawai.id.toString() ? "opacity-100" : "opacity-0"
                   )}
                 />
                 <div className="flex flex-col">

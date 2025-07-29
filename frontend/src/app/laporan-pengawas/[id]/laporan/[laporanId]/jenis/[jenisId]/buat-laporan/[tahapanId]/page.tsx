@@ -697,12 +697,78 @@ export default function BuatLaporanPage() {
                 <div>
                   <Label className="text-sm font-semibold text-gray-700">Jenis File yang Diizinkan</Label>
                   <div className="mt-2 p-3 bg-gray-50 rounded-lg">
-                    <div className="flex flex-wrap gap-2">
-                      {tahapan.jenisFileIzin.map((type, index) => (
-                        <Badge key={index} variant="secondary" className="bg-blue-100 text-blue-800">
-                          {type.toUpperCase()}
-                        </Badge>
-                      ))}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {/* Group file types by category */}
+                      {(() => {
+                        const FILE_TYPE_CATEGORIES = {
+                          'PDF': ['pdf'],
+                          'Word': ['doc', 'docx'],
+                          'Excel': ['xlsx', 'xls', 'csv'],
+                          'Image': ['jpg', 'jpeg', 'png', 'gif'],
+                          'Video': ['mp4', 'avi', 'mov'],
+                          'Other': ['txt', 'zip', 'rar']
+                        };
+
+                        const groupedTypes: { [key: string]: string[] } = {};
+                        const ungroupedTypes: string[] = [];
+
+                        // Group the allowed file types by category
+                        tahapan.jenisFileIzin.forEach(type => {
+                          let found = false;
+                          for (const [category, types] of Object.entries(FILE_TYPE_CATEGORIES)) {
+                            if (types.includes(type.toLowerCase())) {
+                              if (!groupedTypes[category]) {
+                                groupedTypes[category] = [];
+                              }
+                              groupedTypes[category].push(type);
+                              found = true;
+                              break;
+                            }
+                          }
+                          if (!found) {
+                            ungroupedTypes.push(type);
+                          }
+                        });
+
+                        return (
+                          <>
+                            {/* Display grouped categories */}
+                            {Object.entries(groupedTypes).map(([category, types]) => (
+                              <div key={category} className="border border-gray-200 rounded-lg p-3 bg-white">
+                                <div className="font-medium text-sm text-gray-700 mb-2">{category}</div>
+                                <div className="flex flex-wrap gap-1">
+                                  {types.map((type, index) => (
+                                    <Badge key={index} variant="secondary" className="bg-blue-100 text-blue-800 text-xs">
+                                      {type.toUpperCase()}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+
+                            {/* Display ungrouped types */}
+                            {ungroupedTypes.length > 0 && (
+                              <div className="border border-gray-200 rounded-lg p-3 bg-white">
+                                <div className="font-medium text-sm text-gray-700 mb-2">Lainnya</div>
+                                <div className="flex flex-wrap gap-1">
+                                  {ungroupedTypes.map((type, index) => (
+                                    <Badge key={index} variant="secondary" className="bg-gray-100 text-gray-800 text-xs">
+                                      {type.toUpperCase()}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </>
+                        );
+                      })()}
+                    </div>
+                    
+                    {/* Summary text */}
+                    <div className="mt-3 pt-3 border-t border-gray-200">
+                      <p className="text-xs text-gray-600">
+                        Total {tahapan.jenisFileIzin.length} jenis file diizinkan: {tahapan.jenisFileIzin.map(type => type.toUpperCase()).join(', ')}
+                      </p>
                     </div>
                   </div>
                 </div>

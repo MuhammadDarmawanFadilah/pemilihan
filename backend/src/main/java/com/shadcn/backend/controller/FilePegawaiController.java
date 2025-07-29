@@ -26,7 +26,7 @@ public class FilePegawaiController {
     
     @GetMapping
     @PreAuthorize("hasRole('ADMIN') or hasRole('MODERATOR') or hasRole('USER')")
-    public ResponseEntity<Page<FilePegawaiGroupResponse>> findAll(
+    public ResponseEntity<Page<FilePegawaiResponse>> findAll(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) Long pegawaiId,
             @RequestParam(required = false) Long kategoriId,
@@ -37,6 +37,25 @@ public class FilePegawaiController {
             @RequestParam(defaultValue = "desc") String sortDir) {
         
         log.info("GET /api/admin/file-pegawai - search: {}, pegawaiId: {}, kategoriId: {}, isActive: {}, page: {}, size: {}, sortBy: {}, sortDir: {}", 
+                search, pegawaiId, kategoriId, isActive, page, size, sortBy, sortDir);
+        
+        Page<FilePegawaiResponse> result = service.findAll(search, pegawaiId, kategoriId, isActive, page, size, sortBy, sortDir);
+        return ResponseEntity.ok(result);
+    }
+    
+    @GetMapping("/grouped")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MODERATOR') or hasRole('USER')")
+    public ResponseEntity<Page<FilePegawaiGroupResponse>> findAllGrouped(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) Long pegawaiId,
+            @RequestParam(required = false) Long kategoriId,
+            @RequestParam(required = false) Boolean isActive,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir) {
+        
+        log.info("GET /api/admin/file-pegawai/grouped - search: {}, pegawaiId: {}, kategoriId: {}, isActive: {}, page: {}, size: {}, sortBy: {}, sortDir: {}", 
                 search, pegawaiId, kategoriId, isActive, page, size, sortBy, sortDir);
         
         Page<FilePegawaiGroupResponse> result = service.findAllGrouped(search, pegawaiId, kategoriId, isActive, page, size, sortBy, sortDir);

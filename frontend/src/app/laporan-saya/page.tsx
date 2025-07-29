@@ -139,6 +139,14 @@ export default function LaporanSayaPage() {
     }
   }, [user, appliedFilters, currentPage, pageSize]);
 
+  // Set default filter for admin users to show all employees (only once)
+  useEffect(() => {
+    if (user?.role?.roleName === 'ADMIN' && appliedFilters.pegawaiId === '' && inputFilters.pegawaiId === '') {
+      setAppliedFilters(prev => ({ ...prev, pegawaiId: 'all' }));
+      setInputFilters(prev => ({ ...prev, pegawaiId: 'all' }));
+    }
+  }, [user?.role?.roleName, appliedFilters.pegawaiId, inputFilters.pegawaiId]);
+
   useEffect(() => {
     // Reset to first page when filters change
     setCurrentPage(0);
@@ -292,7 +300,11 @@ export default function LaporanSayaPage() {
       if (appliedFilters.laporanId) params.append('laporanId', appliedFilters.laporanId);
       if (appliedFilters.jenisLaporanId) params.append('jenisLaporanId', appliedFilters.jenisLaporanId);
       if (appliedFilters.tahapanLaporanId) params.append('tahapanLaporanId', appliedFilters.tahapanLaporanId);
-      if (appliedFilters.pegawaiId && user?.role?.roleName === 'ADMIN') params.append('pegawaiId', appliedFilters.pegawaiId);
+      
+      // For admin users, handle pegawai filter
+      if (user?.role?.roleName === 'ADMIN' && appliedFilters.pegawaiId) {
+        params.append('pegawaiId', appliedFilters.pegawaiId);
+      }
       
       url += `?${params.toString()}`;
 
@@ -342,7 +354,7 @@ export default function LaporanSayaPage() {
       laporanId: '',
       jenisLaporanId: '',
       tahapanLaporanId: '',
-      pegawaiId: ''
+      pegawaiId: user?.role?.roleName === 'ADMIN' ? 'all' : '' // Default to 'all' for admin
     };
     setInputFilters(emptyFilters);
     setAppliedFilters(emptyFilters);
@@ -568,8 +580,13 @@ export default function LaporanSayaPage() {
                     <Label htmlFor="pegawai">Pegawai</Label>
                     <PegawaiSearchDropdown
                       value={inputFilters.pegawaiId}
-                      onValueChange={(value) => setInputFilters(prev => ({ ...prev, pegawaiId: value }))}
-                      onPegawaiIdChange={(pegawaiId) => setInputFilters(prev => ({ ...prev, pegawaiId: pegawaiId }))}
+                      onValueChange={(value) => {
+                        // Handle display value change - not used for filtering
+                      }}
+                      onPegawaiIdChange={(pegawaiId) => {
+                        // This is the actual ID we use for filtering
+                        setInputFilters(prev => ({ ...prev, pegawaiId: pegawaiId }));
+                      }}
                       placeholder="Semua Pegawai..."
                       includeAllOption={true}
                     />

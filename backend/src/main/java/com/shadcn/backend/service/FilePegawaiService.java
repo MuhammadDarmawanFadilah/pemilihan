@@ -12,6 +12,7 @@ import com.shadcn.backend.model.FileKategori;
 import com.shadcn.backend.repository.FilePegawaiRepository;
 import com.shadcn.backend.repository.PegawaiRepository;
 import com.shadcn.backend.repository.FileKategoriRepository;
+import com.shadcn.backend.service.TempFileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -26,6 +27,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.Map;
 import java.time.LocalDateTime;
+import org.springframework.beans.factory.annotation.Value;
 
 @Service
 @RequiredArgsConstructor
@@ -35,6 +37,10 @@ public class FilePegawaiService {
     private final FilePegawaiRepository repository;
     private final PegawaiRepository pegawaiRepository;
     private final FileKategoriRepository kategoriRepository;
+    private final TempFileService tempFileService;
+    
+    @Value("${app.upload.dir:uploads}")
+    private String uploadDir;
     
     @Transactional(readOnly = true)
     public Page<FilePegawaiGroupResponse> findAllGrouped(String search, Long pegawaiId, Long kategoriId, Boolean isActive, 
@@ -129,6 +135,16 @@ public class FilePegawaiService {
                 entity.setKategori(kategori);
                 entity.setIsActive(fileRequest.getIsActive());
                 
+                // Move file from temp to permanent storage
+                try {
+                    String permanentDir = uploadDir + "/documents";
+                    tempFileService.moveTempFileToPermanent(fileRequest.getFileName().trim(), permanentDir);
+                    log.info("Successfully moved file {} from temp to permanent storage", fileRequest.getFileName());
+                } catch (Exception e) {
+                    log.warn("Could not move file {} from temp to permanent storage: {}", fileRequest.getFileName(), e.getMessage());
+                    // Continue processing even if file move fails, as file might already be in permanent location
+                }
+                
                 FilePegawai saved = repository.save(entity);
                 if (firstSavedFile == null) {
                     firstSavedFile = saved;
@@ -179,6 +195,23 @@ public class FilePegawaiService {
         // Create sort direction
         Sort.Direction direction = Sort.Direction.DESC;
         Sort sort = Sort.by(direction, "createdAt");
+        
+        Pageable pageable = PageRequest.of(page, size, sort);
+        Page<FilePegawai> entities = repository.findWithFilters(search, pegawaiId, kategoriId, isActive, pageable);
+        
+        return entities.map(this::toResponse);
+    }
+    
+    // Method with full parameters for individual file listing
+    @Transactional(readOnly = true)
+    public Page<FilePegawaiResponse> findAll(String search, Long pegawaiId, Long kategoriId, Boolean isActive, 
+                                           int page, int size, String sortBy, String sortDir) {
+        log.info("Finding all file pegawai individually with search: {}, pegawaiId: {}, kategoriId: {}, isActive: {}, page: {}, size: {}, sortBy: {}, sortDir: {}", 
+                search, pegawaiId, kategoriId, isActive, page, size, sortBy, sortDir);
+        
+        // Create sort direction
+        Sort.Direction direction = "desc".equalsIgnoreCase(sortDir) ? Sort.Direction.DESC : Sort.Direction.ASC;
+        Sort sort = Sort.by(direction, sortBy);
         
         Pageable pageable = PageRequest.of(page, size, sort);
         Page<FilePegawai> entities = repository.findWithFilters(search, pegawaiId, kategoriId, isActive, pageable);
@@ -325,6 +358,19 @@ public class FilePegawaiService {
         // Update fields
         entity.setJudul(request.getJudul().trim());
         entity.setDeskripsi(request.getDeskripsi() != null ? request.getDeskripsi().trim() : null);
+        
+        // If filename changed, try to move from temp to permanent storage
+        if (!entity.getFileName().equals(request.getFileName().trim())) {
+            try {
+                String permanentDir = uploadDir + "/documents";
+                tempFileService.moveTempFileToPermanent(request.getFileName().trim(), permanentDir);
+                log.info("Successfully moved updated file {} from temp to permanent storage", request.getFileName());
+            } catch (Exception e) {
+                log.warn("Could not move updated file {} from temp to permanent storage: {}", request.getFileName(), e.getMessage());
+                // Continue processing even if file move fails, as file might already be in permanent location
+            }
+        }
+        
         entity.setFileName(request.getFileName().trim());
         entity.setFileType(request.getFileType());
         entity.setFileSize(request.getFileSize());

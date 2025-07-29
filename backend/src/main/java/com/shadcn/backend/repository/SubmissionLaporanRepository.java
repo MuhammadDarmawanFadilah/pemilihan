@@ -13,21 +13,24 @@ import java.util.List;
 @Repository
 public interface SubmissionLaporanRepository extends JpaRepository<SubmissionLaporan, Long> {
     
-    List<SubmissionLaporan> findByUserIdOrderByTanggalBuatDesc(Long userId);
+    List<SubmissionLaporan> findByPegawaiIdOrderByTanggalBuatDesc(Long pegawaiId);
     
-    Page<SubmissionLaporan> findByUserIdOrderByTanggalBuatDesc(Long userId, Pageable pageable);
+    Page<SubmissionLaporan> findByPegawaiIdOrderByTanggalBuatDesc(Long pegawaiId, Pageable pageable);
     
-    List<SubmissionLaporan> findByUserIdAndStatusOrderByTanggalBuatDesc(Long userId, SubmissionLaporan.StatusLaporan status);
+    List<SubmissionLaporan> findByPegawaiIdAndStatusOrderByTanggalBuatDesc(Long pegawaiId, SubmissionLaporan.StatusLaporan status);
     
-    @Query("SELECT s FROM SubmissionLaporan s WHERE s.pemilihan.pemilihanId = :pemilihanId AND s.user.id = :userId ORDER BY s.tanggalBuat DESC")
-    List<SubmissionLaporan> findByPemilihanAndUserOrderByTanggalBuatDesc(@Param("pemilihanId") Long pemilihanId, @Param("userId") Long userId);
+    @Query("SELECT s FROM SubmissionLaporan s WHERE s.pemilihan.pemilihanId = :pemilihanId AND s.pegawai.id = :pegawaiId ORDER BY s.tanggalBuat DESC")
+    List<SubmissionLaporan> findByPemilihanAndPegawaiOrderByTanggalBuatDesc(@Param("pemilihanId") Long pemilihanId, @Param("pegawaiId") Long pegawaiId);
     
-    @Query("SELECT s FROM SubmissionLaporan s WHERE s.user.id = :userId AND s.tahapanLaporan.tahapanLaporanId = :tahapanId AND s.jenisLaporan.jenisLaporanId = :jenisId")
-    List<SubmissionLaporan> findByUserAndTahapanAndJenis(@Param("userId") Long userId, @Param("tahapanId") Long tahapanId, @Param("jenisId") Long jenisId);
+    @Query("SELECT s FROM SubmissionLaporan s WHERE s.pegawai.id = :pegawaiId AND s.tahapanLaporan.tahapanLaporanId = :tahapanId AND s.jenisLaporan.jenisLaporanId = :jenisId")
+    List<SubmissionLaporan> findByPegawaiAndTahapanAndJenis(@Param("pegawaiId") Long pegawaiId, @Param("tahapanId") Long tahapanId, @Param("jenisId") Long jenisId);
     
-    @Query("SELECT COUNT(s) FROM SubmissionLaporan s WHERE s.user.id = :userId")
-    Long countByUserId(@Param("userId") Long userId);
+    @Query("SELECT COUNT(s) FROM SubmissionLaporan s WHERE s.pegawai.id = :pegawaiId")
+    Long countByPegawaiId(@Param("pegawaiId") Long pegawaiId);
     
-    @Query("SELECT COUNT(s) FROM SubmissionLaporan s WHERE s.user.id = :userId AND s.status = :status")
-    Long countByUserIdAndStatus(@Param("userId") Long userId, @Param("status") SubmissionLaporan.StatusLaporan status);
+    @Query("SELECT COUNT(s) FROM SubmissionLaporan s WHERE s.pegawai.id = :pegawaiId AND s.status = :status")
+    Long countByPegawaiIdAndStatus(@Param("pegawaiId") Long pegawaiId, @Param("status") SubmissionLaporan.StatusLaporan status);
+    
+    // Find all submissions for all employees (for admin)
+    Page<SubmissionLaporan> findAllByOrderByTanggalBuatDesc(Pageable pageable);
 }

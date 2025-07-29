@@ -37,7 +37,6 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
-  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,  SidebarSeparator,
   useSidebar,
@@ -106,7 +105,6 @@ const AppSidebar = () => {
       title: "Laporan Pengawas",
       url: "/laporan-pengawas",
       icon: Vote,
-      badge: "New",
     },
     {
       title: "Laporan Saya",
@@ -117,7 +115,6 @@ const AppSidebar = () => {
       title: "File Manager",
       url: "/file-manager",
       icon: FolderOpen,
-      badge: "New",
     },
   ];  // Admin Pegawai items (accessible to admin/moderator)
   const adminPegawaiItems = [
@@ -125,7 +122,6 @@ const AppSidebar = () => {
       title: "Pegawai",
       url: "/admin/pegawai",
       icon: Users,
-      badge: "New",
     },
     {
       title: "Lokasi Pegawai",
@@ -150,7 +146,6 @@ const AppSidebar = () => {
       title: "Pemilihan",
       url: "/admin/pemilihan",
       icon: Vote,
-      badge: "New",
     },
     {
       title: "Laporan",
@@ -254,14 +249,6 @@ const AppSidebar = () => {
                           <span className="md:hidden text-xs truncate max-w-[80px]">
                             {item.title}
                           </span>
-                          {(item as any).badge && (
-                            <SidebarMenuBadge className="ml-auto bg-green-500 text-white text-xs px-1.5 py-0.5 rounded-full hidden md:inline-block">
-                              {(item as any).badge}
-                            </SidebarMenuBadge>
-                          )}
-                          {(item as any).badge && (
-                            <div className="md:hidden w-2 h-2 bg-green-500 rounded-full ml-auto flex-shrink-0"></div>
-                          )}
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -299,14 +286,6 @@ const AppSidebar = () => {
                             <span className="md:hidden text-xs truncate max-w-[80px]">
                               {item.title.split(' ')[0]}
                             </span>
-                            {item.badge && (
-                              <SidebarMenuBadge className="ml-auto bg-blue-500 text-white text-xs px-1.5 py-0.5 rounded-full hidden md:inline-block">
-                                {item.badge}
-                              </SidebarMenuBadge>
-                            )}
-                            {item.badge && (
-                              <div className="md:hidden w-2 h-2 bg-blue-500 rounded-full ml-auto flex-shrink-0"></div>
-                            )}
                           </Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
@@ -385,9 +364,6 @@ const AppSidebar = () => {
                             <span>{item.title}</span>
                           </Link>
                         </SidebarMenuButton>
-                        {item.badge && (
-                          <SidebarMenuBadge>{item.badge}</SidebarMenuBadge>
-                        )}
                       </SidebarMenuItem>
                     ))}
                   </SidebarMenu>
@@ -417,9 +393,6 @@ const AppSidebar = () => {
                             <span>{item.title}</span>
                           </Link>
                         </SidebarMenuButton>
-                        {item.badge && (
-                          <SidebarMenuBadge>{item.badge}</SidebarMenuBadge>
-                        )}
                       </SidebarMenuItem>
                     ))}
                   </SidebarMenu>

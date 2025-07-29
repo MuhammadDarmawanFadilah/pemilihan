@@ -505,47 +505,65 @@ export default function BuatFilePegawaiPage() {
 
     try {
       setLoading(true)
-      console.log('Starting batch file submission process...')
+      console.log('Starting individual file submission process...')
       console.log('Total files to submit:', fileItems.length)
       
-      // Prepare batch data
-      const batchData = {
-        pegawaiId: selectedPegawai,
-        kategoriId: selectedKategori,
-        files: fileItems.map(fileItem => ({
-          judul: fileItem.judul.trim(),
-          deskripsi: fileItem.deskripsi.trim(),
-          fileName: fileItem.tempFileName,
-          fileType: fileItem.fileType,
-          fileSize: fileItem.fileSize,
-          isActive: true
-        }))
+      let successCount = 0
+      const errors: string[] = []
+
+      // Submit each file individually to create separate records
+      for (let i = 0; i < fileItems.length; i++) {
+        const fileItem = fileItems[i]
+        try {
+          const fileData = {
+            pegawaiId: selectedPegawai,
+            kategoriId: selectedKategori,
+            judul: fileItem.judul.trim(),
+            deskripsi: fileItem.deskripsi.trim(),
+            fileName: fileItem.tempFileName,
+            fileType: fileItem.fileType,
+            fileSize: fileItem.fileSize,
+            isActive: true
+          }
+
+          console.log(`Submitting file ${i + 1}/${fileItems.length}:`, fileData)
+
+          const response = await fetch(getApiUrl('admin/file-pegawai'), {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+            },
+            body: JSON.stringify(fileData)
+          })
+
+          if (!response.ok) {
+            const errorData = await response.json()
+            console.error(`Error submitting file ${i + 1}:`, errorData)
+            errors.push(`File "${fileItem.judul}": ${errorData.message || 'Gagal menyimpan'}`)
+          } else {
+            const result = await response.json()
+            console.log(`File ${i + 1} submitted successfully:`, result)
+            successCount++
+          }
+        } catch (error) {
+          console.error(`Error submitting file ${i + 1}:`, error)
+          errors.push(`File "${fileItem.judul}": ${error instanceof Error ? error.message : 'Gagal menyimpan'}`)
+        }
       }
 
-      console.log('Sending batch request:', batchData)
-
-      const response = await fetch(getApiUrl('admin/file-pegawai/batch'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-        },
-        body: JSON.stringify(batchData)
-      })
-
-      console.log('Response status:', response.status)
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        console.error('Batch submission error:', errorData)
-        throw new Error(errorData.message || 'Gagal menyimpan file pegawai')
+      if (successCount > 0) {
+        showSuccessToast(`Berhasil menambahkan ${successCount} file pegawai${errors.length > 0 ? ` (${errors.length} gagal)` : ''}`)
       }
-
-      const result = await response.json()
-      console.log('Batch submission successful:', result)
       
-      showSuccessToast(`Berhasil menambahkan ${fileItems.length} file pegawai`)
-      router.push('/admin/file-pegawai')
+      if (errors.length > 0) {
+        console.error('Submission errors:', errors)
+        showErrorToast(`${errors.length} file gagal disimpan. Periksa console untuk detail.`)
+      }
+
+      if (successCount > 0) {
+        router.push('/admin/file-pegawai')
+      }
     } catch (error) {
       console.error('Error creating file pegawai:', error)
       showErrorToast(error instanceof Error ? error.message : 'Gagal menambahkan file pegawai')

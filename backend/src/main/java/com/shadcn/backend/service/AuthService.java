@@ -327,10 +327,10 @@ public class AuthService {
             userSummary.setStatus(User.UserStatus.INACTIVE);
         }
         
-        // Create a role DTO for pegawai
+        // Create a role DTO for pegawai using their actual role
         UserSummaryDto.RoleDto roleDto = new UserSummaryDto.RoleDto();
         roleDto.setRoleId(999L); // Special ID for pegawai role
-        roleDto.setRoleName("PEGAWAI");
+        roleDto.setRoleName(pegawai.getRole()); // Use actual role from pegawai
         roleDto.setDescription("Pegawai Sistem");
         userSummary.setRole(roleDto);
         
@@ -362,10 +362,10 @@ public class AuthService {
             user.setStatus(User.UserStatus.INACTIVE);
         }
         
-        // Set role for pegawai - create a dummy role for compatibility
+        // Set role for pegawai - use actual role from pegawai
         Role pegawaiRole = new Role();
         pegawaiRole.setRoleId(999L);
-        pegawaiRole.setRoleName("PEGAWAI");
+        pegawaiRole.setRoleName(pegawai.getRole()); // Use actual role from pegawai
         pegawaiRole.setDescription("Pegawai Sistem");
         user.setRole(pegawaiRole);
         
