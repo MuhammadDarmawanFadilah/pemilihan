@@ -410,7 +410,7 @@ export default function BuatLaporanPage() {
       case 'rar':
         return <Archive className="h-5 w-5 text-yellow-600" />;
       default:
-        return <FileText className="h-5 w-5 text-gray-600" />;
+        return <FileText className="h-5 w-5 text-muted-foreground" />;
     }
   };
 
@@ -530,20 +530,20 @@ export default function BuatLaporanPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50/30 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex flex-col items-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-          <span className="text-gray-600">Memuat data...</span>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
+          <span className="text-muted-foreground">Memuat data...</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50/30">
+    <div className="min-h-screen bg-background">
       <div className="space-y-8 p-6">
         {/* Header */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200/50 p-8">
+        <div className="bg-card rounded-xl shadow-sm border border-border p-8">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
             <div className="space-y-2">
               <div className="flex items-center gap-3">
@@ -555,8 +555,8 @@ export default function BuatLaporanPage() {
                   <FileText className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-3xl font-bold text-gray-900">Buat Laporan</h1>
-                  <p className="text-gray-600 mt-1">
+                  <h1 className="text-3xl font-bold text-foreground">Buat Laporan</h1>
+                  <p className="text-muted-foreground mt-1">
                     {tahapan?.nama || 'Memuat...'}
                   </p>
                 </div>
@@ -564,44 +564,44 @@ export default function BuatLaporanPage() {
               
               {/* Breadcrumb Navigation */}
               <div className="flex items-center gap-2 mt-4">
-                <div className="flex items-center text-sm text-gray-600">
+                <div className="flex items-center text-sm text-muted-foreground">
                   <Button 
                     variant="ghost" 
                     size="sm"
                     onClick={() => router.push('/laporan-pengawas')}
-                    className="p-0 h-auto text-blue-600 hover:text-blue-800 font-medium"
+                    className="p-0 h-auto text-primary hover:text-primary/80 font-medium"
                   >
                     Laporan Pengawas
                   </Button>
-                  <span className="mx-2 text-gray-400">→</span>
+                  <span className="mx-2 text-muted-foreground/60">→</span>
                   <Button 
                     variant="ghost" 
                     size="sm"
                     onClick={() => router.push(`/laporan-pengawas/${pemilihanId}`)}
-                    className="p-0 h-auto text-blue-600 hover:text-blue-800 font-medium"
+                    className="p-0 h-auto text-primary hover:text-primary/80 font-medium"
                   >
                     Daftar Laporan
                   </Button>
-                  <span className="mx-2 text-gray-400">→</span>
+                  <span className="mx-2 text-muted-foreground/60">→</span>
                   <Button 
                     variant="ghost" 
                     size="sm"
                     onClick={() => router.push(`/laporan-pengawas/${pemilihanId}/laporan/${laporanId}`)}
-                    className="p-0 h-auto text-blue-600 hover:text-blue-800 font-medium"
+                    className="p-0 h-auto text-primary hover:text-primary/80 font-medium"
                   >
                     Jenis Laporan
                   </Button>
-                  <span className="mx-2 text-gray-400">→</span>
+                  <span className="mx-2 text-muted-foreground/60">→</span>
                   <Button 
                     variant="ghost" 
                     size="sm"
                     onClick={() => router.push(`/laporan-pengawas/${pemilihanId}/laporan/${laporanId}/jenis/${jenisLaporanId}`)}
-                    className="p-0 h-auto text-blue-600 hover:text-blue-800 font-medium"
+                    className="p-0 h-auto text-primary hover:text-primary/80 font-medium"
                   >
                     Detail Tahapan
                   </Button>
-                  <span className="mx-2 text-gray-400">→</span>
-                  <span className="text-gray-900 font-medium">Buat Laporan</span>
+                  <span className="mx-2 text-muted-foreground/60">→</span>
+                  <span className="text-foreground font-medium">Buat Laporan</span>
                 </div>
               </div>
 
@@ -610,30 +610,30 @@ export default function BuatLaporanPage() {
                 <div className="flex items-center">
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
                     currentStep >= 1 
-                      ? 'bg-blue-600 text-white' 
-                      : 'bg-gray-200 text-gray-600'
+                      ? 'bg-primary text-primary-foreground' 
+                      : 'bg-muted text-muted-foreground'
                   }`}>
                     {currentStep > 1 ? <Check className="w-4 h-4" /> : '1'}
                   </div>
                   <span className={`ml-2 text-sm font-medium ${
-                    currentStep >= 1 ? 'text-blue-600' : 'text-gray-500'
+                    currentStep >= 1 ? 'text-primary' : 'text-muted-foreground'
                   }`}>
                     Informasi Tahapan
                   </span>
                 </div>
                 
-                <ChevronRight className="w-4 h-4 text-gray-400" />
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
                 
                 <div className="flex items-center">
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
                     currentStep >= 2 
-                      ? 'bg-blue-600 text-white' 
-                      : 'bg-gray-200 text-gray-600'
+                      ? 'bg-primary text-primary-foreground' 
+                      : 'bg-muted text-muted-foreground'
                   }`}>
                     2
                   </div>
                   <span className={`ml-2 text-sm font-medium ${
-                    currentStep >= 2 ? 'text-blue-600' : 'text-gray-500'
+                    currentStep >= 2 ? 'text-primary' : 'text-muted-foreground'
                   }`}>
                     Detail Laporan
                   </span>
@@ -645,24 +645,24 @@ export default function BuatLaporanPage() {
 
         {/* Step 1: Informasi Tahapan */}
         {currentStep === 1 && tahapan && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200/50 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Informasi Tahapan</h2>
+          <div className="bg-card rounded-xl shadow-sm border border-border p-6">
+            <h2 className="text-lg font-semibold text-foreground mb-4">Informasi Tahapan</h2>
             
             <div className="space-y-4">
               {/* Nama Tahapan */}
               <div>
-                <Label className="text-sm font-semibold text-gray-700">Nama Tahapan</Label>
-                <div className="mt-2 p-3 bg-gray-50 rounded-lg">
-                  <p className="text-gray-900 font-medium">{tahapan.nama}</p>
+                <Label className="text-sm font-semibold text-foreground">Nama Tahapan</Label>
+                <div className="mt-2 p-3 bg-muted rounded-lg">
+                  <p className="text-foreground font-medium">{tahapan.nama}</p>
                 </div>
               </div>
 
               {/* Deskripsi Tahapan */}
               {tahapan.deskripsi && (
                 <div>
-                  <Label className="text-sm font-semibold text-gray-700">Deskripsi Tahapan</Label>
-                  <div className="mt-2 p-3 bg-gray-50 rounded-lg">
-                    <p className="text-gray-700">{tahapan.deskripsi}</p>
+                  <Label className="text-sm font-semibold text-foreground">Deskripsi Tahapan</Label>
+                  <div className="mt-2 p-3 bg-muted rounded-lg">
+                    <p className="text-muted-foreground">{tahapan.deskripsi}</p>
                   </div>
                 </div>
               )}
@@ -670,19 +670,19 @@ export default function BuatLaporanPage() {
               {/* Template Lampiran */}
               {tahapan.templateTahapan && (
                 <div>
-                  <Label className="text-sm font-semibold text-gray-700">Template Lampiran</Label>
-                  <div className="mt-2 p-3 bg-gray-50 rounded-lg">
+                  <Label className="text-sm font-semibold text-foreground">Template Lampiran</Label>
+                  <div className="mt-2 p-3 bg-muted rounded-lg">
                     <div className="flex items-center gap-3">
-                      <FileText className="w-5 h-5 text-blue-600" />
+                      <FileText className="w-5 h-5 text-primary" />
                       <div className="flex-1">
-                        <p className="text-gray-900 font-medium">{getDisplayName(tahapan.templateTahapan)}</p>
-                        <p className="text-sm text-gray-500">Klik untuk mengunduh template</p>
+                        <p className="text-foreground font-medium">{getDisplayName(tahapan.templateTahapan)}</p>
+                        <p className="text-sm text-muted-foreground">Klik untuk mengunduh template</p>
                       </div>
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => downloadAttachment(tahapan.templateTahapan!)}
-                        className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                        className="text-primary hover:text-primary/80 hover:bg-primary/10"
                       >
                         <Download className="w-4 h-4 mr-2" />
                         Download
@@ -695,8 +695,8 @@ export default function BuatLaporanPage() {
               {/* Jenis File yang Diizinkan */}
               {tahapan.jenisFileIzin && tahapan.jenisFileIzin.length > 0 && (
                 <div>
-                  <Label className="text-sm font-semibold text-gray-700">Jenis File yang Diizinkan</Label>
-                  <div className="mt-2 p-3 bg-gray-50 rounded-lg">
+                  <Label className="text-sm font-semibold text-foreground">Jenis File yang Diizinkan</Label>
+                  <div className="mt-2 p-3 bg-muted rounded-lg">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                       {/* Group file types by category */}
                       {(() => {
@@ -734,11 +734,11 @@ export default function BuatLaporanPage() {
                           <>
                             {/* Display grouped categories */}
                             {Object.entries(groupedTypes).map(([category, types]) => (
-                              <div key={category} className="border border-gray-200 rounded-lg p-3 bg-white">
-                                <div className="font-medium text-sm text-gray-700 mb-2">{category}</div>
+                              <div key={category} className="border border-border rounded-lg p-3 bg-card">
+                                <div className="font-medium text-sm text-foreground mb-2">{category}</div>
                                 <div className="flex flex-wrap gap-1">
                                   {types.map((type, index) => (
-                                    <Badge key={index} variant="secondary" className="bg-blue-100 text-blue-800 text-xs">
+                                    <Badge key={index} variant="secondary" className="bg-primary/10 text-primary text-xs">
                                       {type.toUpperCase()}
                                     </Badge>
                                   ))}
@@ -748,11 +748,11 @@ export default function BuatLaporanPage() {
 
                             {/* Display ungrouped types */}
                             {ungroupedTypes.length > 0 && (
-                              <div className="border border-gray-200 rounded-lg p-3 bg-white">
-                                <div className="font-medium text-sm text-gray-700 mb-2">Lainnya</div>
+                              <div className="border border-border rounded-lg p-3 bg-card">
+                                <div className="font-medium text-sm text-foreground mb-2">Lainnya</div>
                                 <div className="flex flex-wrap gap-1">
                                   {ungroupedTypes.map((type, index) => (
-                                    <Badge key={index} variant="secondary" className="bg-gray-100 text-gray-800 text-xs">
+                                    <Badge key={index} variant="secondary" className="bg-muted text-muted-foreground text-xs">
                                       {type.toUpperCase()}
                                     </Badge>
                                   ))}
@@ -765,8 +765,8 @@ export default function BuatLaporanPage() {
                     </div>
                     
                     {/* Summary text */}
-                    <div className="mt-3 pt-3 border-t border-gray-200">
-                      <p className="text-xs text-gray-600">
+                    <div className="mt-3 pt-3 border-t border-border">
+                      <p className="text-xs text-muted-foreground">
                         Total {tahapan.jenisFileIzin.length} jenis file diizinkan: {tahapan.jenisFileIzin.map(type => type.toUpperCase()).join(', ')}
                       </p>
                     </div>
@@ -793,33 +793,33 @@ export default function BuatLaporanPage() {
         {currentStep === 2 && (
           <div className="space-y-6">
             {/* Laporan Form */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200/50 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-6">Detail Laporan</h2>
+            <div className="bg-card rounded-xl shadow-sm border border-border p-6">
+              <h2 className="text-lg font-semibold text-foreground mb-6">Detail Laporan</h2>
               
               <div className="space-y-6">
                 {/* Metadata Section */}
                 <div className="space-y-4">
-                  <Label className="text-base font-semibold text-gray-900">Informasi Laporan</Label>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-4 bg-gray-50 rounded-lg">
+                  <Label className="text-base font-semibold text-foreground">Informasi Laporan</Label>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-4 bg-muted rounded-lg">
                     <div className="flex items-center gap-3">
-                      <User className="w-5 h-5 text-gray-600" />
+                      <User className="w-5 h-5 text-muted-foreground" />
                       <div className="flex-1">
-                        <p className="text-sm text-gray-600">Dibuat oleh</p>
-                        <p className="font-medium text-gray-900">{user?.fullName || user?.username || 'User'}</p>
+                        <p className="text-sm text-muted-foreground">Dibuat oleh</p>
+                        <p className="font-medium text-foreground">{user?.fullName || user?.username || 'User'}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      <Calendar className="w-5 h-5 text-gray-600" />
+                      <Calendar className="w-5 h-5 text-muted-foreground" />
                       <div className="flex-1">
-                        <p className="text-sm text-gray-600">Tanggal Laporan</p>
-                        <p className="font-medium text-gray-900">{formData.tanggalLaporan}</p>
+                        <p className="text-sm text-muted-foreground">Tanggal Laporan</p>
+                        <p className="font-medium text-foreground">{formData.tanggalLaporan}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      <MapPin className="w-5 h-5 text-gray-600" />
+                      <MapPin className="w-5 h-5 text-muted-foreground" />
                       <div className="flex-1">
-                        <p className="text-sm text-gray-600">Lokasi</p>
-                        <p className="font-medium text-gray-900">{formData.lokasi || 'Belum diatur'}</p>
+                        <p className="text-sm text-muted-foreground">Lokasi</p>
+                        <p className="font-medium text-foreground">{formData.lokasi || 'Belum diatur'}</p>
                         {/* Hidden input untuk menyimpan lokasi */}
                         <input
                           type="hidden"
@@ -863,7 +863,7 @@ export default function BuatLaporanPage() {
                     {!uploading ? (
                       <div 
                         className={`border-2 border-dashed rounded-lg p-6 text-center transition-all cursor-pointer ${
-                          isDragOver ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'
+                          isDragOver ? 'border-primary bg-primary/10' : 'border-border hover:border-border/60'
                         }`}
                         onDragOver={handleDragOver}
                         onDragLeave={handleDragLeave}
@@ -878,14 +878,14 @@ export default function BuatLaporanPage() {
                           accept={tahapan?.jenisFileIzin?.map(ext => `.${ext}`).join(',') || '*/*'}
                           onChange={handleFileInputChange}
                         />
-                        <Upload className={`h-8 w-8 mx-auto mb-4 ${isDragOver ? 'text-blue-500' : 'text-gray-400'}`} />
-                        <p className={`text-sm ${isDragOver ? 'text-blue-600' : 'text-gray-600'}`}>
+                        <Upload className={`h-8 w-8 mx-auto mb-4 ${isDragOver ? 'text-primary' : 'text-muted-foreground'}`} />
+                        <p className={`text-sm ${isDragOver ? 'text-primary' : 'text-muted-foreground'}`}>
                           <span className="font-semibold">
                             {isDragOver ? 'Lepaskan file di sini' : 'Klik untuk upload'}
                           </span>
                           {!isDragOver && ' atau drag and drop'}
                         </p>
-                        <p className="text-xs text-gray-500 mt-2">
+                        <p className="text-xs text-muted-foreground mt-2">
                           {tahapan?.jenisFileIzin && tahapan.jenisFileIzin.length > 0 ? (
                             `File yang diizinkan: ${tahapan.jenisFileIzin.map(ext => ext.toUpperCase()).join(', ')} (Max 10MB per file)`
                           ) : (
@@ -894,9 +894,9 @@ export default function BuatLaporanPage() {
                         </p>
                       </div>
                     ) : (
-                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-gray-50">
-                        <RefreshCw className="h-8 w-8 mx-auto mb-4 text-blue-500 animate-spin" />
-                        <p className="text-sm text-blue-600">
+                      <div className="border-2 border-dashed border-border rounded-lg p-6 text-center bg-muted">
+                        <RefreshCw className="h-8 w-8 mx-auto mb-4 text-primary animate-spin" />
+                        <p className="text-sm text-primary">
                           <span className="font-semibold">Mengupload file...</span>
                         </p>
                       </div>
@@ -907,12 +907,12 @@ export default function BuatLaporanPage() {
                       <div className="mt-4 space-y-2">
                         <Label className="text-sm font-medium">File yang diupload:</Label>
                         {formData.uploadedFiles.map((fileName, index) => (
-                          <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
+                          <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-lg border border-border">
                             <div className="flex items-center gap-3">
                               {getFileIcon(getDisplayName(fileName))}
                               <div>
-                                <p className="text-sm font-medium text-gray-900">{getDisplayName(fileName)}</p>
-                                <p className="text-xs text-gray-500">File tersimpan di server</p>
+                                <p className="text-sm font-medium text-foreground">{getDisplayName(fileName)}</p>
+                                <p className="text-xs text-muted-foreground">File tersimpan di server</p>
                               </div>
                             </div>
                             <div className="flex items-center gap-2">
@@ -940,7 +940,7 @@ export default function BuatLaporanPage() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => removeFile(index)}
-                                className="h-8 w-8 p-0 text-red-600 hover:text-red-800"
+                                className="h-8 w-8 p-0 text-destructive hover:text-destructive/80"
                                 title="Hapus file"
                                 disabled={uploading}
                               >

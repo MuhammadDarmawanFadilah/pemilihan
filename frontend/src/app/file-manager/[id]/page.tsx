@@ -178,7 +178,7 @@ export default function FileDetailPage() {
     } else if (['js', 'ts', 'jsx', 'tsx', 'html', 'css', 'json', 'xml', 'yml', 'yaml'].includes(extension)) {
       return <FileCode className="h-8 w-8 text-green-500" />;
     } else {
-      return <File className="h-8 w-8 text-gray-500" />;
+      return <File className="h-8 w-8 text-muted-foreground" />;
     }
   }
 
@@ -196,7 +196,7 @@ export default function FileDetailPage() {
     } else if (['js', 'ts', 'jsx', 'tsx', 'html', 'css', 'json', 'xml', 'yml', 'yaml'].includes(extension)) {
       return { category: 'Kode', color: 'bg-green-50 text-green-700 border-green-200' };
     } else {
-      return { category: 'File', color: 'bg-gray-50 text-gray-700 border-gray-200' };
+      return { category: 'File', color: 'bg-muted text-muted-foreground border-border' };
     }
   }
 
@@ -275,7 +275,7 @@ export default function FileDetailPage() {
     <ProtectedRoute requireAuth={true}>
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
         {/* Modern Header */}
-        <div className="bg-white/80 backdrop-blur-sm border-b border-white/20 sticky top-0 z-50">
+        <div className="bg-card/80 backdrop-blur-sm border-b border-border sticky top-0 z-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
               {/* Back Button & Title */}
@@ -284,7 +284,7 @@ export default function FileDetailPage() {
                   variant="ghost"
                   size="sm"
                   onClick={() => router.push('/file-manager')}
-                  className="hover:bg-white/60"
+                  className="hover:bg-accent/60"
                 >
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Kembali
@@ -295,10 +295,10 @@ export default function FileDetailPage() {
                     {getFileIcon(file.fileName, file.fileType)}
                   </div>
                   <div>
-                    <h1 className="text-lg font-semibold text-gray-900 truncate max-w-md">
+                    <h1 className="text-lg font-semibold text-foreground truncate max-w-md">
                       {file.judul}
                     </h1>
-                    <p className="text-sm text-gray-500">{file.fileName}</p>
+                    <p className="text-sm text-muted-foreground">{file.fileName}</p>
                   </div>
                 </div>
               </div>
@@ -350,7 +350,7 @@ export default function FileDetailPage() {
             {/* Main Content - File Details */}
             <div className="xl:col-span-2 space-y-6">
               {/* File Overview Card */}
-              <Card className="bg-white/80 backdrop-blur-sm border-white/20 shadow-xl">
+              <Card className="bg-card/80 backdrop-blur-sm border-border shadow-xl">
                 <CardHeader className="pb-4">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-4">
@@ -358,7 +358,7 @@ export default function FileDetailPage() {
                         {getFileIcon(file.fileName, file.fileType)}
                       </div>
                       <div>
-                        <CardTitle className="text-xl text-gray-900 mb-1">
+                        <CardTitle className="text-xl text-foreground mb-1">
                           {file.judul}
                         </CardTitle>
                         <CardDescription className="text-base">
@@ -372,7 +372,7 @@ export default function FileDetailPage() {
                         "text-xs font-medium",
                         file.isActive 
                           ? "bg-green-100 text-green-700 border-green-200" 
-                          : "bg-gray-100 text-gray-700 border-gray-200"
+                          : "bg-muted text-muted-foreground border-border"
                       )}
                     >
                       {file.isActive ? (
@@ -403,7 +403,7 @@ export default function FileDetailPage() {
                           variant="ghost"
                           size="sm"
                           onClick={copyFileName}
-                          className="h-6 w-6 p-0 hover:bg-gray-100"
+                          className="h-6 w-6 p-0 hover:bg-muted"
                         >
                           <Copy className="h-3 w-3" />
                         </Button>

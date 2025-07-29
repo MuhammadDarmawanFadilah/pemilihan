@@ -107,7 +107,7 @@ function FilePreviewModal({
         <div className="flex flex-col items-center justify-center h-full text-white">
           <X className="h-16 w-16 mb-4 text-red-400" />
           <p className="text-lg mb-2">Gagal memuat preview</p>
-          <p className="text-sm text-gray-300">{error}</p>
+          <p className="text-sm text-muted-foreground">{error}</p>
         </div>
       );
     }
@@ -155,10 +155,10 @@ function FilePreviewModal({
 
       default:
         return (
-          <div className="flex flex-col items-center justify-center h-full text-white">
-            <FileText className="h-16 w-16 mb-4 text-gray-400" />
+          <div className="flex flex-col items-center justify-center h-full text-primary-foreground">
+            <FileText className="h-16 w-16 mb-4 text-muted-foreground" />
             <p className="text-lg mb-2">Preview tidak tersedia</p>
-            <p className="text-sm text-gray-300">File: {fileName}</p>
+            <p className="text-sm text-muted-foreground">File: {fileName}</p>
           </div>
         );
     }
@@ -198,7 +198,7 @@ function FilePreviewModal({
           <Eye className="h-6 w-6" />
           <div>
             <h3 className="font-medium">{fileName}</h3>
-            <p className="text-sm text-gray-300">Preview File</p>
+            <p className="text-sm text-muted-foreground">Preview File</p>
           </div>
         </div>
         
@@ -349,7 +349,7 @@ function FileUploadComponent({
         border-2 border-dashed rounded-lg p-6 text-center transition-all cursor-pointer
         ${isDragging 
           ? 'border-blue-500 bg-blue-50' 
-          : 'border-gray-300 hover:border-gray-400'
+          : 'border-border hover:border-border/80'
         }
         ${isUploading ? 'opacity-50 pointer-events-none' : ''}
       `}
@@ -370,9 +370,9 @@ function FileUploadComponent({
       {isUploading ? (
         <RefreshCw className="h-8 w-8 mx-auto mb-2 animate-spin text-blue-500" />
       ) : (
-        <Upload className={`h-8 w-8 mx-auto mb-2 ${isDragging ? 'text-blue-500' : 'text-gray-400'}`} />
+        <Upload className={`h-8 w-8 mx-auto mb-2 ${isDragging ? 'text-primary' : 'text-muted-foreground'}`} />
       )}
-      <p className={`text-sm ${isDragging ? 'text-blue-600' : isUploading ? 'text-blue-600' : 'text-gray-600'}`}>
+      <p className={`text-sm ${isDragging ? 'text-primary' : isUploading ? 'text-primary' : 'text-muted-foreground'}`}>
         {isUploading 
           ? 'Mengupload file...' 
           : isDragging 
@@ -380,7 +380,7 @@ function FileUploadComponent({
             : 'Klik atau drag & drop file'
         }
       </p>
-      <p className="text-xs text-gray-400 mt-1">
+      <p className="text-xs text-muted-foreground mt-1">
         {allowedTypes && allowedTypes.length > 0 ? (
           `File yang diizinkan: ${allowedTypes.map(ext => ext.toUpperCase()).join(', ')} • Maksimal {maxFiles} file`
         ) : (
@@ -456,7 +456,7 @@ function TemplateDisplay({ tahapanLaporanId }: { tahapanLaporanId: number }) {
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2 text-sm text-gray-600">
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <RefreshCw className="h-4 w-4 animate-spin" />
         Memuat template...
       </div>
@@ -465,7 +465,7 @@ function TemplateDisplay({ tahapanLaporanId }: { tahapanLaporanId: number }) {
 
   if (!templateData || !templateData.templateTahapan) {
     return (
-      <div className="text-sm text-gray-500 text-center py-2">
+      <div className="text-sm text-muted-foreground text-center py-2">
         Tidak ada template tersedia untuk tahapan ini
       </div>
     );
@@ -473,14 +473,14 @@ function TemplateDisplay({ tahapanLaporanId }: { tahapanLaporanId: number }) {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between bg-white p-3 rounded border">
+      <div className="flex items-center justify-between bg-card p-3 rounded border border-border">
         <div className="flex items-center gap-3">
-          <FileText className="h-5 w-5 text-blue-600" />
+          <FileText className="h-5 w-5 text-primary" />
           <div>
-            <p className="text-sm font-medium text-gray-900">
+            <p className="text-sm font-medium text-foreground">
               Template {templateData.nama}
             </p>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-muted-foreground">
               Template untuk tahapan laporan
             </p>
           </div>
@@ -499,10 +499,10 @@ function TemplateDisplay({ tahapanLaporanId }: { tahapanLaporanId: number }) {
       </div>
       
       {templateData.jenisFileIzin && templateData.jenisFileIzin.length > 0 && (
-        <div className="p-3 bg-gray-50 rounded border">
+        <div className="p-3 bg-muted rounded border border-border">
           <div className="flex items-center gap-1 mb-2">
-            <File className="h-3 w-3 text-gray-600" />
-            <span className="font-medium text-gray-800 text-xs">Jenis File yang Diizinkan:</span>
+            <File className="h-3 w-3 text-muted-foreground" />
+            <span className="font-medium text-foreground text-xs">Jenis File yang Diizinkan:</span>
           </div>
           <div className="flex flex-wrap gap-1">
             {templateData.jenisFileIzin.map((type: string, index: number) => (
@@ -625,7 +625,7 @@ export default function BuatLaporanSayaPage() {
       case 'mov':
         return <File className="h-5 w-5 text-orange-600" />;
       default:
-        return <File className="h-5 w-5 text-gray-600" />;
+        return <File className="h-5 w-5 text-muted-foreground" />;
     }
   };
 
@@ -914,20 +914,20 @@ export default function BuatLaporanSayaPage() {
         return (
           <div className="max-w-2xl mx-auto">
             <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Pilih Pemilihan</h2>
-              <p className="text-gray-600">Lengkapi informasi di bawah untuk menentukan pemilihan dan laporan Anda</p>
+              <h2 className="text-2xl font-bold text-foreground mb-2">Pilih Pemilihan</h2>
+              <p className="text-muted-foreground">Lengkapi informasi di bawah untuk menentukan pemilihan dan laporan Anda</p>
             </div>
             
             <div className="space-y-6">
               {/* Pemilihan */}
-              <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+              <div className="bg-card p-6 rounded-xl border border-border shadow-sm hover:shadow-md transition-shadow">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                      <span className="text-blue-600 font-bold text-sm">1</span>
+                    <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                      <span className="text-primary font-bold text-sm">1</span>
                     </div>
                     <div>
-                      <Label className="text-base font-semibold text-gray-900">Pemilihan</Label>
+                      <Label className="text-base font-semibold text-foreground">Pemilihan</Label>
                       <p className="text-sm text-gray-500">Pilih pemilihan yang terkait</p>
                     </div>
                   </div>
@@ -964,7 +964,7 @@ export default function BuatLaporanSayaPage() {
               </div>
 
               {/* Laporan */}
-              <div className={`bg-white p-6 rounded-xl border border-gray-200 shadow-sm transition-all ${
+              <div className={`bg-card p-6 rounded-xl border border-border shadow-sm transition-all ${
                 !submissionData.pemilihanId ? 'opacity-50' : 'hover:shadow-md'
               }`}>
                 <div className="flex items-center justify-between mb-4">
@@ -1010,7 +1010,7 @@ export default function BuatLaporanSayaPage() {
               </div>
 
               {/* Jenis Laporan */}
-              <div className={`bg-white p-6 rounded-xl border border-gray-200 shadow-sm transition-all ${
+              <div className={`bg-card p-6 rounded-xl border border-border shadow-sm transition-all ${
                 !submissionData.laporanId ? 'opacity-50' : 'hover:shadow-md'
               }`}>
                 <div className="flex items-center justify-between mb-4">
@@ -1055,7 +1055,7 @@ export default function BuatLaporanSayaPage() {
               </div>
 
               {/* Tahapan Laporan */}
-              <div className={`bg-white p-6 rounded-xl border border-gray-200 shadow-sm transition-all ${
+              <div className={`bg-card p-6 rounded-xl border border-border shadow-sm transition-all ${
                 !submissionData.jenisLaporanId ? 'opacity-50' : 'hover:shadow-md'
               }`}>
                 <div className="flex items-center justify-between mb-4">
@@ -1127,28 +1127,28 @@ export default function BuatLaporanSayaPage() {
             
             <div className="space-y-8">
               {/* Metadata Section */}
-              <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <div className="bg-card p-6 rounded-xl border border-border shadow-sm">
+                <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
                   <User className="w-5 h-5 text-blue-600" />
                   Informasi Laporan
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
-                    <User className="w-8 h-8 text-gray-600 bg-white rounded-lg p-1.5" />
+                  <div className="flex items-center gap-3 p-4 bg-muted rounded-lg">
+                    <User className="w-8 h-8 text-muted-foreground bg-card rounded-lg p-1.5" />
                     <div className="flex-1">
                       <p className="text-sm text-gray-600 font-medium">Dibuat oleh</p>
                       <p className="font-semibold text-gray-900">{user?.fullName || user?.username || 'User'}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
-                    <Calendar className="w-8 h-8 text-gray-600 bg-white rounded-lg p-1.5" />
+                  <div className="flex items-center gap-3 p-4 bg-muted rounded-lg">
+                    <Calendar className="w-8 h-8 text-muted-foreground bg-card rounded-lg p-1.5" />
                     <div className="flex-1">
-                      <p className="text-sm text-gray-600 font-medium">Tanggal Laporan</p>
-                      <p className="font-semibold text-gray-900">{submissionData.tanggalLaporan}</p>
+                      <p className="text-sm text-muted-foreground font-medium">Tanggal Laporan</p>
+                      <p className="font-semibold text-foreground">{submissionData.tanggalLaporan}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
-                    <MapPin className="w-8 h-8 text-gray-600 bg-white rounded-lg p-1.5" />
+                  <div className="flex items-center gap-3 p-4 bg-muted rounded-lg">
+                    <MapPin className="w-8 h-8 text-muted-foreground bg-card rounded-lg p-1.5" />
                     <div className="flex-1">
                       <p className="text-sm text-gray-600 font-medium">Lokasi</p>
                       <p className="font-semibold text-gray-900">{submissionData.lokasi || 'Belum diatur'}</p>
@@ -1161,8 +1161,8 @@ export default function BuatLaporanSayaPage() {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Left Column */}
                 <div className="space-y-6">
-                  <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                    <Label htmlFor="judul" className="text-base font-semibold text-gray-900 flex items-center gap-2 mb-3">
+                  <div className="bg-card p-6 rounded-xl border border-border shadow-sm">
+                    <Label htmlFor="judul" className="text-base font-semibold text-foreground flex items-center gap-2 mb-3">
                       <FileText className="w-5 h-5 text-blue-600" />
                       Judul Laporan *
                     </Label>
@@ -1175,8 +1175,8 @@ export default function BuatLaporanSayaPage() {
                     />
                   </div>
 
-                  <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                    <Label htmlFor="konten" className="text-base font-semibold text-gray-900 flex items-center gap-2 mb-3">
+                  <div className="bg-card p-6 rounded-xl border border-border shadow-sm">
+                    <Label htmlFor="konten" className="text-base font-semibold text-foreground flex items-center gap-2 mb-3">
                       <File className="w-5 h-5 text-blue-600" />
                       Deskripsi Laporan *
                     </Label>
@@ -1198,9 +1198,9 @@ export default function BuatLaporanSayaPage() {
 
                 {/* Right Column - File Upload */}
                 <div className="space-y-6">
-                  <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                  <div className="bg-card p-6 rounded-xl border border-border shadow-sm">
                     <div className="flex items-center justify-between mb-4">
-                      <Label className="text-base font-semibold text-gray-900 flex items-center gap-2">
+                      <Label className="text-base font-semibold text-foreground flex items-center gap-2">
                         <Upload className="w-5 h-5 text-blue-600" />
                         Lampiran Dokumen
                       </Label>
@@ -1231,7 +1231,7 @@ export default function BuatLaporanSayaPage() {
                         </Label>
                         <div className="space-y-2 max-h-60 overflow-y-auto">
                           {submissionData.uploadedFiles.map((file, index) => (
-                            <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border hover:bg-gray-100 transition-colors">
+                            <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-lg border hover:bg-muted/80 transition-colors">
                               <div className="flex items-center space-x-3 flex-1 min-w-0">
                                 {getFileIcon(file)}
                                 <div className="flex-1 min-w-0">
@@ -1321,48 +1321,48 @@ export default function BuatLaporanSayaPage() {
             
             <div className="space-y-6">
               {/* Konteks Laporan */}
-              <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <div className="bg-card p-6 rounded-xl border border-border shadow-sm">
+                <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
                   <FileText className="w-5 h-5 text-blue-600" />
                   Informasi Pemilihan
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="p-4 bg-gray-50 rounded-lg">
-                    <Label className="text-sm font-medium text-gray-600">Pemilihan</Label>
-                    <p className="text-gray-900 font-semibold mt-1">{selectedPemilihan?.judulPemilihan}</p>
+                  <div className="p-4 bg-muted rounded-lg">
+                    <Label className="text-sm font-medium text-muted-foreground">Pemilihan</Label>
+                    <p className="text-foreground font-semibold mt-1">{selectedPemilihan?.judulPemilihan}</p>
                   </div>
-                  <div className="p-4 bg-gray-50 rounded-lg">
-                    <Label className="text-sm font-medium text-gray-600">Laporan</Label>
-                    <p className="text-gray-900 font-semibold mt-1">{selectedLaporan?.namaLaporan}</p>
+                  <div className="p-4 bg-muted rounded-lg">
+                    <Label className="text-sm font-medium text-muted-foreground">Laporan</Label>
+                    <p className="text-foreground font-semibold mt-1">{selectedLaporan?.namaLaporan}</p>
                   </div>
-                  <div className="p-4 bg-gray-50 rounded-lg">
-                    <Label className="text-sm font-medium text-gray-600">Jenis Laporan</Label>
-                    <p className="text-gray-900 font-semibold mt-1">{selectedJenis?.nama}</p>
+                  <div className="p-4 bg-muted rounded-lg">
+                    <Label className="text-sm font-medium text-muted-foreground">Jenis Laporan</Label>
+                    <p className="text-foreground font-semibold mt-1">{selectedJenis?.nama}</p>
                   </div>
-                  <div className="p-4 bg-gray-50 rounded-lg">
-                    <Label className="text-sm font-medium text-gray-600">Tahapan</Label>
-                    <p className="text-gray-900 font-semibold mt-1">{selectedTahapan?.nama}</p>
+                  <div className="p-4 bg-muted rounded-lg">
+                    <Label className="text-sm font-medium text-muted-foreground">Tahapan</Label>
+                    <p className="text-foreground font-semibold mt-1">{selectedTahapan?.nama}</p>
                   </div>
                 </div>
               </div>
 
               {/* Detail Laporan */}
-              <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <div className="bg-card p-6 rounded-xl border border-border shadow-sm">
+                <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
                   <File className="w-5 h-5 text-blue-600" />
                   Detail Laporan
                 </h3>
                 <div className="space-y-4">
                   <div>
-                    <Label className="text-sm font-medium text-gray-600">Judul Laporan</Label>
-                    <p className="text-gray-900 font-semibold mt-1 p-3 bg-gray-50 rounded-lg">
+                    <Label className="text-sm font-medium text-muted-foreground">Judul Laporan</Label>
+                    <p className="text-foreground font-semibold mt-1 p-3 bg-muted rounded-lg">
                       {submissionData.judul}
                     </p>
                   </div>
 
                   <div>
-                    <Label className="text-sm font-medium text-gray-600">Deskripsi Laporan</Label>
-                    <div className="text-gray-900 mt-1 p-4 bg-gray-50 rounded-lg max-h-40 overflow-y-auto">
+                    <Label className="text-sm font-medium text-muted-foreground">Deskripsi Laporan</Label>
+                    <div className="text-foreground mt-1 p-4 bg-muted rounded-lg max-h-40 overflow-y-auto">
                       <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">
                         {submissionData.konten}
                       </pre>
@@ -1370,9 +1370,9 @@ export default function BuatLaporanSayaPage() {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="p-4 bg-gray-50 rounded-lg">
-                      <Label className="text-sm font-medium text-gray-600">Tanggal Laporan</Label>
-                      <p className="text-gray-900 font-semibold mt-1">
+                    <div className="p-4 bg-muted rounded-lg">
+                      <Label className="text-sm font-medium text-muted-foreground">Tanggal Laporan</Label>
+                      <p className="text-foreground font-semibold mt-1">
                         {new Date(submissionData.tanggalLaporan).toLocaleDateString('id-ID', {
                           weekday: 'long',
                           year: 'numeric',
@@ -1391,8 +1391,8 @@ export default function BuatLaporanSayaPage() {
 
               {/* Lampiran */}
               {submissionData.uploadedFiles.length > 0 && (
-                <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <div className="bg-card p-6 rounded-xl border border-border shadow-sm">
+                  <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
                     <Upload className="w-5 h-5 text-blue-600" />
                     Lampiran Dokumen ({submissionData.uploadedFiles.length} file)
                   </h3>

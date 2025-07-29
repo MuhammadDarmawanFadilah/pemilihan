@@ -336,10 +336,10 @@ export default function EditLaporanSayaPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex flex-col items-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-          <span className="text-gray-600">Memuat data...</span>
+          <span className="text-muted-foreground">Memuat data...</span>
         </div>
       </div>
     );
@@ -347,10 +347,10 @@ export default function EditLaporanSayaPage() {
 
   if (!submission) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Laporan tidak ditemukan</h2>
-          <p className="text-gray-600 mb-4">Laporan yang Anda cari tidak dapat ditemukan.</p>
+          <h2 className="text-xl font-semibold text-foreground mb-2">Laporan tidak ditemukan</h2>
+          <p className="text-muted-foreground mb-4">Laporan yang Anda cari tidak dapat ditemukan.</p>
           <Button onClick={() => router.push('/laporan-saya')}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Kembali ke Laporan Saya
@@ -362,10 +362,10 @@ export default function EditLaporanSayaPage() {
 
   if (submission.status === 'APPROVED') {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Laporan tidak dapat diedit</h2>
-          <p className="text-gray-600 mb-4">Laporan yang sudah disetujui tidak dapat diedit.</p>
+          <h2 className="text-xl font-semibold text-foreground mb-2">Laporan tidak dapat diedit</h2>
+          <p className="text-muted-foreground mb-4">Laporan yang sudah disetujui tidak dapat diedit.</p>
           <Button onClick={() => router.push(`/laporan-saya/${submissionId}`)}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Kembali ke Detail
@@ -376,7 +376,7 @@ export default function EditLaporanSayaPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-background py-8">
       <div className="max-w-4xl mx-auto px-4">
         {/* Header */}
         <div className="mb-6">
@@ -389,8 +389,8 @@ export default function EditLaporanSayaPage() {
             Kembali ke Detail
           </Button>
           
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Edit Laporan</h1>
-          <p className="text-gray-600">Edit laporan: {submission.judul}</p>
+          <h1 className="text-2xl font-bold text-foreground mb-2">Edit Laporan</h1>
+          <p className="text-muted-foreground">Edit laporan: {submission.judul}</p>
         </div>
 
         <Card>
@@ -419,7 +419,7 @@ export default function EditLaporanSayaPage() {
                       <p className="text-xs text-gray-500">{step.description}</p>
                     </div>
                     {index < steps.length - 1 && (
-                      <ChevronRight className="w-5 h-5 text-gray-400 mx-4" />
+                      <ChevronRight className="w-5 h-5 text-muted-foreground mx-4" />
                     )}
                   </div>
                 ))}
@@ -483,7 +483,7 @@ export default function EditLaporanSayaPage() {
                     <div className="mt-2">
                       {!uploading ? (
                         <div 
-                          className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center transition-all cursor-pointer hover:border-gray-400"
+                          className="border-2 border-dashed border-border rounded-lg p-6 text-center transition-all cursor-pointer hover:border-border/70"
                           onClick={() => document.getElementById('file-input')?.click()}
                         >
                           <input
@@ -494,16 +494,16 @@ export default function EditLaporanSayaPage() {
                             accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx,.txt,.csv,.md,.zip,.rar"
                             onChange={handleFileInputChange}
                           />
-                          <Upload className="h-8 w-8 mx-auto mb-4 text-gray-400" />
-                          <p className="text-sm text-gray-600">
+                          <Upload className="h-8 w-8 mx-auto mb-4 text-muted-foreground" />
+                          <p className="text-sm text-muted-foreground">
                             <span className="font-semibold">Klik untuk upload</span> file tambahan
                           </p>
-                          <p className="text-xs text-gray-500 mt-2">
+                          <p className="text-xs text-muted-foreground mt-2">
                             Maksimal 10MB per file. Format: JPG, PNG, PDF, DOC, DOCX, TXT, CSV, MD, ZIP, RAR
                           </p>
                         </div>
                       ) : (
-                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-gray-50">
+                        <div className="border-2 border-dashed border-border rounded-lg p-6 text-center bg-muted">
                           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
                           <p className="text-sm text-blue-600">
                             <span className="font-semibold">Mengupload file...</span>
@@ -516,11 +516,11 @@ export default function EditLaporanSayaPage() {
                         <div className="mt-4 space-y-2">
                           <Label className="text-sm font-medium">File yang diupload:</Label>
                           {formData.uploadedFiles.map((fileName, index) => (
-                            <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
+                            <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-lg border">
                               <div className="flex items-center gap-3">
                                 <div>
-                                  <p className="text-sm font-medium text-gray-900">{getDisplayName(fileName)}</p>
-                                  <p className="text-xs text-gray-500">
+                                  <p className="text-sm font-medium text-foreground">{getDisplayName(fileName)}</p>
+                                  <p className="text-xs text-muted-foreground">
                                     {/^\d{8}_\d{6}_/.test(fileName) ? 'File baru' : 'File tersimpan'}
                                   </p>
                                 </div>
@@ -550,12 +550,12 @@ export default function EditLaporanSayaPage() {
                 <div className="space-y-4">
                   <div>
                     <Label>Judul Laporan</Label>
-                    <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded border">{formData.judul}</p>
+                    <p className="text-sm text-muted-foreground bg-muted p-3 rounded border">{formData.judul}</p>
                   </div>
 
                   <div>
                     <Label>Konten Laporan</Label>
-                    <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded border max-h-32 overflow-y-auto whitespace-pre-wrap">
+                    <div className="text-sm text-muted-foreground bg-muted p-3 rounded border max-h-32 overflow-y-auto whitespace-pre-wrap">
                       {formData.konten}
                     </div>
                   </div>
@@ -563,18 +563,18 @@ export default function EditLaporanSayaPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label>Tanggal Laporan</Label>
-                      <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded border">{formData.tanggalLaporan}</p>
+                      <p className="text-sm text-muted-foreground bg-muted p-3 rounded border">{formData.tanggalLaporan}</p>
                     </div>
                     <div>
                       <Label>Lokasi</Label>
-                      <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded border">{formData.lokasi}</p>
+                      <p className="text-sm text-muted-foreground bg-muted p-3 rounded border">{formData.lokasi}</p>
                     </div>
                   </div>
 
                   {formData.uploadedFiles.length > 0 && (
                     <div>
                       <Label>Lampiran ({formData.uploadedFiles.length} file)</Label>
-                      <div className="space-y-1 bg-gray-50 p-3 rounded border">
+                      <div className="space-y-1 bg-muted p-3 rounded border">
                         {formData.uploadedFiles.map((file, index) => (
                           <Badge key={index} variant="outline" className="text-xs mr-1">
                             {getDisplayName(file)}

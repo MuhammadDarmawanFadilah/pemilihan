@@ -173,7 +173,7 @@ export default function PhotoUpload({ value, onChange, preview, onPreviewChange 
 
         {/* Enhanced Loading Indicator */}
         {uploading && (
-          <div className="absolute inset-0 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg">
+          <div className="absolute inset-0 bg-background/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg">
             <div className="text-center">
               <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-2"></div>
               <span className="text-xs text-slate-600 font-medium">Mengupload...</span>

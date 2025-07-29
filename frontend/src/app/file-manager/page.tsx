@@ -341,7 +341,7 @@ export default function FileManagerPage() {
                     <label className="text-sm font-medium mb-2 block">Pegawai</label>
                     <input 
                       type="text"
-                      className="w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-800 cursor-not-allowed"
+                      className="w-full p-2 border rounded-md bg-muted cursor-not-allowed"
                       value={user?.fullName || user?.username || 'Tidak diketahui'}
                       disabled
                     />
@@ -515,7 +515,7 @@ export default function FileManagerPage() {
               
               {/* Pagination */}
               {totalPages > 1 && (
-                <div className="border-t border-gray-200 dark:border-gray-700">
+                <div className="border-t border-border">
                   <ServerPagination
                     currentPage={currentPage}
                     totalPages={totalPages}

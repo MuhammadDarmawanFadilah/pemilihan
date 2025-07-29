@@ -443,12 +443,12 @@ export default function LaporanSayaPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'DRAFT': return 'bg-gray-100 text-gray-800';
-      case 'SUBMITTED': return 'bg-blue-100 text-blue-800';
-      case 'REVIEWED': return 'bg-yellow-100 text-yellow-800';
-      case 'APPROVED': return 'bg-green-100 text-green-800';
-      case 'REJECTED': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'DRAFT': return 'bg-muted text-muted-foreground';
+      case 'SUBMITTED': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+      case 'REVIEWED': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
+      case 'APPROVED': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+      case 'REJECTED': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+      default: return 'bg-muted text-muted-foreground';
     }
   };
 
@@ -465,17 +465,17 @@ export default function LaporanSayaPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 max-w-full">
         <div className="flex justify-between items-center mb-6 pt-8">
-          <h1 className="text-2xl font-bold text-gray-900">Laporan Saya</h1>
+          <h1 className="text-2xl font-bold text-foreground">Laporan Saya</h1>
           <Button onClick={() => router.push('/laporan-saya/buat')}>
             <Plus className="w-4 h-4 mr-2" />
             Buat Laporan Baru
@@ -634,15 +634,15 @@ export default function LaporanSayaPage() {
 
         {/* Submissions List */}
         {submissions.length === 0 ? (
-          <Card className="shadow-sm border-gray-200/50">
+          <Card className="shadow-sm border-border">
             <CardContent className="p-12 text-center">
-              <div className="text-gray-500 mb-4">
-                <Plus className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+              <div className="text-muted-foreground mb-4">
+                <Plus className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
                 <p className="text-lg font-medium">Belum ada laporan</p>
                 <p className="text-sm">Mulai buat laporan pertama Anda</p>
               </div>
               <Button 
-                className="mt-6 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-3"
+                className="mt-6 bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3"
                 onClick={() => router.push('/laporan-saya/buat')}
               >
                 <Plus className="w-4 h-4 mr-2" />
@@ -654,7 +654,7 @@ export default function LaporanSayaPage() {
           <>
             {/* Results Header */}
             <div className="flex justify-between items-center mb-6">
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-muted-foreground">
                 Menampilkan {((currentPage) * pageSize) + 1} - {Math.min((currentPage + 1) * pageSize, totalElements)} dari {totalElements} laporan
               </div>
               <div className="flex items-center gap-2">
@@ -682,52 +682,52 @@ export default function LaporanSayaPage() {
             {/* Submissions Grid */}
             <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8" : "space-y-4 mb-8"}>
               {submissions.map((submission) => (
-                <Card key={submission.id} className="shadow-sm border-gray-200/50 hover:shadow-md transition-shadow">
+                <Card key={submission.id} className="shadow-sm border-border hover:shadow-md transition-shadow">
                   <CardContent className="p-6">
                     {viewMode === 'list' ? (
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-3">
-                            <h3 className="text-lg font-semibold text-gray-900">{submission.judul}</h3>
+                            <h3 className="text-lg font-semibold text-foreground">{submission.judul}</h3>
                             <Badge className={getStatusColor(submission.status)}>
                               {getStatusLabel(submission.status)}
                             </Badge>
                           </div>
                           
-                          <div className="text-gray-600 mb-4 line-clamp-2 text-sm leading-relaxed">
+                          <div className="text-muted-foreground mb-4 line-clamp-2 text-sm leading-relaxed">
                             {submission.konten}
                           </div>
                           
-                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm text-gray-500 mb-4">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm text-muted-foreground mb-4">
                             <div className="flex flex-col">
-                              <span className="font-medium text-gray-700 mb-1">Nama Pegawai:</span> 
-                              <span className="text-gray-900">{submission.userName}</span>
+                              <span className="font-medium text-foreground mb-1">Nama Pegawai:</span> 
+                              <span className="text-foreground">{submission.userName}</span>
                             </div>
                             <div className="flex flex-col">
-                              <span className="font-medium text-gray-700 mb-1">Lokasi:</span> 
-                              <span className="text-gray-900">{submission.lokasi || '-'}</span>
+                              <span className="font-medium text-foreground mb-1">Lokasi:</span> 
+                              <span className="text-foreground">{submission.lokasi || '-'}</span>
                             </div>
                             <div className="flex flex-col">
-                              <span className="font-medium text-gray-700 mb-1">Tanggal Laporan:</span> 
-                              <span className="text-gray-900">{submission.tanggalLaporan}</span>
+                              <span className="font-medium text-foreground mb-1">Tanggal Laporan:</span> 
+                              <span className="text-foreground">{submission.tanggalLaporan}</span>
                             </div>
                             <div className="flex flex-col">
-                              <span className="font-medium text-gray-700 mb-1">Nama Pemilihan:</span> 
-                              <span className="text-gray-900">{submission.pemilihanJudul || '-'}</span>
+                              <span className="font-medium text-foreground mb-1">Nama Pemilihan:</span> 
+                              <span className="text-foreground">{submission.pemilihanJudul || '-'}</span>
                             </div>
                           </div>
 
                           {submission.files && submission.files.length > 0 && (
                             <div className="space-y-2 mb-3">
                               <div className="flex items-center justify-between">
-                                <span className="text-sm font-medium text-gray-700">Lampiran ({submission.files.length} file):</span>
+                                <span className="text-sm font-medium text-foreground">Lampiran ({submission.files.length} file):</span>
                               </div>
                               <div className="flex flex-wrap gap-1">
                                 {submission.files.map((file: string, index: number) => (
                                   <div key={index} className="flex items-center gap-1">
                                     <Badge 
                                       variant="outline" 
-                                      className="text-xs bg-blue-50 text-blue-700 border-blue-200 cursor-pointer hover:bg-blue-100"
+                                      className="text-xs bg-blue-50 text-blue-700 border-blue-200 cursor-pointer hover:bg-blue-100 dark:bg-blue-900 dark:text-blue-200 dark:border-blue-700 dark:hover:bg-blue-800"
                                       onClick={() => downloadFile(file)}
                                     >
                                       <Download className="w-3 h-3 mr-1" />
@@ -745,17 +745,17 @@ export default function LaporanSayaPage() {
                             variant="outline"
                             size="sm"
                             onClick={() => router.push(`/laporan-saya/${submission.id}`)}
-                            className="h-9 w-9 p-0 border-gray-300 hover:bg-blue-50 hover:border-blue-300"
+                            className="h-9 w-9 p-0 border-border hover:bg-primary/10 hover:border-primary/50"
                             title="Lihat detail"
                           >
-                            <Eye className="w-4 h-4 text-blue-600" />
+                            <Eye className="w-4 h-4 text-primary" />
                           </Button>
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => router.push(`/laporan-saya/${submission.id}/edit`)}
                             disabled={submission.status === 'APPROVED'}
-                            className="h-9 w-9 p-0 border-gray-300 hover:bg-green-50 hover:border-green-300 disabled:opacity-50"
+                            className="h-9 w-9 p-0 border-border hover:bg-green-500/10 hover:border-green-500/50 disabled:opacity-50"
                             title="Edit laporan"
                           >
                             <Edit className="w-4 h-4 text-green-600" />
@@ -765,10 +765,10 @@ export default function LaporanSayaPage() {
                             size="sm"
                             onClick={() => handleDelete(submission.id)}
                             disabled={submission.status === 'APPROVED'}
-                            className="h-9 w-9 p-0 border-gray-300 hover:bg-red-50 hover:border-red-300 disabled:opacity-50"
+                            className="h-9 w-9 p-0 border-border hover:bg-destructive/10 hover:border-destructive/50 disabled:opacity-50"
                             title="Hapus laporan"
                           >
-                            <Trash2 className="w-4 h-4 text-red-600" />
+                            <Trash2 className="w-4 h-4 text-destructive" />
                           </Button>
                         </div>
                       </div>
@@ -776,44 +776,44 @@ export default function LaporanSayaPage() {
                       /* Grid View */
                       <div className="space-y-4">
                         <div className="flex items-center gap-3 mb-3">
-                          <h3 className="text-lg font-semibold text-gray-900 line-clamp-1">{submission.judul}</h3>
+                          <h3 className="text-lg font-semibold text-foreground line-clamp-1">{submission.judul}</h3>
                         </div>
                         
                         <div className="flex justify-between items-center mb-3">
                           <Badge className={getStatusColor(submission.status)}>
                             {getStatusLabel(submission.status)}
                           </Badge>
-                          <div className="text-xs text-gray-500">
+                          <div className="text-xs text-muted-foreground">
                             {new Date(submission.tanggalBuat).toLocaleDateString('id-ID')}
                           </div>
                         </div>
                         
-                        <div className="text-gray-600 mb-4 line-clamp-3 text-sm leading-relaxed">
+                        <div className="text-muted-foreground mb-4 line-clamp-3 text-sm leading-relaxed">
                           {submission.konten}
                         </div>
                         
-                        <div className="space-y-3 text-sm text-gray-500">
+                        <div className="space-y-3 text-sm text-muted-foreground">
                           <div className="flex flex-col">
-                            <span className="font-medium text-gray-700 mb-1">Nama Pegawai:</span> 
-                            <span className="text-gray-900">{submission.userName}</span>
+                            <span className="font-medium text-foreground mb-1">Nama Pegawai:</span> 
+                            <span className="text-foreground">{submission.userName}</span>
                           </div>
                           <div className="flex flex-col">
-                            <span className="font-medium text-gray-700 mb-1">Lokasi:</span> 
-                            <span className="text-gray-900">{submission.lokasi || '-'}</span>
+                            <span className="font-medium text-foreground mb-1">Lokasi:</span> 
+                            <span className="text-foreground">{submission.lokasi || '-'}</span>
                           </div>
                           <div className="flex flex-col">
-                            <span className="font-medium text-gray-700 mb-1">Tanggal Laporan:</span> 
-                            <span className="text-gray-900">{submission.tanggalLaporan}</span>
+                            <span className="font-medium text-foreground mb-1">Tanggal Laporan:</span> 
+                            <span className="text-foreground">{submission.tanggalLaporan}</span>
                           </div>
                           <div className="flex flex-col">
-                            <span className="font-medium text-gray-700 mb-1">Nama Pemilihan:</span> 
-                            <span className="text-gray-900">{submission.pemilihanJudul || '-'}</span>
+                            <span className="font-medium text-muted-foreground mb-1">Nama Pemilihan:</span> 
+                            <span className="text-foreground">{submission.pemilihanJudul || '-'}</span>
                           </div>
                         </div>
 
                         {submission.files && submission.files.length > 0 && (
                           <div className="space-y-2">
-                            <div className="text-sm font-medium text-gray-700">
+                            <div className="text-sm font-medium text-muted-foreground">
                               Lampiran ({submission.files.length} file):
                             </div>
                             <div className="flex flex-wrap gap-1">
@@ -875,7 +875,7 @@ export default function LaporanSayaPage() {
               <Card className="shadow-sm border-gray-200/50">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
-                    <div className="text-sm text-gray-600">
+                    <div className="text-sm text-muted-foreground">
                       Halaman {currentPage + 1} dari {totalPages}
                     </div>
                     <div className="flex items-center gap-2">
@@ -904,7 +904,7 @@ export default function LaporanSayaPage() {
                               className={`h-9 w-9 p-0 ${
                                 currentPage === pageNum 
                                   ? "bg-blue-600 text-white border-blue-600" 
-                                  : "border-gray-300 hover:bg-gray-50"
+                                  : "border-border hover:bg-muted"
                               }`}
                             >
                               {pageNum + 1}

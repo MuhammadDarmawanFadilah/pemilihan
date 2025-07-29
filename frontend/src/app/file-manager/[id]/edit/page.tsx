@@ -683,7 +683,7 @@ export default function FileEditPage() {
         </div>
       );
     } else {
-      return <File className="h-6 w-6 text-gray-600" />;
+      return <File className="h-6 w-6 text-muted-foreground" />;
     }
   }
 
@@ -804,7 +804,7 @@ export default function FileEditPage() {
                 <Button
                   variant="outline"
                   onClick={() => step === 1 ? router.push(`/file-manager/${fileId}`) : setStep(1)}
-                  className="h-12 px-4 shadow-md border-gray-200 hover:bg-gray-50 transition-all duration-200"
+                  className="h-12 px-4 shadow-md border-border hover:bg-muted transition-all duration-200"
                 >
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   {step === 1 ? 'Kembali' : 'Kembali ke Step 1'}
@@ -813,7 +813,7 @@ export default function FileEditPage() {
                   <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
                     Edit File
                   </h1>
-                  <p className="text-gray-600 mt-1 font-medium">
+                  <p className="text-muted-foreground mt-1 font-medium">
                     Step {step} dari 2: {step === 1 ? 'Pilih Kategori File' : 'Edit File'}
                   </p>
                 </div>
@@ -1054,11 +1054,11 @@ export default function FileEditPage() {
                           {newFileLoading && (
                             <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 border-2 border-blue-200 rounded-xl p-6 shadow-inner">
                               <div className="flex items-center gap-4">
-                                <div className="p-3 bg-white rounded-xl shadow-sm border border-blue-200">
+                                <div className="p-3 bg-card rounded-xl shadow-sm border border-blue-200">
                                   <div className="animate-spin h-6 w-6 border-2 border-blue-600 border-t-transparent rounded-full" />
                                 </div>
                                 <div className="flex-1">
-                                  <p className="font-semibold text-gray-900 text-lg">
+                                  <p className="font-semibold text-foreground text-lg">
                                     Mengupload file...
                                   </p>
                                   <p className="text-sm text-blue-600">
@@ -1092,20 +1092,20 @@ export default function FileEditPage() {
                       
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4 flex-1 min-w-0">
-                          <div className="relative p-4 bg-white rounded-xl shadow-md border-2 border-blue-200">
+                          <div className="relative p-4 bg-card rounded-xl shadow-md border-2 border-blue-200">
                             {getFileIcon(file.fileName)}
                             <div className="absolute -top-2 -right-2 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center shadow-md">
                               <CheckCircle className="w-3 h-3 text-white" />
                             </div>
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-gray-900 text-lg truncate mb-1">
+                            <p className="font-semibold text-foreground text-lg truncate mb-1">
                               {file.fileName}
                             </p>
                             <p className="text-sm text-blue-600 font-medium">
                               📊 {formatFileSize(file.fileSize)}
                             </p>
-                            <p className="text-xs text-gray-500 mt-2 bg-gray-50 rounded-lg px-3 py-1 inline-block">
+                            <p className="text-xs text-muted-foreground mt-2 bg-muted rounded-lg px-3 py-1 inline-block">
                               {/^\d{8}_\d{6}_[a-f0-9]{8}_/.test(file.fileName) 
                                 ? "🔄 File temporary yang baru diupload" 
                                 : "💾 File yang sudah tersimpan permanent"}
@@ -1154,14 +1154,14 @@ export default function FileEditPage() {
                         
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-4 flex-1 min-w-0">
-                            <div className="relative p-4 bg-white rounded-xl shadow-md border-2 border-green-200">
+                            <div className="relative p-4 bg-card rounded-xl shadow-md border-2 border-green-200">
                               {getFileIcon(newFile.name)}
                               <div className="absolute -top-2 -right-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center shadow-md">
                                 <Check className="w-3 h-3 text-white" />
                               </div>
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="font-semibold text-gray-900 text-lg truncate mb-1">
+                              <p className="font-semibold text-foreground text-lg truncate mb-1">
                                 {newFile.name}
                               </p>
                               <p className="text-sm text-green-600 font-medium">
@@ -1231,7 +1231,7 @@ export default function FileEditPage() {
                       variant="outline"
                       onClick={() => setStep(1)}
                       size="lg"
-                      className="px-8 py-4 text-lg border-2 border-gray-300 rounded-xl hover:bg-gray-50"
+                      className="px-8 py-4 text-lg border-2 border-border rounded-xl hover:bg-muted"
                     >
                       <ArrowLeft className="mr-2 h-6 w-6" />
                       Kembali

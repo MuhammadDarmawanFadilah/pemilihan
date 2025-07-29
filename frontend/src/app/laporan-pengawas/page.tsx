@@ -180,7 +180,7 @@ export default function LaporanPengawasPage() {
     };
     
     const config = statusConfig[status as keyof typeof statusConfig] || 
-                  { color: "bg-gray-100 text-gray-800", label: status };
+                  { color: "bg-muted text-muted-foreground", label: status };
     
     return (
       <Badge className={config.color}>
@@ -217,10 +217,10 @@ export default function LaporanPengawasPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50/30">
+    <div className="min-h-screen bg-background">
       <div className="space-y-8 p-6">
         {/* Header */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200/50 p-8">
+        <div className="bg-card rounded-xl shadow-sm border border-border p-8">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
             <div className="space-y-2">
               <div className="flex items-center gap-3">
@@ -228,8 +228,8 @@ export default function LaporanPengawasPage() {
                   <FileText className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-3xl font-bold text-gray-900">Laporan Pengawas</h1>
-                  <p className="text-gray-600 mt-1">
+                  <h1 className="text-3xl font-bold text-foreground">Laporan Pengawas</h1>
+                  <p className="text-muted-foreground mt-1">
                     Kelola dan pantau laporan pengawasan pemilihan
                   </p>
                 </div>
@@ -237,11 +237,11 @@ export default function LaporanPengawasPage() {
               
               {/* Breadcrumb Navigation */}
               <div className="flex items-center gap-2 mt-4">
-                <div className="flex items-center text-sm text-gray-600">
+                <div className="flex items-center text-sm text-muted-foreground">
                   <Building className="h-4 w-4 mr-2" />
-                  <span className="font-medium text-blue-600">Laporan Pengawas</span>
-                  <span className="mx-2 text-gray-400">→</span>
-                  <span className="text-gray-500">Daftar Pemilihan</span>
+                  <span className="font-medium text-primary">Laporan Pengawas</span>
+                  <span className="mx-2 text-muted-foreground">→</span>
+                  <span className="text-muted-foreground">Daftar Pemilihan</span>
                 </div>
               </div>
             </div>
@@ -250,7 +250,7 @@ export default function LaporanPengawasPage() {
               <Button
                 variant={showFilters ? "default" : "outline"}
                 onClick={() => setShowFilters(!showFilters)}
-                className={showFilters ? "bg-blue-600 hover:bg-blue-700" : ""}
+                className={showFilters ? "bg-primary hover:bg-primary/90" : ""}
               >
                 <Filter className="mr-2 h-4 w-4" />
                 {showFilters ? 'Tutup Filter' : 'Buka Filter'}
@@ -261,15 +261,15 @@ export default function LaporanPengawasPage() {
 
         {/* Filters */}
         {showFilters && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200/50">
-            <div className="p-6 border-b border-gray-200/50">
+          <div className="bg-card rounded-xl shadow-sm border border-border">
+            <div className="p-6 border-b border-border">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center">
-                  <Filter className="w-5 h-5 text-gray-600" />
+                <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
+                  <Filter className="w-5 h-5 text-muted-foreground" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900">Filter & Pencarian</h2>
-                  <p className="text-sm text-gray-500">Gunakan filter untuk mempersempit hasil pencarian</p>
+                  <h2 className="text-lg font-semibold text-foreground">Filter & Pencarian</h2>
+                  <p className="text-sm text-muted-foreground">Gunakan filter untuk mempersempit hasil pencarian</p>
                 </div>
               </div>
             </div>
@@ -277,17 +277,17 @@ export default function LaporanPengawasPage() {
             <div className="p-6">
               <div className="grid gap-6 md:grid-cols-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-700">Filter Nama Pemilihan</label>
+                  <label className="text-sm font-semibold text-foreground">Filter Nama Pemilihan</label>
                   <Input
                     placeholder="Cari nama pemilihan..."
                     value={namaFilter}
                     onChange={(e) => setNamaFilter(e.target.value)}
-                    className="bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                    className="bg-background border-input focus:border-ring focus:ring-ring"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-700">Filter Provinsi</label>
+                  <label className="text-sm font-semibold text-foreground">Filter Provinsi</label>
                   <ProvinsiSearchDropdown
                     value={provinsiFilter}
                     onValueChange={(value) => {
@@ -303,12 +303,12 @@ export default function LaporanPengawasPage() {
                       setKecamatanKode("");
                     }}
                     placeholder="Pilih provinsi..."
-                    className="bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                    className="bg-background border-input focus:border-ring focus:ring-ring"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-700">Filter Kota/Kabupaten</label>
+                  <label className="text-sm font-semibold text-foreground">Filter Kota/Kabupaten</label>
                   <KotaSearchDropdown
                     value={kotaFilter}
                     onValueChange={(value) => {
@@ -323,12 +323,12 @@ export default function LaporanPengawasPage() {
                     provinsiFilter={provinsiKode}
                     placeholder="Pilih kota/kabupaten..."
                     disabled={!provinsiKode}
-                    className="bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                    className="bg-background border-input focus:border-ring focus:ring-ring"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-700">Filter Kecamatan</label>
+                  <label className="text-sm font-semibold text-foreground">Filter Kecamatan</label>
                   <KecamatanSearchDropdown
                     value={kecamatanFilter}
                     onValueChange={(value) => setKecamatanFilter(value)}
@@ -336,16 +336,16 @@ export default function LaporanPengawasPage() {
                     kotaKode={kotaKode}
                     placeholder="Pilih kecamatan..."
                     disabled={!kotaKode}
-                    className="bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                    className="bg-background border-input focus:border-ring focus:ring-ring"
                   />
                 </div>
               </div>
               
               <div className="grid gap-6 md:grid-cols-4 mt-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-700">Tingkat Pemilihan</label>
+                  <label className="text-sm font-semibold text-foreground">Tingkat Pemilihan</label>
                   <Select value={selectedTingkat} onValueChange={(value) => setSelectedTingkat(value)}>
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger className="w-full bg-background border-input">
                       <SelectValue placeholder="Pilih tingkat" />
                     </SelectTrigger>
                     <SelectContent>
@@ -359,9 +359,9 @@ export default function LaporanPengawasPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-700">Status Pemilihan</label>
+                  <label className="text-sm font-semibold text-foreground">Status Pemilihan</label>
                   <Select value={selectedStatus} onValueChange={(value) => setSelectedStatus(value)}>
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger className="w-full bg-background border-input">
                       <SelectValue placeholder="Pilih status" />
                     </SelectTrigger>
                     <SelectContent>
@@ -374,7 +374,7 @@ export default function LaporanPengawasPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-700">Pegawai</label>
+                  <label className="text-sm font-semibold text-foreground">Pegawai</label>
                   <PegawaiSearchDropdown
                     value={selectedPegawai}
                     onValueChange={(value) => setSelectedPegawai(value)}
@@ -386,7 +386,7 @@ export default function LaporanPengawasPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-700">Items per Halaman</label>
+                  <label className="text-sm font-semibold text-foreground">Items per Halaman</label>
                   <Select
                     value={pageSize.toString()}
                     onValueChange={(value) => {
@@ -411,7 +411,7 @@ export default function LaporanPengawasPage() {
               <div className="flex justify-center items-center gap-4 mt-6">
                 <Button 
                   onClick={handleSearch} 
-                  className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-sm px-8 py-2"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm px-8 py-2"
                 >
                   <Search className="mr-2 h-4 w-4" />
                   Cari Data
@@ -420,7 +420,7 @@ export default function LaporanPengawasPage() {
                 <Button 
                   variant="outline" 
                   onClick={handleClearFilters} 
-                  className="border-gray-300 hover:bg-gray-50 px-8 py-2"
+                  className="border-border hover:bg-accent hover:text-accent-foreground px-8 py-2"
                 >
                   <X className="mr-2 h-4 w-4" />
                   Reset Filter
@@ -431,12 +431,12 @@ export default function LaporanPengawasPage() {
         )}
 
         {/* Data Table */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200/50">
-          <div className="p-6 border-b border-gray-200/50">
+        <div className="bg-card rounded-xl shadow-sm border border-border">
+          <div className="p-6 border-b border-border">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">Daftar Pemilihan</h2>
-                <p className="text-sm text-gray-500 mt-1">
+                <h2 className="text-lg font-semibold text-foreground">Daftar Pemilihan</h2>
+                <p className="text-sm text-muted-foreground mt-1">
                   Menampilkan {pemilihan.length} dari {totalElements} total data
                 </p>
               </div>
@@ -445,15 +445,15 @@ export default function LaporanPengawasPage() {
           
           <div className="overflow-x-auto">
             <Table>
-              <TableHeader className="bg-gray-50/50">
-                <TableRow className="border-gray-200/50">
-                  <TableHead className="font-semibold text-gray-700 py-4">Judul Pemilihan</TableHead>
-                  <TableHead className="font-semibold text-gray-700 py-4">Tingkat</TableHead>
-                  <TableHead className="font-semibold text-gray-700 py-4">Wilayah</TableHead>
-                  <TableHead className="font-semibold text-gray-700 py-4">Status</TableHead>
-                  <TableHead className="font-semibold text-gray-700 py-4">Total Laporan</TableHead>
-                  <TableHead className="font-semibold text-gray-700 py-4">Tanggal Mulai</TableHead>
-                  <TableHead className="font-semibold text-gray-700 py-4 w-[100px] text-center">Aksi</TableHead>
+              <TableHeader className="bg-muted/50">
+                <TableRow className="border-border">
+                  <TableHead className="font-semibold text-foreground py-4">Judul Pemilihan</TableHead>
+                  <TableHead className="font-semibold text-foreground py-4">Tingkat</TableHead>
+                  <TableHead className="font-semibold text-foreground py-4">Wilayah</TableHead>
+                  <TableHead className="font-semibold text-foreground py-4">Status</TableHead>
+                  <TableHead className="font-semibold text-foreground py-4">Total Laporan</TableHead>
+                  <TableHead className="font-semibold text-foreground py-4">Tanggal Mulai</TableHead>
+                  <TableHead className="font-semibold text-foreground py-4 w-[100px] text-center">Aksi</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -461,8 +461,8 @@ export default function LaporanPengawasPage() {
                   <TableRow>
                     <TableCell colSpan={7} className="text-center py-12">
                       <div className="flex flex-col items-center justify-center">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4"></div>
-                        <span className="text-gray-600 font-medium">Memuat data...</span>
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
+                        <span className="text-muted-foreground font-medium">Memuat data...</span>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -470,11 +470,11 @@ export default function LaporanPengawasPage() {
                   <TableRow>
                     <TableCell colSpan={7} className="text-center py-12">
                       <div className="flex flex-col items-center justify-center">
-                        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                          <Search className="w-8 h-8 text-gray-400" />
+                        <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
+                          <Search className="w-8 h-8 text-muted-foreground" />
                         </div>
-                        <h3 className="text-lg font-medium text-gray-900 mb-2">Tidak ada data pemilihan</h3>
-                        <p className="text-gray-500 text-center max-w-sm">
+                        <h3 className="text-lg font-medium text-foreground mb-2">Tidak ada data pemilihan</h3>
+                        <p className="text-muted-foreground text-center max-w-sm">
                           Belum ada data pemilihan yang tersedia atau data tidak sesuai dengan filter yang diterapkan
                         </p>
                       </div>
@@ -482,12 +482,12 @@ export default function LaporanPengawasPage() {
                   </TableRow>
                 ) : (
                   pemilihan.map((item, index) => (
-                    <TableRow key={item.pemilihanId} className={index % 2 === 0 ? "bg-white" : "bg-gray-50/30"}>
+                    <TableRow key={item.pemilihanId} className={index % 2 === 0 ? "bg-background" : "bg-muted/30"}>
                       <TableCell className="py-4">
                         <div className="max-w-xs">
-                          <div className="font-semibold text-gray-900 mb-1">{item.judulPemilihan}</div>
+                          <div className="font-semibold text-foreground mb-1">{item.judulPemilihan}</div>
                           {item.deskripsi && (
-                            <div className="text-sm text-gray-500 line-clamp-2">
+                            <div className="text-sm text-muted-foreground line-clamp-2">
                               {item.deskripsi.length > 60 
                                 ? item.deskripsi.substring(0, 60) + "..." 
                                 : item.deskripsi}
@@ -501,7 +501,7 @@ export default function LaporanPengawasPage() {
                         </Badge>
                       </TableCell>
                       <TableCell className="py-4">
-                        <span className="text-gray-700 font-medium">
+                        <span className="text-foreground font-medium">
                           {item.wilayahTingkat || '-'}
                         </span>
                       </TableCell>
@@ -511,11 +511,11 @@ export default function LaporanPengawasPage() {
                           <Badge variant="secondary" className="font-medium">
                             {item.totalLaporan || 0}
                           </Badge>
-                          <span className="text-xs text-gray-500">laporan</span>
+                          <span className="text-xs text-muted-foreground">laporan</span>
                         </div>
                       </TableCell>
                       <TableCell className="py-4">
-                        <span className="text-gray-600 font-medium">
+                        <span className="text-muted-foreground font-medium">
                           {(item.tanggalMulai || item.tanggalAktif) ? new Date(item.tanggalMulai || item.tanggalAktif!).toLocaleDateString('id-ID', {
                             day: '2-digit',
                             month: 'short',
@@ -528,7 +528,7 @@ export default function LaporanPengawasPage() {
                           variant="ghost"
                           size="sm"
                           onClick={() => window.location.href = `/laporan-pengawas/${item.pemilihanId}`}
-                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                          className="text-primary hover:text-primary/90 hover:bg-accent"
                         >
                           <Eye className="h-4 w-4 mr-2" />
                           Detail
@@ -543,12 +543,12 @@ export default function LaporanPengawasPage() {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="p-6 border-t border-gray-200/50">
+            <div className="p-6 border-t border-border">
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="text-sm text-gray-600">
-                  Halaman <span className="font-medium">{currentPage + 1}</span> dari{' '}
-                  <span className="font-medium">{totalPages}</span> | 
-                  Total <span className="font-medium">{totalElements}</span> data
+                <div className="text-sm text-muted-foreground">
+                  Halaman <span className="font-medium text-foreground">{currentPage + 1}</span> dari{' '}
+                  <span className="font-medium text-foreground">{totalPages}</span> | 
+                  Total <span className="font-medium text-foreground">{totalElements}</span> data
                 </div>
                 <div className="flex items-center space-x-2">
                   <Button
@@ -556,7 +556,7 @@ export default function LaporanPengawasPage() {
                     size="sm"
                     onClick={() => setCurrentPage(0)}
                     disabled={!hasPrevious}
-                    className="px-3"
+                    className="px-3 border-border"
                   >
                     First
                   </Button>
@@ -576,7 +576,7 @@ export default function LaporanPengawasPage() {
                       variant={page === currentPage ? "default" : "outline"}
                       size="sm"
                       onClick={() => setCurrentPage(page)}
-                      className={page === currentPage ? "bg-blue-600 hover:bg-blue-700 px-3" : "px-3"}
+                      className={page === currentPage ? "bg-primary hover:bg-primary/90 px-3" : "px-3 border-border"}
                     >
                       {page + 1}
                     </Button>
@@ -587,7 +587,7 @@ export default function LaporanPengawasPage() {
                     size="sm"
                     onClick={() => setCurrentPage(currentPage + 1)}
                     disabled={!hasNext}
-                    className="px-3"
+                    className="px-3 border-border"
                   >
                     Next
                   </Button>
@@ -596,7 +596,7 @@ export default function LaporanPengawasPage() {
                     size="sm"
                     onClick={() => setCurrentPage(totalPages - 1)}
                     disabled={!hasNext}
-                    className="px-3"
+                    className="px-3 border-border"
                   >
                     Last
                   </Button>

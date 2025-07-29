@@ -534,7 +534,7 @@ export default function FileUploadPage() {
                   <Button
                     variant="outline"
                     onClick={() => step === 1 ? router.push('/file-manager') : setStep(1)}
-                    className="h-12 px-4 shadow-md border-gray-200 hover:bg-gray-50 transition-all duration-200"
+                    className="h-12 px-4 shadow-md border-border hover:bg-muted transition-all duration-200"
                   >
                     <ArrowLeft className="w-4 h-4 mr-2" />
                     {step === 1 ? 'Kembali' : 'Kembali ke Step 1'}
@@ -781,11 +781,11 @@ export default function FileUploadPage() {
                             {fileItem.tempFileName === 'loading' && (
                               <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 border-2 border-blue-200 rounded-xl p-6 shadow-inner">
                                 <div className="flex items-center gap-4">
-                                  <div className="p-3 bg-white rounded-xl shadow-sm border border-blue-200">
+                                  <div className="p-3 bg-card rounded-xl shadow-sm border border-blue-200">
                                     <div className="animate-spin h-6 w-6 border-2 border-blue-600 border-t-transparent rounded-full" />
                                   </div>
                                   <div className="flex-1">
-                                    <p className="font-semibold text-gray-900 text-lg">
+                                    <p className="font-semibold text-foreground text-lg">
                                       Mengupload file...
                                     </p>
                                     <p className="text-sm text-blue-600">
@@ -804,14 +804,14 @@ export default function FileUploadPage() {
                         <div className="mt-6 bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 border-2 border-green-200 rounded-xl p-6 shadow-inner">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-4 flex-1 min-w-0">
-                              <div className="relative p-3 bg-white rounded-xl shadow-sm border border-green-200">
+                              <div className="relative p-3 bg-card rounded-xl shadow-sm border border-green-200">
                                 {getFileIcon(fileItem.originalName)}
                                 <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
                                   <Check className="w-2 h-2 text-white" />
                                 </div>
                               </div>
                               <div className="flex-1 min-w-0">
-                                <p className="font-semibold text-gray-900 text-lg truncate">
+                                <p className="font-semibold text-foreground text-lg truncate">
                                   {fileItem.originalName}
                                 </p>
                                 <p className="text-sm text-gray-600">
@@ -882,7 +882,7 @@ export default function FileUploadPage() {
                       onClick={() => setStep(1)}
                       variant="outline"
                       size="lg"
-                      className="px-8 py-4 text-lg border-2 border-gray-300 rounded-xl hover:bg-gray-50"
+                      className="px-8 py-4 text-lg border-2 border-border rounded-xl hover:bg-muted"
                     >
                       <ArrowLeft className="w-5 h-5 mr-3" />
                       Kembali

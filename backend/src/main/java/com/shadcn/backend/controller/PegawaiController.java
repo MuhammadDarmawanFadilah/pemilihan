@@ -3,6 +3,7 @@ package com.shadcn.backend.controller;
 import com.shadcn.backend.dto.PegawaiRequest;
 import com.shadcn.backend.dto.PegawaiResponse;
 import com.shadcn.backend.dto.UpdatePegawaiRequest;
+import com.shadcn.backend.dto.UserUpdateRequest;
 import com.shadcn.backend.model.Pegawai;
 import com.shadcn.backend.service.PegawaiService;
 import jakarta.validation.Valid;
@@ -12,6 +13,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -192,7 +195,7 @@ public class PegawaiController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('pegawai.update') or (hasRole('USER') and #id == authentication.principal.id)")
+    @PreAuthorize("hasAuthority('pegawai.update')")
     public ResponseEntity<PegawaiResponse> updatePegawai(
             @PathVariable Long id, 
             @Valid @RequestBody UpdatePegawaiRequest request) {
@@ -204,6 +207,23 @@ public class PegawaiController {
             return ResponseEntity.badRequest().build();
         } catch (Exception e) {
             log.error("Error updating pegawai", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @PutMapping("/{id}/profile")
+    @PreAuthorize("(hasRole('USER') or hasRole('ADMIN') or hasRole('MODERATOR')) and #id == authentication.principal.id")
+    public ResponseEntity<PegawaiResponse> updateUserProfile(
+            @PathVariable Long id, 
+            @Valid @RequestBody UserUpdateRequest request) {
+        try {
+            PegawaiResponse pegawai = pegawaiService.updateUserProfile(id, request);
+            return ResponseEntity.ok(pegawai);
+        } catch (RuntimeException e) {
+            log.error("Error updating user profile: {}", e.getMessage());
+            return ResponseEntity.badRequest().build();
+        } catch (Exception e) {
+            log.error("Error updating user profile", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }

@@ -6,13 +6,11 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 
-import java.util.List;
-
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class UpdatePegawaiRequest {
+public class UserUpdateRequest {
     
     @NotBlank(message = "Username tidak boleh kosong")
     @Size(min = 3, max = 50, message = "Username harus antara 3-50 karakter")
@@ -39,14 +37,8 @@ public class UpdatePegawaiRequest {
     @Size(max = 100, message = "Pendidikan maksimal 100 karakter")
     private String pendidikan;
     
-    @Size(max = 100, message = "Role maksimal 100 karakter")
-    private String role;
-    
     @Size(max = 100, message = "Jabatan maksimal 100 karakter")
     private String jabatan;
-    
-    @Pattern(regexp = "AKTIF|TIDAK_AKTIF|SUSPEND", message = "Status harus AKTIF, TIDAK_AKTIF, atau SUSPEND")
-    private String status;
     
     // Location fields (optional)
     @Size(max = 500, message = "Alamat maksimal 500 karakter")
@@ -73,9 +65,4 @@ public class UpdatePegawaiRequest {
     // Photo URL field
     @Size(max = 500, message = "URL foto maksimal 500 karakter")
     private String photoUrl;
-    
-    // Pemilihan assignment
-    private List<Long> selectedPemilihanIds;
-    
-    // Note: totalTps is automatically calculated based on selectedPemilihanIds
 }

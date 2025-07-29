@@ -203,10 +203,10 @@ const SingleUserPage = () => {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen gap-4">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+          <h1 className="text-2xl font-bold text-foreground">
             {error || "User tidak ditemukan"}
           </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">
+          <p className="text-muted-foreground mt-2">
             User yang Anda cari tidak dapat ditemukan atau terjadi kesalahan.
           </p>
         </div>

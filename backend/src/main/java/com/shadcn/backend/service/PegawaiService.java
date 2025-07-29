@@ -5,6 +5,7 @@ import com.shadcn.backend.model.Pemilihan;
 import com.shadcn.backend.model.Jabatan;
 import com.shadcn.backend.dto.PegawaiRequest;
 import com.shadcn.backend.dto.UpdatePegawaiRequest;
+import com.shadcn.backend.dto.UserUpdateRequest;
 import com.shadcn.backend.dto.PegawaiResponse;
 import com.shadcn.backend.repository.PegawaiRepository;
 import com.shadcn.backend.repository.PemilihanRepository;
@@ -265,6 +266,88 @@ public class PegawaiService {
         Pegawai updatedPegawai = pegawaiRepository.save(pegawai);
         
         log.info("Pegawai updated successfully with id: {}", updatedPegawai.getId());
+        return createPegawaiResponseWithLocationNames(updatedPegawai);
+    }
+
+    public PegawaiResponse updateUserProfile(Long id, UserUpdateRequest request) {
+        log.info("Updating user profile for pegawai with id: {}", id);
+        
+        Pegawai pegawai = pegawaiRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Pegawai not found with id: " + id));
+
+        // Check if username is being changed and already exists
+        if (request.getUsername() != null && !request.getUsername().equals(pegawai.getUsername())) {
+            if (pegawaiRepository.existsByUsername(request.getUsername())) {
+                throw new RuntimeException("Username already exists: " + request.getUsername());
+            }
+            pegawai.setUsername(request.getUsername());
+        }
+
+        // Check if email is being changed and already exists
+        if (request.getEmail() != null && !request.getEmail().equals(pegawai.getEmail())) {
+            if (pegawaiRepository.existsByEmail(request.getEmail())) {
+                throw new RuntimeException("Email already exists: " + request.getEmail());
+            }
+            pegawai.setEmail(request.getEmail());
+        }
+
+        // Update other fields (role, status not allowed for user updates)
+        if (request.getFullName() != null) {
+            pegawai.setFullName(request.getFullName());
+        }
+        if (request.getPhoneNumber() != null) {
+            pegawai.setPhoneNumber(request.getPhoneNumber());
+        }
+        if (request.getNip() != null) {
+            pegawai.setNip(request.getNip());
+        }
+        if (request.getPendidikan() != null) {
+            pegawai.setPendidikan(request.getPendidikan());
+        }
+        if (request.getJabatan() != null) {
+            // For user updates, allow jabatan to be stored as string (may not exist in master data)
+            pegawai.setJabatan(null); // Clear existing jabatan reference
+            // Note: You might want to handle this differently based on business requirements
+        }
+
+        // Location fields
+        if (request.getAlamat() != null) {
+            pegawai.setAlamat(request.getAlamat());
+        }
+        if (request.getProvinsi() != null) {
+            pegawai.setProvinsi(request.getProvinsi());
+        }
+        if (request.getKota() != null) {
+            pegawai.setKota(request.getKota());
+        }
+        if (request.getKecamatan() != null) {
+            pegawai.setKecamatan(request.getKecamatan());
+        }
+        if (request.getKelurahan() != null) {
+            pegawai.setKelurahan(request.getKelurahan());
+        }
+        if (request.getKodePos() != null) {
+            pegawai.setKodePos(request.getKodePos());
+        }
+        if (request.getLatitude() != null) {
+            pegawai.setLatitude(request.getLatitude());
+        }
+        if (request.getLongitude() != null) {
+            pegawai.setLongitude(request.getLongitude());
+        }
+        if (request.getPhotoUrl() != null) {
+            pegawai.setPhotoUrl(request.getPhotoUrl());
+        }
+
+        // Update password if provided
+        if (request.getPassword() != null && !request.getPassword().isEmpty()) {
+            pegawai.setPassword(passwordEncoder.encode(request.getPassword()));
+        }
+
+        pegawai.setUpdatedAt(LocalDateTime.now());
+        Pegawai updatedPegawai = pegawaiRepository.save(pegawai);
+        
+        log.info("User profile updated successfully for pegawai with id: {}", updatedPegawai.getId());
         return createPegawaiResponseWithLocationNames(updatedPegawai);
     }
 
