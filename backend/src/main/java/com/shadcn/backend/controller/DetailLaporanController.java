@@ -169,4 +169,134 @@ public class DetailLaporanController {
             return ResponseEntity.badRequest().build();
         }
     }
+
+    // Pegawai-specific endpoints
+    @GetMapping("/pegawai/{pegawaiId}")
+    @PreAuthorize("hasAnyRole('USER', 'MODERATOR', 'ADMIN')")
+    public ResponseEntity<PaginatedResponse<DetailLaporanResponse>> getSubmissionsByPegawai(
+            @PathVariable Long pegawaiId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) Integer pemilihanId,
+            @RequestParam(required = false) Integer laporanId,
+            @RequestParam(required = false) Integer jenisLaporanId,
+            @RequestParam(required = false) Integer tahapanLaporanId,
+            @RequestParam(required = false) String pegawaiIdFilter,
+            @RequestHeader(value = "Authorization", required = false) String token) {
+        
+        // Get current user from token to check their role
+        String actualToken = token != null && token.startsWith("Bearer ") ? token.substring(7) : null;
+        
+        // Determine if current user is admin
+        boolean isAdmin = false;
+        Long currentPegawaiId = null;
+        
+        if (actualToken != null) {
+            // Check if it's a pegawai token
+            if (authService.isPegawaiToken(actualToken)) {
+                Pegawai currentPegawai = authService.getCurrentPegawai(actualToken);
+                if (currentPegawai != null) {
+                    currentPegawaiId = currentPegawai.getId();
+                    // Check if pegawai has ADMIN or MODERATOR role
+                    isAdmin = "ADMIN".equals(currentPegawai.getRole()) || "MODERATOR".equals(currentPegawai.getRole());
+                }
+            }
+        }
+        
+        // Security enforcement: Non-admin pegawai can only see their own reports
+        if (!isAdmin && currentPegawaiId != null && !currentPegawaiId.equals(pegawaiId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        
+        // Convert pegawaiIdFilter from String to Long, handle "all" case
+        Long pegawaiIdLong = null;
+        if (pegawaiIdFilter != null && !pegawaiIdFilter.equals("all") && !pegawaiIdFilter.trim().isEmpty()) {
+            try {
+                pegawaiIdLong = Long.parseLong(pegawaiIdFilter);
+            } catch (NumberFormatException e) {
+                // Invalid pegawaiId format, ignore it
+                pegawaiIdLong = null;
+            }
+        }
+        
+        // For non-admin users, force the pegawaiId to be the current user's ID
+        if (!isAdmin) {
+            pegawaiIdLong = currentPegawaiId;
+        }
+        
+        PaginatedResponse<DetailLaporanResponse> submissions = submissionLaporanService.getSubmissionsByUserPaginated(
+            pegawaiId, page, size, search, pemilihanId, laporanId, jenisLaporanId, tahapanLaporanId, pegawaiIdLong);
+        return ResponseEntity.ok(submissions);
+    }
+
+    @GetMapping("/{id}/pegawai/{pegawaiId}")
+    @PreAuthorize("hasAnyRole('USER', 'MODERATOR', 'ADMIN')")
+    public ResponseEntity<DetailLaporanResponse> getSubmissionByIdForPegawai(@PathVariable Long id, @PathVariable Long pegawaiId,
+            @RequestHeader(value = "Authorization", required = false) String token) {
+        
+        // Get current user from token to check their role
+        String actualToken = token != null && token.startsWith("Bearer ") ? token.substring(7) : null;
+        
+        // Determine if current user is admin
+        boolean isAdmin = false;
+        Long currentPegawaiId = null;
+        
+        if (actualToken != null) {
+            // Check if it's a pegawai token
+            if (authService.isPegawaiToken(actualToken)) {
+                Pegawai currentPegawai = authService.getCurrentPegawai(actualToken);
+                if (currentPegawai != null) {
+                    currentPegawaiId = currentPegawai.getId();
+                    // Check if pegawai has ADMIN or MODERATOR role
+                    isAdmin = "ADMIN".equals(currentPegawai.getRole()) || "MODERATOR".equals(currentPegawai.getRole());
+                }
+            }
+        }
+        
+        // Security enforcement: Non-admin pegawai can only see their own reports
+        if (!isAdmin && currentPegawaiId != null && !currentPegawaiId.equals(pegawaiId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        
+        Optional<DetailLaporanResponse> submission = submissionLaporanService.getSubmissionById(id, pegawaiId);
+        return submission.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+    }
+
+    @DeleteMapping("/{id}/pegawai/{pegawaiId}")
+    @PreAuthorize("hasAnyRole('USER', 'MODERATOR', 'ADMIN')")
+    public ResponseEntity<Void> deleteSubmissionForPegawai(@PathVariable Long id, @PathVariable Long pegawaiId,
+            @RequestHeader(value = "Authorization", required = false) String token) {
+        
+        // Get current user from token to check their role
+        String actualToken = token != null && token.startsWith("Bearer ") ? token.substring(7) : null;
+        
+        // Determine if current user is admin
+        boolean isAdmin = false;
+        Long currentPegawaiId = null;
+        
+        if (actualToken != null) {
+            // Check if it's a pegawai token
+            if (authService.isPegawaiToken(actualToken)) {
+                Pegawai currentPegawai = authService.getCurrentPegawai(actualToken);
+                if (currentPegawai != null) {
+                    currentPegawaiId = currentPegawai.getId();
+                    // Check if pegawai has ADMIN or MODERATOR role
+                    isAdmin = "ADMIN".equals(currentPegawai.getRole()) || "MODERATOR".equals(currentPegawai.getRole());
+                }
+            }
+        }
+        
+        // Security enforcement: Non-admin pegawai can only delete their own reports
+        if (!isAdmin && currentPegawaiId != null && !currentPegawaiId.equals(pegawaiId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        
+        try {
+            submissionLaporanService.deleteSubmission(id, pegawaiId);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
 }

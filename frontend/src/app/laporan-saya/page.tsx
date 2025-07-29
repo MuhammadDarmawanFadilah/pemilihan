@@ -285,7 +285,7 @@ export default function LaporanSayaPage() {
   const loadSubmissions = async () => {
     setLoading(true);
     try {
-      let url = getApiUrl(`detail-laporan/user/${user?.id}`);
+      let url = getApiUrl(`detail-laporan/pegawai/${user?.id}`);
       
       // Add filter parameters if applied
       const params = new URLSearchParams();
@@ -371,7 +371,7 @@ export default function LaporanSayaPage() {
     }
 
     try {
-      const response = await fetch(getApiUrl(`detail-laporan/${id}/user/${user?.id}`), {
+      const response = await fetch(getApiUrl(`detail-laporan/${id}/pegawai/${user?.id}`), {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
@@ -698,7 +698,7 @@ export default function LaporanSayaPage() {
                             {submission.konten}
                           </div>
                           
-                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm text-muted-foreground mb-4">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 text-sm text-muted-foreground mb-4">
                             <div className="flex flex-col">
                               <span className="font-medium text-foreground mb-1">Nama Pegawai:</span> 
                               <span className="text-foreground">{submission.userName}</span>
@@ -714,6 +714,10 @@ export default function LaporanSayaPage() {
                             <div className="flex flex-col">
                               <span className="font-medium text-foreground mb-1">Nama Pemilihan:</span> 
                               <span className="text-foreground">{submission.pemilihanJudul || '-'}</span>
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="font-medium text-foreground mb-1">Tahapan Laporan:</span> 
+                              <span className="text-foreground">{submission.tahapanLaporanNama || '-'}</span>
                             </div>
                           </div>
 
@@ -808,6 +812,10 @@ export default function LaporanSayaPage() {
                           <div className="flex flex-col">
                             <span className="font-medium text-muted-foreground mb-1">Nama Pemilihan:</span> 
                             <span className="text-foreground">{submission.pemilihanJudul || '-'}</span>
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="font-medium text-muted-foreground mb-1">Tahapan Laporan:</span> 
+                            <span className="text-foreground">{submission.tahapanLaporanNama || '-'}</span>
                           </div>
                         </div>
 

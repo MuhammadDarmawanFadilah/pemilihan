@@ -25,6 +25,11 @@ interface SubmissionLaporan {
   userId: number;
   userName: string;
   files: string[];
+  // Related entity names for display
+  pemilihanJudul?: string;
+  laporanNama?: string;
+  jenisLaporanNama?: string;
+  tahapanLaporanNama?: string;
 }
 
 export default function DetailLaporanSayaPage({
@@ -281,6 +286,33 @@ export default function DetailLaporanSayaPage({
                 <div>
                   <label className="text-sm font-medium text-gray-600">Status</label>
                   <p className="text-gray-900">{getStatusLabel(submission.status)}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Election and Report Context */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Konteks Pemilihan & Laporan</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-600">Pemilihan</label>
+                  <p className="text-gray-900">{submission.pemilihanJudul || '-'}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-600">Jenis Laporan</label>
+                  <p className="text-gray-900">{submission.jenisLaporanNama || '-'}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-600">Kategori Laporan</label>
+                  <p className="text-gray-900">{submission.laporanNama || '-'}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-600">Tahapan Laporan</label>
+                  <p className="text-gray-900">{submission.tahapanLaporanNama || '-'}</p>
                 </div>
               </div>
             </CardContent>

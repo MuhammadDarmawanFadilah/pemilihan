@@ -90,18 +90,18 @@ function FilePreviewModal({
   const renderPreview = () => {
     if (error) {
       return (
-        <div className="flex flex-col items-center justify-center h-full text-white">
-          <X className="h-16 w-16 mb-4 text-red-400" />
+        <div className="flex flex-col items-center justify-center h-full text-foreground">
+          <X className="h-16 w-16 mb-4 text-destructive" />
           <p className="text-lg mb-2">Gagal memuat preview</p>
-          <p className="text-sm text-gray-300">{error}</p>
+          <p className="text-sm text-muted-foreground">{error}</p>
         </div>
       );
     }
 
     if (isLoading || !blobUrl) {
       return (
-        <div className="flex flex-col items-center justify-center h-full text-white">
-          <div className="animate-spin h-16 w-16 border-4 border-white border-t-transparent rounded-full mb-4" />
+        <div className="flex flex-col items-center justify-center h-full text-foreground">
+          <div className="animate-spin h-16 w-16 border-4 border-primary border-t-transparent rounded-full mb-4" />
           <p className="text-lg">Memuat preview...</p>
         </div>
       );
@@ -147,11 +147,11 @@ function FilePreviewModal({
     } else {
       return (
         <div className="flex items-center justify-center h-full">
-          <div className="text-center text-white">
-            <File className="h-16 w-16 mx-auto mb-4" />
+          <div className="text-center text-foreground">
+            <File className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
             <p className="text-lg mb-2">Preview tidak tersedia</p>
-            <p className="text-sm text-gray-300">File: {originalName}</p>
-            <p className="text-xs text-gray-400 mt-2">Format file tidak didukung untuk preview</p>
+            <p className="text-sm text-muted-foreground">File: {originalName}</p>
+            <p className="text-xs text-muted-foreground mt-2">Format file tidak didukung untuk preview</p>
           </div>
         </div>
       );
@@ -159,31 +159,31 @@ function FilePreviewModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black">
-      <div className="absolute top-0 left-0 right-0 z-10 bg-gradient-to-r from-black/90 to-black/80 backdrop-blur-sm text-white p-6 flex items-center justify-between">
+    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm">
+      <div className="absolute top-0 left-0 right-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b text-foreground p-6 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <div className="p-2 bg-white/10 rounded-lg">
-            <Eye className="h-6 w-6" />
+          <div className="p-2 bg-primary/10 rounded-lg">
+            <Eye className="h-6 w-6 text-primary" />
           </div>
           <div>
             <h3 className="font-semibold text-lg">{originalName}</h3>
-            <p className="text-sm text-gray-300">Preview File • {fileExtension?.toUpperCase()}</p>
+            <p className="text-sm text-muted-foreground">Preview File • {fileExtension?.toUpperCase()}</p>
           </div>
         </div>
         
         <div className="flex items-center gap-3">
           <Button 
             onClick={onClose} 
-            variant="secondary" 
+            variant="outline" 
             size="sm"
-            className="bg-white/10 hover:bg-white/20 text-white border-white/20"
+            className="border-border"
           >
             <X className="h-4 w-4" />
           </Button>
         </div>
       </div>
 
-      <div className="absolute inset-0 pt-20">
+      <div className="absolute inset-0 pt-20 bg-background">
         {renderPreview()}
       </div>
     </div>
@@ -402,12 +402,12 @@ export default function FileUploadPage() {
     const extension = fileName?.split('.').pop()?.toLowerCase() || '';
     
     if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(extension)) {
-      return <ImageIcon className="h-6 w-6 text-green-600" />;
+      return <ImageIcon className="h-6 w-6 text-green-600 dark:text-green-400" />;
     } else if (['mp4', 'webm', 'ogg', 'avi', 'mov'].includes(extension)) {
       return (
         <div className="relative">
-          <FileText className="h-6 w-6 text-blue-600" />
-          <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-blue-500 rounded-full flex items-center justify-center">
+          <FileText className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+          <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-blue-500 dark:bg-blue-400 rounded-full flex items-center justify-center">
             <span className="text-[8px] text-white font-bold">▶</span>
           </div>
         </div>
@@ -415,12 +415,12 @@ export default function FileUploadPage() {
     } else if (['pdf'].includes(extension)) {
       return (
         <div className="relative">
-          <FileText className="h-6 w-6 text-red-600" />
-          <div className="absolute -top-1 -right-1 text-[8px] font-bold text-red-600">PDF</div>
+          <FileText className="h-6 w-6 text-red-600 dark:text-red-400" />
+          <div className="absolute -top-1 -right-1 text-[8px] font-bold text-red-600 dark:text-red-400">PDF</div>
         </div>
       );
     } else {
-      return <File className="h-6 w-6 text-gray-600" />;
+      return <File className="h-6 w-6 text-muted-foreground" />;
     }
   }
 
@@ -525,65 +525,66 @@ export default function FileUploadPage() {
   return (
     <>
       <ProtectedRoute requireAuth={true}>
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+        <div className="min-h-screen bg-background">
           <div className="max-w-6xl mx-auto px-4 py-8">
             {/* Header Section */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6 mb-8">
+            <div className="bg-card/80 backdrop-blur-sm rounded-2xl shadow-xl border border-border p-6 mb-8">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <Button
                     variant="outline"
                     onClick={() => step === 1 ? router.push('/file-manager') : setStep(1)}
-                    className="h-12 px-4 shadow-md border-border hover:bg-muted transition-all duration-200"
+                    className="h-12 px-4 shadow-md border-border hover:bg-accent transition-all duration-200"
                   >
                     <ArrowLeft className="w-4 h-4 mr-2" />
                     {step === 1 ? 'Kembali' : 'Kembali ke Step 1'}
                   </Button>
                   <div>
-                    <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                    <h1 className="text-3xl font-bold text-foreground">
                       Upload File
                     </h1>
-                    <p className="text-gray-600 mt-1 font-medium">
+                    <p className="text-muted-foreground mt-1 font-medium">
                       Step {step} dari 2: {step === 1 ? 'Pilih Kategori File' : 'Upload File'}
                     </p>
                   </div>
-                </div>            </div>
-          </div>
+                </div>
+              </div>
+            </div>
 
           {/* Enhanced Progress Indicator */}
           <div className="mb-10">
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-8">
+            <div className="bg-card/80 backdrop-blur-sm rounded-2xl shadow-lg border border-border p-8">
               <div className="flex items-center justify-center">
                 <div className="flex items-center relative">
                   {/* Step 1 Circle */}
                   <div className={`relative flex items-center justify-center w-14 h-14 rounded-full transition-all duration-500 ${
                     step >= 1 
-                      ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30 scale-110' 
-                      : 'bg-gray-200 text-gray-500'
+                      ? 'bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-lg shadow-primary/30 scale-110' 
+                      : 'bg-muted text-muted-foreground'
                   }`}>
                     <FolderOpen className="w-6 h-6" />
                     {step >= 1 && (
-                      <div className="absolute -inset-2 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full opacity-20 animate-pulse"></div>
+                      <div className="absolute -inset-2 bg-gradient-to-r from-primary to-primary/80 rounded-full opacity-20 animate-pulse"></div>
                     )}
                   </div>
                   
                   {/* Progress Line */}
                   <div className="relative mx-8">
-                    <div className="h-1 w-32 bg-gray-200 rounded-full"></div>
+                    <div className="h-1 w-32 bg-muted rounded-full"></div>
                     <div className={`absolute top-0 left-0 h-1 rounded-full transition-all duration-700 ${
-                      step >= 2 ? 'w-full bg-gradient-to-r from-blue-600 to-indigo-600' : 'w-0'
+                      step >= 2 ? 'w-full bg-gradient-to-r from-primary to-primary/80' : 'w-0'
                     }`}></div>
                   </div>
                   
                   {/* Step 2 Circle */}
                   <div className={`relative flex items-center justify-center w-14 h-14 rounded-full transition-all duration-500 ${
                     step >= 2 
-                      ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-lg shadow-green-500/30 scale-110' 
-                      : 'bg-gray-200 text-gray-500'
+                      ? 'bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-500 dark:to-emerald-500 text-white shadow-lg shadow-green-500/30 scale-110' 
+                      : 'bg-muted text-muted-foreground'
                   }`}>
                     <Upload className="w-6 h-6" />
                     {step >= 2 && (
-                      <div className="absolute -inset-2 bg-gradient-to-r from-green-600 to-emerald-600 rounded-full opacity-20 animate-pulse"></div>
+                      <div className="absolute -inset-2 bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-500 dark:to-emerald-500 rounded-full opacity-20 animate-pulse"></div>
                     )}
                   </div>
                 </div>
@@ -594,19 +595,19 @@ export default function FileUploadPage() {
                 <div className="flex items-center justify-between w-80">
                   <div className="text-center">
                     <div className={`text-sm font-semibold transition-colors duration-300 ${
-                      step >= 1 ? 'text-blue-600' : 'text-gray-500'
+                      step >= 1 ? 'text-primary' : 'text-muted-foreground'
                     }`}>
                       Pilih Kategori
                     </div>
-                    <div className="text-xs text-gray-400 mt-1">Kategori File</div>
+                    <div className="text-xs text-muted-foreground mt-1">Kategori File</div>
                   </div>
                   <div className="text-center">
                     <div className={`text-sm font-semibold transition-colors duration-300 ${
-                      step >= 2 ? 'text-green-600' : 'text-gray-500'
+                      step >= 2 ? 'text-green-600 dark:text-green-500' : 'text-muted-foreground'
                     }`}>
                       Upload File
                     </div>
-                    <div className="text-xs text-gray-400 mt-1">Dokumen & Detail</div>
+                    <div className="text-xs text-muted-foreground mt-1">Dokumen & Detail</div>
                   </div>
                 </div>
               </div>
@@ -615,14 +616,14 @@ export default function FileUploadPage() {
 
           {/* Step 1: Select Kategori */}
           {step === 1 && (
-            <Card className="shadow-2xl border-0 bg-white/90 backdrop-blur-md rounded-2xl overflow-hidden">
-              <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-4">
+            <Card className="shadow-2xl border-0 bg-card/90 backdrop-blur-md rounded-2xl overflow-hidden">
+              <CardHeader className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground py-4">
                 <CardTitle className="flex items-center gap-3 text-lg font-semibold">
                   <FolderOpen className="w-5 h-5" />
                   Pilih Kategori File
-                  <span className="text-blue-200 text-sm font-normal">(1/2)</span>
+                  <span className="text-primary-foreground/70 text-sm font-normal">(1/2)</span>
                 </CardTitle>
-                <CardDescription className="text-blue-100 text-sm mt-1">
+                <CardDescription className="text-primary-foreground/80 text-sm mt-1">
                   Tentukan kategori untuk file yang akan diupload
                 </CardDescription>
               </CardHeader>
@@ -632,10 +633,10 @@ export default function FileUploadPage() {
                   {isAdmin && (
                     <div className="space-y-4">
                       <div className="flex items-center gap-2 mb-3">
-                        <Label htmlFor="pegawai" className="text-lg font-semibold text-gray-800">
+                        <Label htmlFor="pegawai" className="text-lg font-semibold text-foreground">
                           Pegawai
                         </Label>
-                        <span className="text-red-500 text-sm">*</span>
+                        <span className="text-destructive text-sm">*</span>
                       </div>
                       <div className="relative">
                         <SearchableSelectObject
@@ -648,19 +649,18 @@ export default function FileUploadPage() {
                           searchPlaceholder="Ketik nama pegawai..."
                           emptyText="Tidak ada pegawai ditemukan"
                           onValueChange={setSelectedPegawai}
-                          className="h-14 text-base border-2 border-gray-200 focus:border-blue-500 rounded-xl"
+                          className="h-14 text-base border-2 border-border focus:border-primary rounded-xl"
                         />
                       </div>
-
                     </div>
                   )}
                   
                   <div className="space-y-4">
                     <div className="flex items-center gap-2 mb-3">
-                      <Label htmlFor="kategori" className="text-lg font-semibold text-gray-800">
+                      <Label htmlFor="kategori" className="text-lg font-semibold text-foreground">
                         Kategori File
                       </Label>
-                      <span className="text-red-500 text-sm">*</span>
+                      <span className="text-destructive text-sm">*</span>
                     </div>
                     <div className="relative">
                       <SearchableSelectObject
@@ -673,17 +673,16 @@ export default function FileUploadPage() {
                         searchPlaceholder="Ketik nama kategori..."
                         emptyText="Tidak ada kategori ditemukan"
                         onValueChange={setSelectedKategori}
-                        className="h-14 text-base border-2 border-gray-200 focus:border-blue-500 rounded-xl"
+                        className="h-14 text-base border-2 border-border focus:border-primary rounded-xl"
                       />
                     </div>
-
                   </div>
 
                   <div className="flex justify-end">
                     <Button 
                       onClick={handleStep1Next}
                       size="lg"
-                      className="px-10 py-4 text-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-xl hover:shadow-2xl transition-all duration-300 rounded-xl"
+                      className="px-10 py-4 text-lg bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-xl hover:shadow-2xl transition-all duration-300 rounded-xl"
                     >
                       Lanjut ke Upload File
                       <ChevronRight className="w-6 h-6 ml-2" />
@@ -696,14 +695,14 @@ export default function FileUploadPage() {
 
           {/* Step 2: Upload Files */}
           {step === 2 && (
-            <Card className="shadow-2xl border-0 bg-white/90 backdrop-blur-md rounded-2xl overflow-hidden">
-              <CardHeader className="bg-gradient-to-r from-green-600 to-teal-700 text-white py-4">
+            <Card className="shadow-2xl border-0 bg-card/90 backdrop-blur-md rounded-2xl overflow-hidden">
+              <CardHeader className="bg-gradient-to-r from-green-600 to-teal-700 dark:from-green-500 dark:to-teal-600 text-white py-4">
                 <CardTitle className="flex items-center gap-3 text-lg font-semibold">
                   <Upload className="w-5 h-5" />
                   Upload File Baru
-                  <span className="text-green-200 text-sm font-normal">(2/2)</span>
+                  <span className="text-green-200 dark:text-green-100 text-sm font-normal">(2/2)</span>
                 </CardTitle>
-                <CardDescription className="text-green-100 text-sm mt-1">
+                <CardDescription className="text-green-100 dark:text-green-50 text-sm mt-1">
                   Kategori: {kategoriOptions.find(k => k.id === selectedKategori)?.nama}
                 </CardDescription>
               </CardHeader>
@@ -712,17 +711,17 @@ export default function FileUploadPage() {
                 <div className="space-y-10">
                   {/* File Upload Sections */}
                   {fileItems.map((fileItem, index) => (
-                    <div key={fileItem.id} className="bg-gradient-to-br from-gray-50 to-white border-2 border-gray-100 rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300">
+                    <div key={fileItem.id} className="bg-gradient-to-br from-muted/50 to-card border-2 border-border rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300">
                       <div className="flex items-center justify-between mb-8">
                         <div className="flex items-center gap-4">
-                          <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl shadow-lg">
+                          <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground rounded-xl shadow-lg">
                             <span className="text-lg font-bold">{index + 1}</span>
                           </div>
                           <div>
-                            <h3 className="text-xl font-bold text-gray-800">
+                            <h3 className="text-xl font-bold text-foreground">
                               File {index + 1}
                             </h3>
-                            <p className="text-sm text-gray-600">Upload dokumen dan isi detail</p>
+                            <p className="text-sm text-muted-foreground">Upload dokumen dan isi detail</p>
                           </div>
                         </div>
                         {fileItems.length > 1 && (
@@ -730,7 +729,7 @@ export default function FileUploadPage() {
                             variant="outline"
                             size="sm"
                             onClick={() => removeFileItem(fileItem.id)}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 rounded-xl"
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/20 rounded-xl"
                           >
                             <Trash2 className="w-4 h-4 mr-2" />
                             Hapus File
@@ -741,26 +740,26 @@ export default function FileUploadPage() {
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         <div className="space-y-4">
                           <div className="flex items-center gap-2">
-                            <Label htmlFor={`judul-${fileItem.id}`} className="text-base font-semibold text-gray-700">
+                            <Label htmlFor={`judul-${fileItem.id}`} className="text-base font-semibold text-foreground">
                               Judul File
                             </Label>
-                            <span className="text-red-500 text-sm">*</span>
+                            <span className="text-destructive text-sm">*</span>
                           </div>
                           <Input
                             id={`judul-${fileItem.id}`}
                             value={fileItem.judul}
                             onChange={(e) => updateFileItem(fileItem.id, 'judul', e.target.value)}
                             placeholder="Masukkan judul file yang deskriptif..."
-                            className="h-14 text-base border-2 border-gray-200 focus:border-green-500 rounded-xl"
+                            className="h-14 text-base border-2 border-border focus:border-green-500 dark:focus:border-green-400 rounded-xl"
                           />
                         </div>
                         
                         <div className="space-y-4">
                           <div className="flex items-center gap-2">
-                            <Label htmlFor={`file-${fileItem.id}`} className="text-base font-semibold text-gray-700">
+                            <Label htmlFor={`file-${fileItem.id}`} className="text-base font-semibold text-foreground">
                               Upload File
                             </Label>
-                            <span className="text-red-500 text-sm">*</span>
+                            <span className="text-destructive text-sm">*</span>
                           </div>
                           <div className="space-y-4">
                             <div className="relative">
@@ -773,22 +772,22 @@ export default function FileUploadPage() {
                                     handleFileSelect(fileItem.id, file)
                                   }
                                 }}
-                                className="h-14 text-base border-2 border-dashed border-gray-300 focus:border-green-500 rounded-xl file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
+                                className="h-14 text-base border-2 border-dashed border-border focus:border-green-500 dark:focus:border-green-400 rounded-xl file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-green-50 dark:file:bg-green-950 file:text-green-700 dark:file:text-green-300 hover:file:bg-green-100 dark:hover:file:bg-green-900"
                               />
                             </div>
                             
                             {/* File Upload Status */}
                             {fileItem.tempFileName === 'loading' && (
-                              <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 border-2 border-blue-200 rounded-xl p-6 shadow-inner">
+                              <div className="bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 border-2 border-primary/20 rounded-xl p-6 shadow-inner">
                                 <div className="flex items-center gap-4">
-                                  <div className="p-3 bg-card rounded-xl shadow-sm border border-blue-200">
-                                    <div className="animate-spin h-6 w-6 border-2 border-blue-600 border-t-transparent rounded-full" />
+                                  <div className="p-3 bg-card rounded-xl shadow-sm border border-primary/20">
+                                    <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
                                   </div>
                                   <div className="flex-1">
                                     <p className="font-semibold text-foreground text-lg">
                                       Mengupload file...
                                     </p>
-                                    <p className="text-sm text-blue-600">
+                                    <p className="text-sm text-primary">
                                       📤 Mohon tunggu, file sedang diproses
                                     </p>
                                   </div>
@@ -801,20 +800,20 @@ export default function FileUploadPage() {
                       
                       {/* File Upload Result */}
                       {fileItem.originalName && fileItem.tempFileName && fileItem.tempFileName !== 'loading' && (
-                        <div className="mt-6 bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 border-2 border-green-200 rounded-xl p-6 shadow-inner">
+                        <div className="mt-6 bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 dark:from-green-950/20 dark:via-emerald-950/20 dark:to-teal-950/20 border-2 border-green-200 dark:border-green-800 rounded-xl p-6 shadow-inner">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-4 flex-1 min-w-0">
-                              <div className="relative p-3 bg-card rounded-xl shadow-sm border border-green-200">
+                              <div className="relative p-3 bg-card rounded-xl shadow-sm border border-green-200 dark:border-green-800">
                                 {getFileIcon(fileItem.originalName)}
-                                <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
-                                  <Check className="w-2 h-2 text-white" />
+                                <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 dark:bg-green-400 rounded-full flex items-center justify-center">
+                                  <Check className="w-2 h-2 text-white dark:text-green-900" />
                                 </div>
                               </div>
                               <div className="flex-1 min-w-0">
                                 <p className="font-semibold text-foreground text-lg truncate">
                                   {fileItem.originalName}
                                 </p>
-                                <p className="text-sm text-gray-600">
+                                <p className="text-sm text-muted-foreground">
                                   📊 {fileItem.fileSize ? `${(fileItem.fileSize / 1024 / 1024).toFixed(2)} MB` : ''}
                                 </p>
                               </div>
@@ -827,7 +826,7 @@ export default function FileUploadPage() {
                                   variant="outline"
                                   size="sm"
                                   onClick={() => handleFilePreview(fileItem.tempFileName!, fileItem.originalName!)}
-                                  className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-200 rounded-lg h-10 px-4"
+                                  className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/20 border-blue-200 dark:border-blue-800 rounded-lg h-10 px-4"
                                 >
                                   <Eye className="w-4 h-4 mr-2" />
                                   Preview
@@ -837,7 +836,7 @@ export default function FileUploadPage() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => handleFileDownload(fileItem.tempFileName!, fileItem.originalName!)}
-                                className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200 rounded-lg h-10 px-4"
+                                className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-950/20 border-green-200 dark:border-green-800 rounded-lg h-10 px-4"
                               >
                                 <Download className="w-4 h-4 mr-2" />
                                 Download
@@ -848,7 +847,7 @@ export default function FileUploadPage() {
                       )}
                       
                       <div className="mt-8 space-y-4">
-                        <Label htmlFor={`deskripsi-${fileItem.id}`} className="text-base font-semibold text-gray-700">
+                        <Label htmlFor={`deskripsi-${fileItem.id}`} className="text-base font-semibold text-foreground">
                           Deskripsi File
                         </Label>
                         <Textarea
@@ -856,7 +855,7 @@ export default function FileUploadPage() {
                           value={fileItem.deskripsi}
                           onChange={(e) => updateFileItem(fileItem.id, 'deskripsi', e.target.value)}
                           placeholder="Tambahkan deskripsi file untuk memudahkan pencarian dan identifikasi..."
-                          className="h-24 resize-none text-base border-2 border-gray-200 focus:border-green-500 rounded-xl"
+                          className="h-24 resize-none text-base border-2 border-border focus:border-green-500 dark:focus:border-green-400 rounded-xl"
                           rows={3}
                         />
                       </div>
@@ -868,7 +867,7 @@ export default function FileUploadPage() {
                     <Button
                       variant="outline"
                       onClick={addFileItem}
-                      className="px-8 py-4 text-lg border-3 border-dashed border-gray-300 hover:border-green-400 hover:bg-green-50 rounded-2xl transition-all duration-300 hover:shadow-lg"
+                      className="px-8 py-4 text-lg border-3 border-dashed border-muted-foreground/30 hover:border-green-400 dark:hover:border-green-500 hover:bg-green-50 dark:hover:bg-green-950/20 rounded-2xl transition-all duration-300 hover:shadow-lg"
                       size="lg"
                     >
                       <Plus className="w-6 h-6 mr-3" />
@@ -877,12 +876,12 @@ export default function FileUploadPage() {
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="flex justify-between items-center pt-8 border-t-2 border-gray-100">
+                  <div className="flex justify-between items-center pt-8 border-t-2 border-border">
                     <Button
                       onClick={() => setStep(1)}
                       variant="outline"
                       size="lg"
-                      className="px-8 py-4 text-lg border-2 border-border rounded-xl hover:bg-muted"
+                      className="px-8 py-4 text-lg border-2 border-border rounded-xl hover:bg-accent"
                     >
                       <ArrowLeft className="w-5 h-5 mr-3" />
                       Kembali
@@ -891,7 +890,7 @@ export default function FileUploadPage() {
                       onClick={handleSubmit}
                       disabled={loading || fileItems.some(item => !item.judul.trim() || !item.tempFileName || item.tempFileName === 'loading')}
                       size="lg"
-                      className="px-12 py-4 text-lg bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-xl hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-all duration-300"
+                      className="px-12 py-4 text-lg bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-500 dark:to-emerald-500 hover:from-green-700 hover:to-emerald-700 dark:hover:from-green-600 dark:hover:to-emerald-600 shadow-xl hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-all duration-300"
                     >
                       {loading ? (
                         <>

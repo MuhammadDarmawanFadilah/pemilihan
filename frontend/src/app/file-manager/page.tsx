@@ -18,7 +18,6 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast-utils"
 import { SortableHeader } from '@/components/ui/sortable-header'
 import { ServerPagination } from '@/components/ServerPagination'
@@ -60,8 +59,6 @@ export default function FileManagerPage() {
   const [loading, setLoading] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false)
-  const [selectedFile, setSelectedFile] = useState<FilePegawaiResponse | null>(null)
   const [kategoriOptions, setKategoriOptions] = useState<KategoriOption[]>([])
   const [selectedKategori, setSelectedKategori] = useState<number | null>(null)
   const [selectedPegawaiId, setSelectedPegawaiId] = useState<string>('')
@@ -186,9 +183,36 @@ export default function FileManagerPage() {
     router.push(`/file-manager/${file.id}`)
   }
 
-  const handleDelete = (file: FilePegawaiResponse) => {
-    setSelectedFile(file)
-    setIsDeleteOpen(true)
+  const handleDelete = async (file: FilePegawaiResponse) => {
+    // Use simple alert confirmation instead of popup
+    const isConfirmed = window.confirm(
+      `Apakah Anda yakin ingin menghapus file "${file.judul}" dengan kategori "${file.kategoriNama}"?\n\nTindakan ini tidak dapat dibatalkan.`
+    )
+    
+    if (!isConfirmed) return
+
+    try {
+      setLoading(true)
+      const response = await fetch(getApiUrl(`api/admin/file-pegawai/${file.id}`), {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+        }
+      })
+      
+      if (response.ok) {
+        showSuccessToast('File berhasil dihapus')
+        fetchFiles() // Refresh the file list
+      } else {
+        const errorData = await response.json()
+        showErrorToast(errorData.message || 'Gagal menghapus file')
+      }
+    } catch (error) {
+      console.error('Error deleting file:', error)
+      showErrorToast('Gagal menghapus file')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleDownload = async (file: FilePegawaiResponse) => {
@@ -218,37 +242,6 @@ export default function FileManagerPage() {
     } catch (error) {
       console.error('Error downloading file:', error)
       showErrorToast('Gagal mengunduh file')
-    }
-  }
-
-  const submitDelete = async () => {
-    if (!selectedFile) return
-
-    try {
-      setLoading(true)
-      // Find the file-pegawai group ID that contains this file
-      // For now, we'll use the file ID directly and assume it maps to the group
-      const response = await fetch(getApiUrl(`api/admin/file-pegawai/${selectedFile.id}`), {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-        }
-      })
-      
-      if (response.ok) {
-        showSuccessToast('File berhasil dihapus')
-        setIsDeleteOpen(false)
-        setSelectedFile(null)
-        fetchFiles()
-      } else {
-        const errorData = await response.json()
-        showErrorToast(errorData.message || 'Gagal menghapus file')
-      }
-    } catch (error) {
-      console.error('Error deleting file:', error)
-      showErrorToast('Gagal menghapus file')
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -528,19 +521,6 @@ export default function FileManagerPage() {
               )}
             </CardContent>
           </Card>
-
-          {/* Delete Confirmation Dialog */}
-          <ConfirmationDialog
-            open={isDeleteOpen}
-            onOpenChange={setIsDeleteOpen}
-            title="Hapus File"
-            description={`Apakah Anda yakin ingin menghapus file "${selectedFile?.judul}" dengan kategori "${selectedFile?.kategoriNama}"? Tindakan ini tidak dapat dibatalkan.`}
-            confirmText="Hapus"
-            cancelText="Batal"
-            variant="destructive"
-            onConfirm={submitDelete}
-            loading={loading}
-          />
         </div>
       </div>
     </ProtectedRoute>

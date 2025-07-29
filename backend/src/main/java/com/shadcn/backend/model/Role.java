@@ -25,7 +25,7 @@ public class Role {
     
     @NotBlank(message = "Nama role tidak boleh kosong")
     @Size(max = 50, message = "Nama role maksimal 50 karakter")
-    @Column(unique = true, nullable = false)
+    @Column(name = "role_name", unique = true, nullable = false)
     private String roleName;
     
     @Size(max = 255, message = "Deskripsi maksimal 255 karakter")
