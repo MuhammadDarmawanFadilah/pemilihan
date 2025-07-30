@@ -8,6 +8,7 @@ public class DetailLaporanRequest {
     private String lokasi;
     private String tanggalLaporan;
     private List<String> tempFiles;
+    private List<String> permanentFiles;
     private Integer tahapanLaporanId;
     private Integer jenisLaporanId;
     private Integer laporanId;
@@ -53,6 +54,14 @@ public class DetailLaporanRequest {
 
     public void setTempFiles(List<String> tempFiles) {
         this.tempFiles = tempFiles;
+    }
+
+    public List<String> getPermanentFiles() {
+        return permanentFiles;
+    }
+
+    public void setPermanentFiles(List<String> permanentFiles) {
+        this.permanentFiles = permanentFiles;
     }
 
     public Integer getTahapanLaporanId() {

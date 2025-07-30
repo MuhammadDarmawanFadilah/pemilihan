@@ -84,11 +84,39 @@ export default function FileDetailPage() {
     if (!file) return
 
     try {
-      const response = await fetch(getApiUrl(`api/files/download/documents/${file.fileName}`), {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+      // Check if this is a new temp file (has datetime pattern: YYYYMMDD_HHMMSS_)
+      const isTempFile = /^\d{8}_\d{6}_[a-f0-9]{8}_/.test(file.fileName);
+      
+      let downloadUrl;
+      let response;
+      
+      if (isTempFile) {
+        // For temp files, try temp-files endpoint first
+        downloadUrl = getApiUrl(`api/temp-files/download/${file.fileName}`);
+        response = await fetch(downloadUrl, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          }
+        });
+        
+        // If temp file not found (404), try permanent endpoint
+        if (!response.ok && response.status === 404) {
+          downloadUrl = getApiUrl(`api/admin/file-pegawai/download/${file.fileName}`);
+          response = await fetch(downloadUrl, {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+            }
+          });
         }
-      })
+      } else {
+        // For permanent files, use admin file-pegawai download endpoint
+        downloadUrl = getApiUrl(`api/admin/file-pegawai/download/${file.fileName}`);
+        response = await fetch(downloadUrl, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          }
+        });
+      }
 
       if (response.ok) {
         const blob = await response.blob()
@@ -212,14 +240,34 @@ export default function FileDetailPage() {
       const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080';
       const isTempFile = /^\d{8}_\d{6}_[a-f0-9]{8}_/.test(file.fileName);
       
-      let previewUrl;
       if (isTempFile) {
-        previewUrl = `${API_BASE_URL}/api/temp-files/preview/${file.fileName}`;
+        // For temp files, try temp endpoint first
+        const tempUrl = `${API_BASE_URL}/api/temp-files/preview/${file.fileName}`;
+        
+        // Try temp endpoint first
+        fetch(tempUrl, {
+          method: 'HEAD',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          }
+        }).then(response => {
+          if (response.ok) {
+            // File exists in temp, open temp preview
+            window.open(tempUrl, '_blank');
+          } else {
+            // File not in temp, try permanent
+            const permanentUrl = `${API_BASE_URL}/api/admin/file-pegawai/preview/${file.fileName}`;
+            window.open(permanentUrl, '_blank');
+          }
+        }).catch(() => {
+          // On error, try permanent endpoint
+          const permanentUrl = `${API_BASE_URL}/api/admin/file-pegawai/preview/${file.fileName}`;
+          window.open(permanentUrl, '_blank');
+        });
       } else {
-        previewUrl = `${API_BASE_URL}/api/files/preview/documents/${file.fileName}`;
+        const permanentUrl = `${API_BASE_URL}/api/admin/file-pegawai/preview/${file.fileName}`;
+        window.open(permanentUrl, '_blank');
       }
-      
-      window.open(previewUrl, '_blank');
     }
   }
 
@@ -273,7 +321,7 @@ export default function FileDetailPage() {
 
   return (
     <ProtectedRoute requireAuth={true}>
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
         {/* Modern Header */}
         <div className="bg-card/80 backdrop-blur-sm border-b border-border sticky top-0 z-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -291,7 +339,7 @@ export default function FileDetailPage() {
                 </Button>
                 <Separator orientation="vertical" className="h-6" />
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg">
+                  <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-700 rounded-lg">
                     {getFileIcon(file.fileName, file.fileType)}
                   </div>
                   <div>
@@ -309,7 +357,7 @@ export default function FileDetailPage() {
                   variant="outline"
                   size="sm"
                   onClick={previewFile}
-                  className="hidden sm:flex hover:bg-blue-50 border-blue-200"
+                  className="hidden sm:flex hover:bg-blue-50 dark:hover:bg-blue-950 border-blue-200 dark:border-blue-800"
                 >
                   <Eye className="h-4 w-4 mr-2" />
                   Preview
@@ -318,7 +366,7 @@ export default function FileDetailPage() {
                   variant="outline"
                   size="sm"
                   onClick={handleDownload}
-                  className="hover:bg-green-50 border-green-200"
+                  className="hover:bg-green-50 dark:hover:bg-green-950 border-green-200 dark:border-green-800"
                 >
                   <Download className="h-4 w-4 mr-2" />
                   Download
@@ -327,7 +375,7 @@ export default function FileDetailPage() {
                   variant="outline"
                   size="sm"
                   onClick={handleEdit}
-                  className="hover:bg-orange-50 border-orange-200"
+                  className="hover:bg-orange-50 dark:hover:bg-orange-950 border-orange-200 dark:border-orange-800"
                 >
                   <Edit className="h-4 w-4 mr-2" />
                   Edit
@@ -336,7 +384,7 @@ export default function FileDetailPage() {
                   variant="outline"
                   size="sm"
                   onClick={handleDelete}
-                  className="hover:bg-red-50 border-red-200 text-red-600"
+                  className="hover:bg-red-50 dark:hover:bg-red-950 border-red-200 dark:border-red-800 text-red-600 dark:text-red-400"
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
@@ -354,7 +402,7 @@ export default function FileDetailPage() {
                 <CardHeader className="pb-4">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-4">
-                      <div className="p-3 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl shadow-lg">
+                      <div className="p-3 bg-gradient-to-r from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-700 rounded-xl shadow-lg">
                         {getFileIcon(file.fileName, file.fileType)}
                       </div>
                       <div>
@@ -371,7 +419,7 @@ export default function FileDetailPage() {
                       className={cn(
                         "text-xs font-medium",
                         file.isActive 
-                          ? "bg-green-100 text-green-700 border-green-200" 
+                          ? "bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800" 
                           : "bg-muted text-muted-foreground border-border"
                       )}
                     >
@@ -394,9 +442,9 @@ export default function FileDetailPage() {
                   {/* File Properties Grid */}
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {/* File Name */}
-                    <div className="bg-gradient-to-r from-gray-50 to-white border border-gray-200 rounded-lg p-4">
+                    <div className="bg-gradient-to-r from-gray-50 dark:from-gray-800 to-white dark:to-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-4">
                       <div className="flex items-center justify-between mb-2">
-                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                        <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                           Nama File
                         </label>
                         <Button
@@ -408,31 +456,31 @@ export default function FileDetailPage() {
                           <Copy className="h-3 w-3" />
                         </Button>
                       </div>
-                      <p className="text-sm font-medium text-gray-900 break-all">
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100 break-all">
                         {file.fileName}
                       </p>
                     </div>
 
                     {/* File Size */}
-                    <div className="bg-gradient-to-r from-blue-50 to-white border border-blue-200 rounded-lg p-4">
-                      <label className="text-xs font-medium text-blue-600 uppercase tracking-wide mb-2 block">
+                    <div className="bg-gradient-to-r from-blue-50 dark:from-blue-900 to-white dark:to-blue-800 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
+                      <label className="text-xs font-medium text-blue-600 dark:text-blue-400 uppercase tracking-wide mb-2 block">
                         Ukuran File
                       </label>
                       <div className="flex items-center gap-2">
-                        <HardDrive className="h-4 w-4 text-blue-500" />
-                        <p className="text-sm font-medium text-gray-900">
+                        <HardDrive className="h-4 w-4 text-blue-500 dark:text-blue-400" />
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                           {formatFileSize(file.fileSize)}
                         </p>
                       </div>
                     </div>
 
                     {/* File Type */}
-                    <div className="bg-gradient-to-r from-purple-50 to-white border border-purple-200 rounded-lg p-4">
-                      <label className="text-xs font-medium text-purple-600 uppercase tracking-wide mb-2 block">
+                    <div className="bg-gradient-to-r from-purple-50 dark:from-purple-900 to-white dark:to-purple-800 border border-purple-200 dark:border-purple-700 rounded-lg p-4">
+                      <label className="text-xs font-medium text-purple-600 dark:text-purple-400 uppercase tracking-wide mb-2 block">
                         Tipe File
                       </label>
                       <div className="flex items-center gap-2">
-                        <Tag className="h-4 w-4 text-purple-500" />
+                        <Tag className="h-4 w-4 text-purple-500 dark:text-purple-400" />
                         <Badge variant="outline" className={getFileTypeInfo(file.fileName, file.fileType).color}>
                           {getFileTypeInfo(file.fileName, file.fileType).category}
                         </Badge>
@@ -442,11 +490,11 @@ export default function FileDetailPage() {
 
                   {/* Category & Additional Info */}
                   {file.kategoriNama && (
-                    <div className="bg-gradient-to-r from-green-50 to-white border border-green-200 rounded-lg p-4">
-                      <label className="text-xs font-medium text-green-600 uppercase tracking-wide mb-2 block">
+                    <div className="bg-gradient-to-r from-green-50 dark:from-green-900 to-white dark:to-green-800 border border-green-200 dark:border-green-700 rounded-lg p-4">
+                      <label className="text-xs font-medium text-green-600 dark:text-green-400 uppercase tracking-wide mb-2 block">
                         Kategori Dokumen
                       </label>
-                      <Badge variant="outline" className="bg-green-100 text-green-700 border-green-200">
+                      <Badge variant="outline" className="bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 border-green-200 dark:border-green-700">
                         {file.kategoriNama}
                       </Badge>
                     </div>
@@ -455,7 +503,7 @@ export default function FileDetailPage() {
               </Card>
 
               {/* Quick Actions Card */}
-              <Card className="bg-white/80 backdrop-blur-sm border-white/20 shadow-xl">
+              <Card className="bg-card/80 backdrop-blur-sm border shadow-xl">
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center gap-2">
                     <MoreHorizontal className="h-5 w-5" />
@@ -467,36 +515,36 @@ export default function FileDetailPage() {
                     <Button
                       variant="outline"
                       onClick={previewFile}
-                      className="h-auto flex-col gap-2 p-4 hover:bg-blue-50 border-blue-200"
+                      className="h-auto flex-col gap-2 p-4 hover:bg-blue-50 dark:hover:bg-blue-950 border-blue-200 dark:border-blue-800"
                     >
-                      <Eye className="h-5 w-5 text-blue-600" />
+                      <Eye className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                       <span className="text-xs font-medium">Preview</span>
                     </Button>
                     
                     <Button
                       variant="outline"
                       onClick={handleDownload}
-                      className="h-auto flex-col gap-2 p-4 hover:bg-green-50 border-green-200"
+                      className="h-auto flex-col gap-2 p-4 hover:bg-green-50 dark:hover:bg-green-950 border-green-200 dark:border-green-800"
                     >
-                      <Download className="h-5 w-5 text-green-600" />
+                      <Download className="h-5 w-5 text-green-600 dark:text-green-400" />
                       <span className="text-xs font-medium">Download</span>
                     </Button>
                     
                     <Button
                       variant="outline"
                       onClick={handleEdit}
-                      className="h-auto flex-col gap-2 p-4 hover:bg-orange-50 border-orange-200"
+                      className="h-auto flex-col gap-2 p-4 hover:bg-orange-50 dark:hover:bg-orange-950 border-orange-200 dark:border-orange-800"
                     >
-                      <Edit className="h-5 w-5 text-orange-600" />
+                      <Edit className="h-5 w-5 text-orange-600 dark:text-orange-400" />
                       <span className="text-xs font-medium">Edit</span>
                     </Button>
                     
                     <Button
                       variant="outline"
                       onClick={() => window.open(`/file-manager/${file.id}`, '_blank')}
-                      className="h-auto flex-col gap-2 p-4 hover:bg-purple-50 border-purple-200"
+                      className="h-auto flex-col gap-2 p-4 hover:bg-purple-50 dark:hover:bg-purple-950 border-purple-200 dark:border-purple-800"
                     >
-                      <ExternalLink className="h-5 w-5 text-purple-600" />
+                      <ExternalLink className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                       <span className="text-xs font-medium">Buka Tab</span>
                     </Button>
                   </div>
@@ -507,7 +555,7 @@ export default function FileDetailPage() {
             {/* Sidebar - Metadata */}
             <div className="space-y-6">
               {/* Upload Information */}
-              <Card className="bg-white/80 backdrop-blur-sm border-white/20 shadow-xl">
+              <Card className="bg-card/80 backdrop-blur-sm border shadow-xl">
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center gap-2">
                     <User className="h-5 w-5" />
@@ -516,44 +564,44 @@ export default function FileDetailPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-3">
-                    <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-blue-50 to-white rounded-lg border border-blue-200">
-                      <div className="p-2 bg-blue-100 rounded-lg">
-                        <User className="h-4 w-4 text-blue-600" />
+                    <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-blue-50 dark:from-blue-900 to-white dark:to-blue-800 rounded-lg border border-blue-200 dark:border-blue-700">
+                      <div className="p-2 bg-blue-100 dark:bg-blue-800 rounded-lg">
+                        <User className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                       </div>
                       <div>
-                        <label className="text-xs font-medium text-blue-600 uppercase tracking-wide">
+                        <label className="text-xs font-medium text-blue-600 dark:text-blue-400 uppercase tracking-wide">
                           Diupload Oleh
                         </label>
-                        <p className="text-sm font-medium text-gray-900">
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                           {file.pegawaiNama}
                         </p>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-green-50 to-white rounded-lg border border-green-200">
-                      <div className="p-2 bg-green-100 rounded-lg">
-                        <Calendar className="h-4 w-4 text-green-600" />
+                    <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-green-50 dark:from-green-900 to-white dark:to-green-800 rounded-lg border border-green-200 dark:border-green-700">
+                      <div className="p-2 bg-green-100 dark:bg-green-800 rounded-lg">
+                        <Calendar className="h-4 w-4 text-green-600 dark:text-green-400" />
                       </div>
                       <div>
-                        <label className="text-xs font-medium text-green-600 uppercase tracking-wide">
+                        <label className="text-xs font-medium text-green-600 dark:text-green-400 uppercase tracking-wide">
                           Tanggal Upload
                         </label>
-                        <p className="text-sm font-medium text-gray-900">
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                           {formatDate(file.createdAt)}
                         </p>
                       </div>
                     </div>
 
                     {file.updatedAt !== file.createdAt && (
-                      <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-orange-50 to-white rounded-lg border border-orange-200">
-                        <div className="p-2 bg-orange-100 rounded-lg">
-                          <Clock className="h-4 w-4 text-orange-600" />
+                      <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-orange-50 dark:from-orange-900 to-white dark:to-orange-800 rounded-lg border border-orange-200 dark:border-orange-700">
+                        <div className="p-2 bg-orange-100 dark:bg-orange-800 rounded-lg">
+                          <Clock className="h-4 w-4 text-orange-600 dark:text-orange-400" />
                         </div>
                         <div>
-                          <label className="text-xs font-medium text-orange-600 uppercase tracking-wide">
+                          <label className="text-xs font-medium text-orange-600 dark:text-orange-400 uppercase tracking-wide">
                             Terakhir Diubah
                           </label>
-                          <p className="text-sm font-medium text-gray-900">
+                          <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                             {formatDate(file.updatedAt)}
                           </p>
                         </div>
@@ -564,7 +612,7 @@ export default function FileDetailPage() {
               </Card>
 
               {/* File Actions */}
-              <Card className="bg-white/80 backdrop-blur-sm border-white/20 shadow-xl">
+              <Card className="bg-card/80 backdrop-blur-sm border shadow-xl">
                 <CardHeader>
                   <CardTitle className="text-lg">Kelola File</CardTitle>
                   <CardDescription>
@@ -574,7 +622,7 @@ export default function FileDetailPage() {
                 <CardContent className="space-y-3">
                   <Button 
                     onClick={handleDownload} 
-                    className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-lg"
+                    className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-700 hover:from-blue-600 hover:to-indigo-700 dark:hover:from-blue-700 dark:hover:to-indigo-800 shadow-lg"
                     size="sm"
                   >
                     <Download className="h-4 w-4 mr-2" />
@@ -584,7 +632,7 @@ export default function FileDetailPage() {
                   <Button 
                     onClick={handleEdit} 
                     variant="outline" 
-                    className="w-full hover:bg-orange-50 border-orange-200 text-orange-700"
+                    className="w-full hover:bg-orange-50 dark:hover:bg-orange-950 border-orange-200 dark:border-orange-800 text-orange-700 dark:text-orange-300"
                     size="sm"
                   >
                     <Edit className="h-4 w-4 mr-2" />
@@ -596,7 +644,7 @@ export default function FileDetailPage() {
                   <Button 
                     onClick={handleDelete} 
                     variant="outline" 
-                    className="w-full hover:bg-red-50 border-red-200 text-red-600"
+                    className="w-full hover:bg-red-50 dark:hover:bg-red-950 border-red-200 dark:border-red-800 text-red-600 dark:text-red-400"
                     size="sm"
                   >
                     <Trash2 className="h-4 w-4 mr-2" />

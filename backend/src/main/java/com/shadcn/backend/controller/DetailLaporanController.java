@@ -140,8 +140,37 @@ public class DetailLaporanController {
 
     @GetMapping("/{id}/user/{userId}")
     @PreAuthorize("hasAnyRole('USER', 'MODERATOR', 'ADMIN')")
-    public ResponseEntity<DetailLaporanResponse> getSubmissionById(@PathVariable Long id, @PathVariable Long userId) {
-        Optional<DetailLaporanResponse> submission = submissionLaporanService.getSubmissionById(id, userId);
+    public ResponseEntity<DetailLaporanResponse> getSubmissionById(
+            @PathVariable Long id, 
+            @PathVariable Long userId,
+            @RequestHeader(value = "Authorization", required = false) String token) {
+        
+        // Get current user from token to check their role
+        String actualToken = token != null && token.startsWith("Bearer ") ? token.substring(7) : null;
+        Long currentUserId = actualToken != null ? authService.getUserIdFromToken(actualToken) : null;
+        
+        // Check if current user is admin
+        boolean isAdmin = false;
+        if (currentUserId != null) {
+            // Check if it's a pegawai token
+            if (authService.isPegawaiToken(actualToken)) {
+                // For pegawai, check if their role is ADMIN or MODERATOR
+                try {
+                    User pegawaiAsUser = authService.getUserFromToken(actualToken);
+                    if (pegawaiAsUser != null && pegawaiAsUser.getRole() != null) {
+                        isAdmin = "ADMIN".equals(pegawaiAsUser.getRole().getRoleName()) || 
+                                 "MODERATOR".equals(pegawaiAsUser.getRole().getRoleName());
+                    }
+                } catch (Exception e) {
+                    isAdmin = false;
+                }
+            } else {
+                // Regular user token
+                isAdmin = authService.isAdmin(currentUserId);
+            }
+        }
+        
+        Optional<DetailLaporanResponse> submission = submissionLaporanService.getSubmissionById(id, userId, isAdmin);
         return submission.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
@@ -150,9 +179,35 @@ public class DetailLaporanController {
     public ResponseEntity<DetailLaporanResponse> updateSubmission(
             @PathVariable Long id, 
             @PathVariable Long userId, 
-            @RequestBody DetailLaporanRequest request) {
+            @RequestBody DetailLaporanRequest request,
+            @RequestHeader(value = "Authorization", required = false) String token) {
         try {
-            DetailLaporanResponse response = submissionLaporanService.updateSubmission(id, userId, request);
+            // Get current user from token to check their role
+            String actualToken = token != null && token.startsWith("Bearer ") ? token.substring(7) : null;
+            Long currentUserId = actualToken != null ? authService.getUserIdFromToken(actualToken) : null;
+            
+            // Check if current user is admin
+            boolean isAdmin = false;
+            if (currentUserId != null) {
+                // Check if it's a pegawai token
+                if (authService.isPegawaiToken(actualToken)) {
+                    // For pegawai, check if their role is ADMIN or MODERATOR
+                    try {
+                        User pegawaiAsUser = authService.getUserFromToken(actualToken);
+                        if (pegawaiAsUser != null && pegawaiAsUser.getRole() != null) {
+                            isAdmin = "ADMIN".equals(pegawaiAsUser.getRole().getRoleName()) || 
+                                     "MODERATOR".equals(pegawaiAsUser.getRole().getRoleName());
+                        }
+                    } catch (Exception e) {
+                        isAdmin = false;
+                    }
+                } else {
+                    // Regular user token
+                    isAdmin = authService.isAdmin(currentUserId);
+                }
+            }
+            
+            DetailLaporanResponse response = submissionLaporanService.updateSubmission(id, userId, request, isAdmin);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(null);

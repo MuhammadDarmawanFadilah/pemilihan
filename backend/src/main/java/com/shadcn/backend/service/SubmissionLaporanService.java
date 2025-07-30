@@ -291,16 +291,38 @@ public class SubmissionLaporanService {
         return Optional.empty();
     }
 
+    public Optional<DetailLaporanResponse> getSubmissionById(Long id, Long userId, boolean isAdmin) {
+        Optional<SubmissionLaporan> submission = submissionLaporanRepository.findById(id);
+        if (submission.isPresent()) {
+            // If admin, allow access to any submission
+            // If not admin, only allow access to own submissions
+            if (isAdmin || submission.get().getPegawai().getId().equals(userId)) {
+                return Optional.of(convertToResponse(submission.get()));
+            }
+        }
+        return Optional.empty();
+    }
+
     @Transactional
     public DetailLaporanResponse updateSubmission(Long id, Long userId, DetailLaporanRequest request) {
+        return updateSubmission(id, userId, request, false);
+    }
+
+    @Transactional
+    public DetailLaporanResponse updateSubmission(Long id, Long userId, DetailLaporanRequest request, boolean isAdmin) {
         try {
             // Find existing submission
             Optional<SubmissionLaporan> existingSubmissionOpt = submissionLaporanRepository.findById(id);
-            if (existingSubmissionOpt.isEmpty() || !existingSubmissionOpt.get().getPegawai().getId().equals(userId)) {
-                throw new RuntimeException("Submission tidak ditemukan atau tidak memiliki akses");
+            if (existingSubmissionOpt.isEmpty()) {
+                throw new RuntimeException("Submission tidak ditemukan");
             }
 
             SubmissionLaporan existingSubmission = existingSubmissionOpt.get();
+
+            // Check access: admin can edit any submission, regular users can only edit their own
+            if (!isAdmin && !existingSubmission.getPegawai().getId().equals(userId)) {
+                throw new RuntimeException("Tidak memiliki akses untuk mengedit laporan ini");
+            }
 
             // Check if submission can be edited (not approved)
             if (existingSubmission.getStatus() == SubmissionLaporan.StatusLaporan.APPROVED) {
@@ -337,10 +359,46 @@ public class SubmissionLaporanService {
 
             existingSubmission = submissionLaporanRepository.save(existingSubmission);
 
-            // Process temp files if provided
+            // Handle file management
             List<String> permanentFiles = new ArrayList<>();
+            List<String> filesToKeep = new ArrayList<>();
+            
+            // Get existing files
+            List<SubmissionLampiran> existingLampiran = submissionLampiranRepository.findBySubmissionLaporanIdOrderByTanggalUploadDesc(existingSubmission.getId());
+            
+            // Add permanent files that should be kept (files that user wants to keep)
+            if (request.getPermanentFiles() != null) {
+                for (String filename : request.getPermanentFiles()) {
+                    // Clean the filename - remove any 'documents/' prefix
+                    String cleanFilename = filename.replace("documents/", "");
+                    filesToKeep.add(cleanFilename);
+                }
+            }
+            
+            // Process temp files if provided
             if (request.getTempFiles() != null && !request.getTempFiles().isEmpty()) {
                 permanentFiles = moveTempFilesToPermanent(request.getTempFiles(), existingSubmission);
+                filesToKeep.addAll(permanentFiles);
+            }
+            
+            // Delete files that are no longer needed (files not in filesToKeep list)
+            for (SubmissionLampiran lampiran : existingLampiran) {
+                String existingFilename = lampiran.getNamaFile();
+                String cleanExistingFilename = existingFilename.replace("documents/", "");
+                
+                if (!filesToKeep.contains(existingFilename) && !filesToKeep.contains(cleanExistingFilename)) {
+                    try {
+                        // Delete physical file
+                        Path filePath = Paths.get(uploadsDirectory, "documents", cleanExistingFilename);
+                        Files.deleteIfExists(filePath);
+                        System.out.println("Deleted unused file: " + cleanExistingFilename);
+                        
+                        // Delete from database
+                        submissionLampiranRepository.delete(lampiran);
+                    } catch (IOException e) {
+                        System.err.println("Error deleting file " + cleanExistingFilename + ": " + e.getMessage());
+                    }
+                }
             }
 
             // Create response
@@ -368,11 +426,6 @@ public class SubmissionLaporanService {
             // Get existing files
             List<SubmissionLampiran> lampiranList = submissionLampiranRepository.findBySubmissionLaporanIdOrderByTanggalUploadDesc(existingSubmission.getId());
             List<String> files = lampiranList.stream().map(SubmissionLampiran::getNamaFile).collect(java.util.stream.Collectors.toList());
-            
-            // Add new files if any
-            if (!permanentFiles.isEmpty()) {
-                files.addAll(permanentFiles);
-            }
             response.setFiles(files);
 
             return response;
@@ -386,7 +439,23 @@ public class SubmissionLaporanService {
     public void deleteSubmission(Long id, Long userId) {
         Optional<SubmissionLaporan> submission = submissionLaporanRepository.findById(id);
         if (submission.isPresent() && submission.get().getPegawai().getId().equals(userId)) {
-            submissionLaporanRepository.delete(submission.get());
+            SubmissionLaporan submissionEntity = submission.get();
+            
+            // Delete associated files first
+            List<SubmissionLampiran> lampiranList = submissionLampiranRepository.findBySubmissionLaporanIdOrderByTanggalUploadDesc(submissionEntity.getId());
+            for (SubmissionLampiran lampiran : lampiranList) {
+                try {
+                    // Delete physical file
+                    Path filePath = Paths.get(uploadsDirectory, "documents", lampiran.getNamaFile());
+                    Files.deleteIfExists(filePath);
+                    System.out.println("Deleted file: " + lampiran.getNamaFile());
+                } catch (IOException e) {
+                    System.err.println("Error deleting file " + lampiran.getNamaFile() + ": " + e.getMessage());
+                }
+            }
+            
+            // Delete the submission (lampiran records will be deleted by cascade)
+            submissionLaporanRepository.delete(submissionEntity);
         } else {
             throw new RuntimeException("Submission tidak ditemukan atau tidak memiliki akses");
         }

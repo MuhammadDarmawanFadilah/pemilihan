@@ -90,6 +90,8 @@ const AppSidebar = () => {
     }
   }, [isMobile, setOpenMobile]);
 
+  const isAdmin = user?.role?.roleName === 'ADMIN' || user?.role?.roleName === 'MODERATOR';
+
   // Public items (accessible to everyone)
   const publicItems = [
     {
@@ -107,7 +109,7 @@ const AppSidebar = () => {
       icon: Vote,
     },
     {
-      title: "Laporan Saya",
+      title: isAdmin ? "Kelola Laporan" : "Laporan Saya",
       url: "/laporan-saya",
       icon: FileText,
     },
@@ -195,8 +197,6 @@ const AppSidebar = () => {
       icon: MapPin,
     },
   ];
-
-  const isAdmin = user?.role?.roleName === 'ADMIN' || user?.role?.roleName === 'MODERATOR';
 
   // Filter userItems to hide notifications for alumni (non-admin/non-moderator users)
   const filteredUserItems = userItems.filter(item => {

@@ -8,12 +8,20 @@ import com.shadcn.backend.service.FilePegawaiService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 @RestController
@@ -23,6 +31,9 @@ import java.util.List;
 public class FilePegawaiController {
     
     private final FilePegawaiService service;
+    
+    @Value("${app.upload.dir:/uploads}")
+    private String uploadDir;
     
     @GetMapping
     @PreAuthorize("hasRole('ADMIN') or hasRole('MODERATOR') or hasRole('USER')")
@@ -137,5 +148,87 @@ public class FilePegawaiController {
         log.info("PATCH /api/admin/file-pegawai/{}/toggle-active", id);
         FilePegawaiResponse result = service.toggleActive(id);
         return ResponseEntity.ok(result);
+    }
+    
+    @GetMapping("/preview/{fileName}")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MODERATOR') or hasRole('USER')")
+    public ResponseEntity<Resource> previewFile(@PathVariable String fileName) {
+        try {
+            // Check if file exists in permanent storage
+            Path filePath = Paths.get(uploadDir).resolve("documents").resolve(fileName);
+            
+            if (!Files.exists(filePath) || !Files.isRegularFile(filePath)) {
+                log.warn("File not found or not readable: {}", fileName);
+                return ResponseEntity.notFound().build();
+            }
+
+            Resource resource = new UrlResource(filePath.toUri());
+            if (!resource.exists() || !resource.isReadable()) {
+                log.warn("File resource not readable: {}", fileName);
+                return ResponseEntity.notFound().build();
+            }
+
+            String contentType;
+            try {
+                contentType = Files.probeContentType(filePath);
+                if (contentType == null) {
+                    contentType = "application/octet-stream";
+                }
+            } catch (Exception e) {
+                contentType = "application/octet-stream";
+            }
+
+            // For preview, use inline disposition for viewable files
+            String disposition = contentType.startsWith("image/") || contentType.equals("application/pdf") 
+                ? "inline" : "attachment";
+
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(contentType))
+                    .header(HttpHeaders.CONTENT_DISPOSITION, disposition + "; filename=\"" + fileName + "\"")
+                    .body(resource);
+                    
+        } catch (Exception e) {
+            log.error("Error previewing file: {}", fileName, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+    
+    @GetMapping("/download/{fileName}")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MODERATOR') or hasRole('USER')")
+    public ResponseEntity<Resource> downloadFile(@PathVariable String fileName) {
+        try {
+            // Check if file exists in permanent storage
+            Path filePath = Paths.get(uploadDir).resolve("documents").resolve(fileName);
+            
+            if (!Files.exists(filePath) || !Files.isRegularFile(filePath)) {
+                log.warn("File not found or not readable: {}", fileName);
+                return ResponseEntity.notFound().build();
+            }
+
+            Resource resource = new UrlResource(filePath.toUri());
+            if (!resource.exists() || !resource.isReadable()) {
+                log.warn("File resource not readable: {}", fileName);
+                return ResponseEntity.notFound().build();
+            }
+
+            String contentType;
+            try {
+                contentType = Files.probeContentType(filePath);
+                if (contentType == null) {
+                    contentType = "application/octet-stream";
+                }
+            } catch (Exception e) {
+                contentType = "application/octet-stream";
+            }
+
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(contentType))
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
+                    .body(resource);
+                    
+        } catch (Exception e) {
+            log.error("Error downloading file: {}", fileName, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 }

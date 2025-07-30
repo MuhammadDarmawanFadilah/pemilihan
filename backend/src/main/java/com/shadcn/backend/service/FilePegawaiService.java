@@ -27,6 +27,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.Map;
 import java.time.LocalDateTime;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import org.springframework.beans.factory.annotation.Value;
 
 @Service
@@ -128,21 +131,22 @@ public class FilePegawaiService {
                 FilePegawai entity = new FilePegawai();
                 entity.setJudul(fileRequest.getJudul().trim());
                 entity.setDeskripsi(fileRequest.getDeskripsi() != null ? fileRequest.getDeskripsi().trim() : null);
-                entity.setFileName(fileRequest.getFileName().trim());
                 entity.setFileType(fileRequest.getFileType());
                 entity.setFileSize(fileRequest.getFileSize());
                 entity.setPegawai(pegawai);
                 entity.setKategori(kategori);
                 entity.setIsActive(fileRequest.getIsActive());
                 
-                // Move file from temp to permanent storage
+                // Move file from temp to permanent storage and get new filename
                 try {
                     String permanentDir = uploadDir + "/documents";
-                    tempFileService.moveTempFileToPermanent(fileRequest.getFileName().trim(), permanentDir);
-                    log.info("Successfully moved file {} from temp to permanent storage", fileRequest.getFileName());
+                    String permanentFileName = tempFileService.moveTempFileToPermanent(fileRequest.getFileName().trim(), permanentDir);
+                    entity.setFileName(permanentFileName); // Use the new permanent filename
+                    log.info("Successfully moved file {} from temp to permanent storage as {}", fileRequest.getFileName(), permanentFileName);
                 } catch (Exception e) {
                     log.warn("Could not move file {} from temp to permanent storage: {}", fileRequest.getFileName(), e.getMessage());
-                    // Continue processing even if file move fails, as file might already be in permanent location
+                    // Use original filename if move fails
+                    entity.setFileName(fileRequest.getFileName().trim());
                 }
                 
                 FilePegawai saved = repository.save(entity);
@@ -359,19 +363,43 @@ public class FilePegawaiService {
         entity.setJudul(request.getJudul().trim());
         entity.setDeskripsi(request.getDeskripsi() != null ? request.getDeskripsi().trim() : null);
         
-        // If filename changed, try to move from temp to permanent storage
-        if (!entity.getFileName().equals(request.getFileName().trim())) {
+        // Check if this is a temp file that needs to be moved to permanent storage
+        String requestFileName = request.getFileName().trim();
+        boolean isTempFile = requestFileName.matches("^\\d{8}_\\d{6}_[a-f0-9]{8}_.*");
+        
+        if (isTempFile) {
+            // This is a temp file, try to move to permanent storage
             try {
                 String permanentDir = uploadDir + "/documents";
-                tempFileService.moveTempFileToPermanent(request.getFileName().trim(), permanentDir);
-                log.info("Successfully moved updated file {} from temp to permanent storage", request.getFileName());
+                String permanentFileName = tempFileService.moveTempFileToPermanent(requestFileName, permanentDir);
+                entity.setFileName(permanentFileName); // Use the new permanent filename
+                log.info("Successfully moved temp file {} to permanent storage as {}", requestFileName, permanentFileName);
             } catch (Exception e) {
-                log.warn("Could not move updated file {} from temp to permanent storage: {}", request.getFileName(), e.getMessage());
-                // Continue processing even if file move fails, as file might already be in permanent location
+                log.warn("Could not move temp file {} to permanent storage: {}", requestFileName, e.getMessage());
+                // Check if file already exists in permanent storage with same name
+                Path permanentFilePath = Paths.get(uploadDir).resolve("documents").resolve(requestFileName);
+                if (Files.exists(permanentFilePath)) {
+                    entity.setFileName(requestFileName);
+                    log.info("Temp file {} already exists in permanent storage, using existing file", requestFileName);
+                } else {
+                    throw new RuntimeException("File tidak ditemukan di temp maupun permanent storage: " + requestFileName);
+                }
             }
+        } else if (!entity.getFileName().equals(requestFileName)) {
+            // Non-temp file with filename change, try to move from temp to permanent
+            try {
+                String permanentDir = uploadDir + "/documents";
+                String permanentFileName = tempFileService.moveTempFileToPermanent(requestFileName, permanentDir);
+                entity.setFileName(permanentFileName); // Use the new permanent filename
+                log.info("Successfully moved updated file {} from temp to permanent storage as {}", requestFileName, permanentFileName);
+            } catch (Exception e) {
+                log.warn("Could not move updated file {} from temp to permanent storage: {}", requestFileName, e.getMessage());
+                entity.setFileName(requestFileName);
+            }
+        } else {
+            // Keep existing filename if no change and not temp file
+            entity.setFileName(requestFileName);
         }
-        
-        entity.setFileName(request.getFileName().trim());
         entity.setFileType(request.getFileType());
         entity.setFileSize(request.getFileSize());
         entity.setPegawai(pegawai);

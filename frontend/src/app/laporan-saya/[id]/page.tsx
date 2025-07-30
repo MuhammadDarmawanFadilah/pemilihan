@@ -171,12 +171,12 @@ export default function DetailLaporanSayaPage({
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'DRAFT': return 'bg-gray-100 text-gray-800';
-      case 'SUBMITTED': return 'bg-blue-100 text-blue-800';
-      case 'REVIEWED': return 'bg-yellow-100 text-yellow-800';
-      case 'APPROVED': return 'bg-green-100 text-green-800';
-      case 'REJECTED': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'DRAFT': return 'bg-muted text-muted-foreground';
+      case 'SUBMITTED': return 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300';
+      case 'REVIEWED': return 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-300';
+      case 'APPROVED': return 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300';
+      case 'REJECTED': return 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-300';
+      default: return 'bg-muted text-muted-foreground';
     }
   };
 
@@ -193,17 +193,17 @@ export default function DetailLaporanSayaPage({
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   if (!submission) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-xl font-semibold mb-2">Laporan tidak ditemukan</h2>
+          <h2 className="text-xl font-semibold mb-2 text-foreground">Laporan tidak ditemukan</h2>
           <Button onClick={() => router.push('/laporan-saya')}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Kembali ke Daftar Laporan
@@ -214,7 +214,7 @@ export default function DetailLaporanSayaPage({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-background py-8">
       <div className="max-w-4xl mx-auto px-4">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
@@ -227,7 +227,7 @@ export default function DetailLaporanSayaPage({
               Kembali
             </Button>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">{submission.judul}</h1>
+              <h1 className="text-2xl font-bold text-foreground">{submission.judul}</h1>
               <Badge className={getStatusColor(submission.status)}>
                 {getStatusLabel(submission.status)}
               </Badge>
@@ -264,16 +264,16 @@ export default function DetailLaporanSayaPage({
             <CardContent>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium text-gray-600">Tanggal Laporan</label>
-                  <p className="text-gray-900">{submission.tanggalLaporan}</p>
+                  <label className="text-sm font-medium text-muted-foreground">Tanggal Laporan</label>
+                  <p className="text-foreground">{submission.tanggalLaporan}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-600">Lokasi</label>
-                  <p className="text-gray-900">{submission.lokasi}</p>
+                  <label className="text-sm font-medium text-muted-foreground">Lokasi</label>
+                  <p className="text-foreground">{submission.lokasi}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-600">Tanggal Dibuat</label>
-                  <p className="text-gray-900">
+                  <label className="text-sm font-medium text-muted-foreground">Tanggal Dibuat</label>
+                  <p className="text-foreground">
                     {new Date(submission.tanggalBuat).toLocaleDateString('id-ID', {
                       year: 'numeric',
                       month: 'long',
@@ -284,8 +284,8 @@ export default function DetailLaporanSayaPage({
                   </p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-600">Status</label>
-                  <p className="text-gray-900">{getStatusLabel(submission.status)}</p>
+                  <label className="text-sm font-medium text-muted-foreground">Status</label>
+                  <p className="text-foreground">{getStatusLabel(submission.status)}</p>
                 </div>
               </div>
             </CardContent>
@@ -299,20 +299,20 @@ export default function DetailLaporanSayaPage({
             <CardContent>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium text-gray-600">Pemilihan</label>
-                  <p className="text-gray-900">{submission.pemilihanJudul || '-'}</p>
+                  <label className="text-sm font-medium text-muted-foreground">Pemilihan</label>
+                  <p className="text-foreground">{submission.pemilihanJudul || '-'}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-600">Jenis Laporan</label>
-                  <p className="text-gray-900">{submission.jenisLaporanNama || '-'}</p>
+                  <label className="text-sm font-medium text-muted-foreground">Jenis Laporan</label>
+                  <p className="text-foreground">{submission.jenisLaporanNama || '-'}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-600">Kategori Laporan</label>
-                  <p className="text-gray-900">{submission.laporanNama || '-'}</p>
+                  <label className="text-sm font-medium text-muted-foreground">Kategori Laporan</label>
+                  <p className="text-foreground">{submission.laporanNama || '-'}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-600">Tahapan Laporan</label>
-                  <p className="text-gray-900">{submission.tahapanLaporanNama || '-'}</p>
+                  <label className="text-sm font-medium text-muted-foreground">Tahapan Laporan</label>
+                  <p className="text-foreground">{submission.tahapanLaporanNama || '-'}</p>
                 </div>
               </div>
             </CardContent>
@@ -325,7 +325,7 @@ export default function DetailLaporanSayaPage({
             </CardHeader>
             <CardContent>
               <div className="prose max-w-none">
-                <div className="whitespace-pre-wrap text-gray-900">
+                <div className="whitespace-pre-wrap text-foreground">
                   {submission.konten}
                 </div>
               </div>
@@ -343,15 +343,15 @@ export default function DetailLaporanSayaPage({
                   {submission.files.map((file, index) => (
                     <div
                       key={index}
-                      className="flex items-center justify-between p-3 border rounded-lg"
+                      className="flex items-center justify-between p-3 border rounded-lg bg-card"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-gray-100 rounded flex items-center justify-center">
-                          <span className="text-xs font-medium text-gray-600">
+                        <div className="w-8 h-8 bg-muted rounded flex items-center justify-center">
+                          <span className="text-xs font-medium text-muted-foreground">
                             {file.split('.').pop()?.toUpperCase()}
                           </span>
                         </div>
-                        <span className="text-gray-900">{file}</span>
+                        <span className="text-foreground">{file}</span>
                       </div>
                       <Button
                         variant="outline"

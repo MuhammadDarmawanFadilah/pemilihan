@@ -9,8 +9,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Stream;
 
 @Service
@@ -19,8 +19,6 @@ public class TempFileService {
 
     @Value("${app.upload.temp-dir:/storage/temp}")
     private String tempUploadDir;
-
-    private static final DateTimeFormatter DATETIME_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss");
 
     /**
      * Clean up temporary files older than specified hours
@@ -85,12 +83,39 @@ public class TempFileService {
             Files.createDirectories(permanentDirPath);
         }
 
-        // Move file to permanent location
-        Path permanentFilePath = permanentDirPath.resolve(tempFileName);
+        // Extract original filename from temp filename
+        // Temp filename format: yyyyMMdd_HHmmss_uuid_originalname.ext
+        String originalFileName = extractOriginalFileName(tempFileName);
+        
+        // Generate clean filename for permanent storage using UUID
+        String uuid = UUID.randomUUID().toString();
+        
+        // Split original filename to get name and extension
+        int lastDotIndex = originalFileName.lastIndexOf('.');
+        String extension = lastDotIndex > 0 ? originalFileName.substring(lastDotIndex) : "";
+        
+        String permanentFileName = uuid + extension;
+
+        // Move file to permanent location with clean filename
+        Path permanentFilePath = permanentDirPath.resolve(permanentFileName);
         Files.move(tempFilePath, permanentFilePath);
 
         log.info("Moved temp file {} to permanent storage: {}", tempFileName, permanentFilePath);
-        return permanentFilePath.toString();
+        return permanentFileName; // Return just the filename, not the full path
+    }
+    
+    /**
+     * Extract original filename from temp filename
+     * Temp filename format: yyyyMMdd_HHmmss_uuid_originalname.ext
+     */
+    private String extractOriginalFileName(String tempFileName) {
+        // Split by underscore and take everything after the third underscore
+        String[] parts = tempFileName.split("_", 4);
+        if (parts.length >= 4) {
+            return parts[3]; // originalname.ext
+        }
+        // Fallback - return the filename as is if format doesn't match
+        return tempFileName;
     }
 
     /**

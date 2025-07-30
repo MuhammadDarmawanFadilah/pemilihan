@@ -267,15 +267,40 @@ export default function EditLaporanSayaPage() {
         throw new Error('Konten laporan wajib diisi');
       }
 
+      // Check if files are being removed and warn user
+      const originalFiles = submission?.files || [];
+      const filesToRemove = originalFiles.filter(f => !formData.uploadedFiles.includes(f));
+      
+      if (filesToRemove.length > 0) {
+        const fileNames = filesToRemove.map(f => getDisplayName(f)).join(', ');
+        const confirmMessage = `Anda akan menghapus ${filesToRemove.length} file: ${fileNames}. File ini akan dihapus permanen. Lanjutkan?`;
+        if (!confirm(confirmMessage)) {
+          return;
+        }
+      }
+
       // Prepare update data (similar to create but for update)
+      // Key insight: Files already in the database (originalFiles) should be treated as permanent,
+      // regardless of their naming pattern. Only truly new uploads should be treated as temp files.
+      
+      // Temp files: files that match temp pattern AND are not in the original submission
+      const tempFiles = formData.uploadedFiles.filter(f => 
+        /^\d{8}_\d{6}_/.test(f) && !originalFiles.includes(f)
+      );
+      
+      // Permanent files: files that were in the original submission (keeping only those still in uploadedFiles)
+      const permanentFiles = formData.uploadedFiles.filter(f => 
+        originalFiles.includes(f)
+      ).map(f => f.replace('documents/', ''));
+      
       const updateData = {
         id: parseInt(submissionId),
         judul: formData.judul,
         konten: formData.konten,
         lokasi: formData.lokasi,
         tanggalLaporan: formData.tanggalLaporan,
-        tempFiles: formData.uploadedFiles.filter(f => /^\d{8}_\d{6}_/.test(f)), // Only new temp files
-        permanentFiles: formData.uploadedFiles.filter(f => !/^\d{8}_\d{6}_/.test(f)), // Existing permanent files
+        tempFiles: tempFiles, // Only new temp files
+        permanentFiles: permanentFiles, // Files to keep from original submission
         tahapanLaporanId: submission?.tahapanLaporanId,
         jenisLaporanId: submission?.jenisLaporanId,
         laporanId: submission?.laporanId,
@@ -283,6 +308,17 @@ export default function EditLaporanSayaPage() {
         userId: user?.id
       };
 
+      console.log('=== FILE EDIT DEBUG INFO ===');
+      console.log('Original files from submission:', originalFiles);
+      console.log('Current uploadedFiles:', formData.uploadedFiles);
+      console.log('Files to remove:', originalFiles.filter(f => !formData.uploadedFiles.includes(f)));
+      console.log('Files to keep:', formData.uploadedFiles.filter(f => originalFiles.includes(f)));
+      console.log('Identified tempFiles:', tempFiles);
+      console.log('Identified permanentFiles:', permanentFiles);
+      console.log('Final updateData:', updateData);
+      console.log('===============================');
+      console.log('Filtered tempFiles:', tempFiles);
+      console.log('Filtered permanentFiles:', permanentFiles);
       console.log('Updating laporan data:', updateData);
       
       // For now, we'll use the same endpoint as create since update endpoint may not exist yet
@@ -514,14 +550,17 @@ export default function EditLaporanSayaPage() {
                       {/* Uploaded Files List */}
                       {formData.uploadedFiles.length > 0 && (
                         <div className="mt-4 space-y-2">
-                          <Label className="text-sm font-medium">File yang diupload:</Label>
+                          <Label className="text-sm font-medium">File yang diupload ({formData.uploadedFiles.length} file):</Label>
+                          <p className="text-xs text-muted-foreground mb-2">
+                            💡 Tip: File yang dihapus dari daftar ini akan dihapus permanen saat Anda menyimpan perubahan.
+                          </p>
                           {formData.uploadedFiles.map((fileName, index) => (
                             <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-lg border">
                               <div className="flex items-center gap-3">
                                 <div>
                                   <p className="text-sm font-medium text-foreground">{getDisplayName(fileName)}</p>
                                   <p className="text-xs text-muted-foreground">
-                                    {/^\d{8}_\d{6}_/.test(fileName) ? 'File baru' : 'File tersimpan'}
+                                    {(submission?.files || []).includes(fileName) ? 'File tersimpan' : 'File baru'}
                                   </p>
                                 </div>
                               </div>
