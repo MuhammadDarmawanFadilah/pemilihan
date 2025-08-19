@@ -1,0 +1,101 @@
+{
+  "name": "Sistem Pemilihan Alumni - Aplikasi Voting Online",
+  "short_name": "Pemilihan Alumni",
+  "description": "Aplikasi Sistem Pemilihan Alumni Online untuk Event Pemilihan",
+  "theme_color": "#f69435",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "start_url": "/?utm_source=pwa&utm_medium=pwa&utm_campaign=pwa",
+  "lang": "id",
+  "dir": "ltr",
+  "id": "pemilihan-alumni-pwa",
+  "categories": ["productivity", "business", "education"],
+  "prefer_related_applications": false,
+  "edge_side_panel": {
+    "preferred_width": 480
+  },
+  "icons": [
+    {
+      "src": "/logo.svg",
+      "sizes": "72x72",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/logo.svg",
+      "sizes": "96x96",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/logo.svg",
+      "sizes": "128x128",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/logo.svg",
+      "sizes": "144x144",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/logo.svg",
+      "sizes": "152x152",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/logo.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.svg",
+      "sizes": "384x384",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/logo.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/logo.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "form_factor": "wide",
+      "label": "Dashboard Pemilihan Alumni"
+    },
+    {
+      "src": "/logo.svg", 
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "form_factor": "narrow",
+      "label": "Pemilihan Mobile"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "Go to Dashboard",
+      "url": "/?utm_source=pwa_shortcut&utm_medium=pwa&utm_campaign=dashboard",
+      "icons": [{ "src": "/logo.svg", "sizes": "192x192" }]
+    },
+    {
+      "name": "Pemilihan",
+      "short_name": "Voting",
+      "description": "Halaman Pemilihan",
+      "url": "/voting?utm_source=pwa_shortcut&utm_medium=pwa&utm_campaign=voting",
+      "icons": [{ "src": "/logo.svg", "sizes": "192x192" }]
+    }
+  ]
+}
