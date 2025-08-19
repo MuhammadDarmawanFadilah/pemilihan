@@ -48,6 +48,7 @@ export default async function RootLayout({
         <link rel="icon" href="/logo.svg" type="image/svg+xml" />
         <link rel="shortcut icon" href="/logo.svg" />
         <link rel="apple-touch-icon" href="/logo.svg" />
+        <link rel="manifest" href="/manifest.json" />
         {process.env.NODE_ENV === 'development' && (
           <script src="/network-filter.js" defer></script>
         )}

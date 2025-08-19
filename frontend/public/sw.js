@@ -1,9 +1,9 @@
 // Service Worker for PWA - Auto-generated
-// Generated at: 2025-08-18T23:18:53.006Z
+// Generated at: 2025-08-19T00:29:50.579Z
 
 // Dynamic cache name with timestamp for development
 const VERSION = '0.1.0';
-const BUILD_TIME = 1755559133006;
+const BUILD_TIME = 1755563390579;
 const isDev = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
 const CACHE_NAME = isDev ? `pemilihan-alumni-dev-${BUILD_TIME}` : `pemilihan-alumni-v${VERSION}`;
 const OFFLINE_URL = '/offline';
