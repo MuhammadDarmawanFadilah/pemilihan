@@ -1,7 +1,7 @@
 {
-  "name": "Sistem Pemilihan Alumni - Aplikasi Voting Online",
-  "short_name": "Pemilihan Alumni",
-  "description": "Aplikasi Sistem Pemilihan Alumni Online untuk Event Pemilihan",
+  "name": "Sistem Pemilihan Bawaslu - Aplikasi Voting Online",
+  "short_name": "Pemilihan Bawaslu",
+  "description": "Aplikasi Sistem Pemilihan Bawaslu Online untuk Event Pemilihan",
   "theme_color": "#f69435",
   "background_color": "#ffffff",
   "display": "standalone",
@@ -10,7 +10,7 @@
   "start_url": "/?utm_source=pwa&utm_medium=pwa&utm_campaign=pwa",
   "lang": "id",
   "dir": "ltr",
-  "id": "pemilihan-alumni-pwa",
+  "id": "pemilihan-bawaslu-pwa",
   "categories": ["productivity", "business", "education"],
   "prefer_related_applications": false,
   "edge_side_panel": {
@@ -72,7 +72,7 @@
       "sizes": "512x512",
       "type": "image/svg+xml",
       "form_factor": "wide",
-      "label": "Dashboard Pemilihan Alumni"
+      "label": "Dashboard Pemilihan Bawaslu"
     },
     {
       "src": "/logo.svg", 

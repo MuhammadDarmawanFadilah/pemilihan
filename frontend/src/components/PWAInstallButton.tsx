@@ -215,7 +215,7 @@ const PWAInstallButton = () => {
     if (deviceType === 'mobile') {
       if (isChrome || isEdge) {
         return {
-          title: "Install Sistem Pemilihan Alumni",
+          title: "Install Sistem Pemilihan Bawaslu",
           steps: [
             "1. Klik menu tiga titik (⋮) di pojok kanan atas browser",
             "2. Pilih 'Install app' atau 'Add to Home screen'",
@@ -224,7 +224,7 @@ const PWAInstallButton = () => {
         };
       } else if (isFirefox) {
         return {
-          title: "Install Sistem Pemilihan Alumni",
+          title: "Install Sistem Pemilihan Bawaslu",
           steps: [
             "1. Klik ikon 'Home' di address bar",
             "2. Pilih 'Add to Home Screen'",
@@ -233,7 +233,7 @@ const PWAInstallButton = () => {
         };
       } else if (isSafari) {
         return {
-          title: "Install Sistem Pemilihan Alumni",
+          title: "Install Sistem Pemilihan Bawaslu",
           steps: [
             "1. Ketuk tombol 'Share' (ikon persegi dengan panah ke atas)",
             "2. Scroll ke bawah dan pilih 'Add to Home Screen'",
@@ -244,16 +244,16 @@ const PWAInstallButton = () => {
     } else {
       if (isChrome || isEdge) {
         return {
-          title: "Install Sistem Pemilihan Alumni",
+          title: "Install Sistem Pemilihan Bawaslu",
           steps: [
             "1. Klik menu tiga titik (⋮) di pojok kanan atas browser",
-            "2. Pilih 'Install Sistem Pemilihan Alumni...'",
+            "2. Pilih 'Install Sistem Pemilihan Bawaslu...'",
             "3. Klik 'Install' pada dialog yang muncul"
           ]
         };
       } else if (isFirefox) {
         return {
-          title: "Install Sistem Pemilihan Alumni",
+          title: "Install Sistem Pemilihan Bawaslu",
           steps: [
             "1. Klik ikon '+' di address bar (jika tersedia)",
             "2. Atau bookmark halaman ini untuk akses cepat",
@@ -264,7 +264,7 @@ const PWAInstallButton = () => {
     }
 
     return {
-      title: "Install Sistem Pemilihan Alumni",
+      title: "Install Sistem Pemilihan Bawaslu",
       steps: [
         "1. Bookmark halaman ini untuk akses cepat",
         "2. Atau tambahkan shortcut ke desktop/home screen",
