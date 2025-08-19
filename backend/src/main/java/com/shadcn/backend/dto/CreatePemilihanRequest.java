@@ -18,7 +18,7 @@ public class CreatePemilihanRequest {
     private Double longitude;
     private String tanggalAktif;
     private String tanggalBerakhir;
-    private List<DetailLaporanDTO> detailLaporan;
+    private List<DetailLaporanDto> detailLaporan;
 
     // Constructors
     public CreatePemilihanRequest() {}
@@ -27,7 +27,7 @@ public class CreatePemilihanRequest {
                                  String provinsi, String kota, String kecamatan, String kelurahan, 
                                  String tingkatPemilihan, String rt, String rw, String alamatLokasi, 
                                  Double latitude, Double longitude, String tanggalAktif, 
-                                 String tanggalBerakhir, List<DetailLaporanDTO> detailLaporan) {
+                                 String tanggalBerakhir, List<DetailLaporanDto> detailLaporan) {
         this.judulPemilihan = judulPemilihan;
         this.deskripsi = deskripsi;
         this.status = status;
@@ -167,11 +167,11 @@ public class CreatePemilihanRequest {
         this.tanggalBerakhir = tanggalBerakhir;
     }
 
-    public List<DetailLaporanDTO> getDetailLaporan() {
+    public List<DetailLaporanDto> getDetailLaporan() {
         return detailLaporan;
     }
 
-    public void setDetailLaporan(List<DetailLaporanDTO> detailLaporan) {
+    public void setDetailLaporan(List<DetailLaporanDto> detailLaporan) {
         this.detailLaporan = detailLaporan;
     }
 }

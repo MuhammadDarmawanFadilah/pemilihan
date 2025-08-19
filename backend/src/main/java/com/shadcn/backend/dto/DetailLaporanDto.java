@@ -10,7 +10,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class DetailLaporanDTO {
+public class DetailLaporanDto {
     private Long detailLaporanId;
     private Long laporanId;
     private String konten;

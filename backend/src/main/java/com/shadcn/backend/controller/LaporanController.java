@@ -474,7 +474,7 @@ public class LaporanController {
             }
 
             String konten = contentRequest.get("konten");
-            DetailLaporanDTO updatedDetail = laporanService.updateDetailLaporan(detailId, konten, userId);
+            DetailLaporanDto updatedDetail = laporanService.updateDetailLaporan(detailId, konten, userId);
             return ResponseEntity.ok(updatedDetail);
         } catch (SecurityException e) {
             Map<String, String> error = new HashMap<>();
@@ -514,7 +514,7 @@ public class LaporanController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
             }
 
-            DetailLaporanDTO completedDetail = laporanService.completeDetailLaporan(detailId, userId);
+            DetailLaporanDto completedDetail = laporanService.completeDetailLaporan(detailId, userId);
             return ResponseEntity.ok(completedDetail);
         } catch (SecurityException e) {
             Map<String, String> error = new HashMap<>();

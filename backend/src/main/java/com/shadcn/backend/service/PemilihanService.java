@@ -5,7 +5,7 @@ import com.shadcn.backend.model.DetailPemilihan;
 import com.shadcn.backend.model.Laporan;
 import com.shadcn.backend.dto.PemilihanDTO;
 import com.shadcn.backend.dto.CreatePemilihanRequest;
-import com.shadcn.backend.dto.DetailLaporanDTO;
+import com.shadcn.backend.dto.DetailLaporanDto;
 import com.shadcn.backend.repository.PemilihanRepository;
 import com.shadcn.backend.repository.DetailPemilihanRepository;
 import com.shadcn.backend.repository.LaporanRepository;
@@ -128,7 +128,7 @@ public class PemilihanService {
                 detailPemilihanRepository.deleteByPemilihanPemilihanId(pemilihan.getPemilihanId());
                 
                 // Create new detail pemilihan
-                for (DetailLaporanDTO detailDto : request.getDetailLaporan()) {
+                for (DetailLaporanDto detailDto : request.getDetailLaporan()) {
                     DetailPemilihan detail = new DetailPemilihan();
                     detail.setPemilihan(pemilihan);
                     

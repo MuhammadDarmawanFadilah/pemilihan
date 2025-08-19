@@ -461,7 +461,7 @@ public class LaporanService {
     
     // Update detail laporan
     @Transactional
-    public DetailLaporanDTO updateDetailLaporan(Long detailId, String konten, Long userId) {
+    public DetailLaporanDto updateDetailLaporan(Long detailId, String konten, Long userId) {
         DetailLaporan detail = detailLaporanRepository.findById(detailId)
                 .orElseThrow(() -> new RuntimeException("Detail laporan tidak ditemukan"));
         
@@ -480,7 +480,7 @@ public class LaporanService {
     
     // Complete detail laporan
     @Transactional
-    public DetailLaporanDTO completeDetailLaporan(Long detailId, Long userId) {
+    public DetailLaporanDto completeDetailLaporan(Long detailId, Long userId) {
         DetailLaporan detail = detailLaporanRepository.findById(detailId)
                 .orElseThrow(() -> new RuntimeException("Detail laporan tidak ditemukan"));
         
@@ -788,8 +788,8 @@ public class LaporanService {
         return dto;
     }
     
-    private DetailLaporanDTO convertDetailToDto(DetailLaporan detail) {
-        DetailLaporanDTO dto = new DetailLaporanDTO();
+    private DetailLaporanDto convertDetailToDto(DetailLaporan detail) {
+        DetailLaporanDto dto = new DetailLaporanDto();
         dto.setDetailLaporanId(detail.getDetailLaporanId());
         dto.setKonten(detail.getKonten());
         dto.setStatus(detail.getStatus());
