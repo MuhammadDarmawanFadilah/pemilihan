@@ -2,10 +2,7 @@
 # SISTEM PEMILIHAN BAWASLU - GITIGNORE
 # ==========================================
 
-# Development Environment Files
-.env.local
-.env.development.local
-.env.test.local
+
 
 # Production Environment Files (Allow .env.prod to be committed)
 # .env.prod is intentionally NOT ignored - it should be committed to GitHub
@@ -119,8 +116,6 @@ web_modules/
 .yarn-integrity
 
 # dotenv environment variables file (except .env.prod)
-.env
-.env.backup
 
 # parcel-bundler cache
 .cache
@@ -237,8 +232,6 @@ nbdist/
 .nb-gradle/
 
 # Local Configuration Override Files
-application-local.properties
-application-local.yml
 
 # Development Tools
 .tool-versions

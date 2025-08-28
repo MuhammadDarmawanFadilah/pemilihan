@@ -6,12 +6,15 @@
     "dev": "node scripts/generate-sw.js && next dev --turbopack",
     "dev:pwa": "node scripts/dev-with-pwa.js",
     "build": "node scripts/generate-sw.js && next build",
+    "build:verify": "cross-env NODE_ENV=production npm run build && node scripts/verify-production-console.js",
     "start": "next start",
     "lint": "next lint --fix",
     "lint:check": "next lint",
     "type-check": "tsc --noEmit",
     "build:analyze": "ANALYZE=true npm run build",
-    "generate-sw": "node scripts/generate-sw.js"
+    "generate-sw": "node scripts/generate-sw.js",
+    "test-pwa": "node scripts/test-pwa-update.js",
+    "simulate-pwa-update": "node scripts/simulate-pwa-update.js"
   },
   "dependencies": {
     "@ducanh2912/next-pwa": "^10.2.9",
@@ -65,13 +68,17 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
+    "@ducanh2912/next-pwa": "^10.2.9",
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "cross-env": "^10.0.0",
     "eslint": "^9",
     "eslint-config-next": "15.3.0",
+    "glob": "^11.0.3",
+    "postcss": "^8",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

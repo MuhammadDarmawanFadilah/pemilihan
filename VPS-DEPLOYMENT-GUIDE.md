@@ -1,4 +1,18 @@
-# VPS DEPLOYMENT GUIDE - OPTIMIZED ALUMNI ELECTION SYSTEM
+# VPS DEPLOYMENT GUIDE - SISTEM PEMILIHAN BAWASLU
+## Production Deployment with Enhanced PWA Features
+
+### 🚀 ONE-COMMAND DEPLOYMENT (Optimized for High Performance)
+
+#### **STAGE 1: System & Dependencies Setup**
+```bash
+sudo apt update && sudo apt upgrade -y && \
+sudo apt install -y openjdk-21-jdk mysql-server nginx maven git curl wget unzip nodejs npm && \
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash - && \
+sudo apt install -y nodejs && \
+sudo npm install -g pnpm && \
+sudo systemctl start mysql nginx && \
+sudo systemctl enable mysql nginx
+```T GUIDE - OPTIMIZED ALUMNI ELECTION SYSTEM
 ## Production Deployment with Balanced Performance
 
 ### � ONE-COMMAND DEPLOYMENT (Optimized for High Performance)

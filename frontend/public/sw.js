@@ -1,11 +1,13 @@
 // Service Worker for PWA - Auto-generated
-// Generated at: 2025-08-19T00:45:47.890Z
+// Generated at: 2025-08-28T01:26:12.073Z
+// Deployment ID: a6b4i9
 
 // Dynamic cache name with timestamp for development
 const VERSION = '0.1.0';
-const BUILD_TIME = 1755564347889;
+const BUILD_TIME = 1756344372057;
+const DEPLOYMENT_ID = 'a6b4i9';
 const isDev = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-const CACHE_NAME = isDev ? `pemilihan-alumni-dev-${BUILD_TIME}` : `pemilihan-alumni-v${VERSION}`;
+const CACHE_NAME = isDev ? `pemilihan-bawaslu-dev-${BUILD_TIME}` : `pemilihan-bawaslu-v${VERSION}-${DEPLOYMENT_ID}`;
 const OFFLINE_URL = '/offline';
 
 // Files to cache immediately
@@ -39,6 +41,7 @@ self.addEventListener('install', (event) => {
 // Activate event - cleanup old caches
 self.addEventListener('activate', (event) => {
   console.log('Service Worker: Activate event');
+  console.log('Service Worker: New deployment activated:', DEPLOYMENT_ID);
   
   event.waitUntil(
     caches.keys()
@@ -55,6 +58,19 @@ self.addEventListener('activate', (event) => {
       .then(() => {
         // Take control of all open clients
         return self.clients.claim();
+      })
+      .then(() => {
+        // Notify all clients about the update
+        return self.clients.matchAll().then(clients => {
+          clients.forEach(client => {
+            client.postMessage({
+              type: 'SW_UPDATED',
+              deploymentId: DEPLOYMENT_ID,
+              buildTime: BUILD_TIME,
+              message: 'New version available!'
+            });
+          });
+        });
       })
   );
 });
@@ -166,7 +182,7 @@ self.addEventListener('push', (event) => {
     const data = event.data.json();
     
     const options = {
-      body: data.body || 'Notifikasi baru dari Sistem Pemilihan Alumni',
+      body: data.body || 'Notifikasi baru dari Sistem Pemilihan Bawaslu',
       icon: '/logo.svg',
       badge: '/logo.svg',
       vibrate: [100, 50, 100],
@@ -189,7 +205,7 @@ self.addEventListener('push', (event) => {
     };
     
     event.waitUntil(
-      self.registration.showNotification(data.title || 'Sistem Pemilihan Alumni', options)
+      self.registration.showNotification(data.title || 'Sistem Pemilihan Bawaslu', options)
     );
   }
 });
@@ -223,3 +239,4 @@ console.log('Service Worker: Loaded successfully');
 console.log('Environment:', isDev ? 'Development' : 'Production');
 console.log('Cache Name:', CACHE_NAME);
 console.log('Build Time:', new Date(BUILD_TIME).toLocaleString());
+console.log('Deployment ID:', DEPLOYMENT_ID);
