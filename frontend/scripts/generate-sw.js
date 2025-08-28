@@ -33,7 +33,11 @@ const STATIC_CACHE_URLS = [
   '/offline',
   '/manifest.json',
   '/logo.svg',
-  '/favicon.ico'
+  '/favicon.ico',
+  // PWA primary icons
+  '/icons/icon-192x192.png',
+  '/icons/icon-512x512.png',
+  '/icons/apple-touch-icon.png'
 ];
 
 // Install event - cache static files
