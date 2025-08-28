@@ -29,43 +29,97 @@ const PWAInstallButton = () => {
   const [deviceType, setDeviceType] = useState<'mobile' | 'desktop'>('desktop');
 
   useEffect(() => {
-    // Detect device type
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    setDeviceType(isMobile ? 'mobile' : 'desktop');
+    // Enhanced mobile detection
+    const detectMobile = () => {
+      const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
+      
+      // Check for mobile devices
+      const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
+      
+      // Check for tablet devices
+      const isTablet = /ipad|android(?!.*mobile)|tablet/i.test(userAgent);
+      
+      // Use window size as additional check
+      const hasSmallScreen = window.innerWidth < 768 || window.innerHeight < 768;
+      
+      // Consider both user agent and screen size
+      const isMobile = isMobileDevice || (hasSmallScreen && !isTablet);
+      
+      setDeviceType(isMobile ? 'mobile' : 'desktop');
+      
+      console.log('PWA: Device detection', {
+        userAgent,
+        isMobileDevice,
+        isTablet,
+        hasSmallScreen,
+        finalDeviceType: isMobile ? 'mobile' : 'desktop',
+        windowSize: { width: window.innerWidth, height: window.innerHeight }
+      });
+      
+      return isMobile;
+    };
 
-    // Check PWA support
+    const isMobile = detectMobile();
+
+    // Enhanced PWA support check
     const checkPWASupport = () => {
       const hasServiceWorker = 'serviceWorker' in navigator;
       const hasManifest = document.querySelector('link[rel="manifest"]') !== null;
+      const isSecureContext = location.protocol === 'https:' || location.hostname === 'localhost';
       
-      // More lenient PWA support - just need service worker and manifest
-      setIsSupported(hasServiceWorker && hasManifest);
+      // Check if we're in a PWA context already
+      const isPWAContext = window.matchMedia('(display-mode: standalone)').matches || 
+                          (navigator as any).standalone === true ||
+                          document.referrer.includes('android-app://');
+      
+      // Additional mobile-specific checks
+      const hasManifestSupport = 'onbeforeinstallprompt' in window || 
+                                  isMobile; // Mobile browsers generally support PWA even without beforeinstallprompt
+      
+      const supported = hasServiceWorker && hasManifest && isSecureContext && !isPWAContext;
+      setIsSupported(supported);
       
       console.log('PWA Support Check:', {
         serviceWorker: hasServiceWorker,
         manifest: hasManifest,
+        secureContext: isSecureContext,
         manifestElement: document.querySelector('link[rel="manifest"]'),
-        userAgent: navigator.userAgent
+        isPWAContext,
+        hasManifestSupport,
+        supported,
+        userAgent: navigator.userAgent,
+        standalone: (navigator as any).standalone,
+        displayMode: window.matchMedia('(display-mode: standalone)').matches
       });
+      
+      return supported;
     };
 
     // Check if app is already installed
     const checkIfInstalled = () => {
-      // Check if running in standalone mode (installed)
+      // Enhanced standalone detection
       const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
-                          (window.navigator as any).standalone === true ||
-                          document.referrer.includes('android-app://');
+                          (navigator as any).standalone === true ||
+                          document.referrer.includes('android-app://') ||
+                          window.location.search.includes('utm_source=pwa');
       
       setIsInstalled(isStandalone);
-      console.log('PWA: Install check - isStandalone:', isStandalone);
+      console.log('PWA: Install check', {
+        standalone: window.matchMedia('(display-mode: standalone)').matches,
+        navigatorStandalone: (navigator as any).standalone,
+        androidApp: document.referrer.includes('android-app://'),
+        pwaSource: window.location.search.includes('utm_source=pwa'),
+        finalResult: isStandalone
+      });
+      
       return isStandalone;
     };
 
-    checkPWASupport();
+    const supported = checkPWASupport();
     const installed = checkIfInstalled();
 
     // Only add event listeners if not installed and PWA is supported
-    if (!installed && isSupported) {
+    if (!installed && supported) {
       const handleBeforeInstallPrompt = (e: BeforeInstallPromptEvent) => {
         console.log('PWA: beforeinstallprompt event fired');
         
@@ -103,27 +157,59 @@ const PWAInstallButton = () => {
       window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt as EventListener);
       window.addEventListener('appinstalled', handleAppInstalled);
 
-      // More aggressive installation criteria checking
-      const checkInstallCriteria = () => {
-        // Force service worker registration if not already done
-        if ('serviceWorker' in navigator) {
+      // Force service worker registration check for mobile
+      if (isMobile && 'serviceWorker' in navigator) {
+        const checkServiceWorkerAndPrompt = () => {
           navigator.serviceWorker.getRegistrations().then(registrations => {
+            console.log('PWA: Service worker registrations:', registrations.length);
+            
             if (registrations.length === 0) {
               console.log('PWA: No service worker found, may affect installability');
+              
+              // Try to manually register service worker
+              navigator.serviceWorker.register('/sw.js')
+                .then(registration => {
+                  console.log('PWA: Service worker manually registered:', registration.scope);
+                  
+                  // Wait a bit then check for install prompt
+                  setTimeout(() => {
+                    if (!deferredPrompt) {
+                      console.log('PWA: No install prompt available after SW registration');
+                    }
+                  }, 2000);
+                })
+                .catch(error => {
+                  console.error('PWA: Manual SW registration failed:', error);
+                });
             } else {
-              console.log('PWA: Service worker registered, checking install criteria');
-              // Dispatch a custom event to potentially trigger beforeinstallprompt
-              setTimeout(() => {
-                const event = new CustomEvent('pwa-check-install');
-                window.dispatchEvent(event);
-              }, 1000);
+              console.log('PWA: Service worker already registered');
+              
+              // Force update check
+              registrations[0].update().then(() => {
+                console.log('PWA: Service worker update check completed');
+              });
             }
           });
-        }
-      };
+        };
 
-      // Check install criteria after a delay to allow page to fully load
-      setTimeout(checkInstallCriteria, 2000);
+        // Check service worker after a delay to allow page to fully load
+        setTimeout(checkServiceWorkerAndPrompt, 1000);
+      }
+
+      // Additional mobile-specific initialization
+      if (isMobile) {
+        // Check if manifest is properly loaded
+        setTimeout(() => {
+          fetch('/manifest.json')
+            .then(response => response.json())
+            .then(manifest => {
+              console.log('PWA: Manifest loaded successfully:', manifest);
+            })
+            .catch(error => {
+              console.error('PWA: Error loading manifest:', error);
+            });
+        }, 500);
+      }
 
       return () => {
         window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt as EventListener);
@@ -133,11 +219,12 @@ const PWAInstallButton = () => {
 
     console.log('PWA: Install button component mounted', {
       isInstalled: installed,
-      isSupported,
-      deviceType,
-      userAgent: navigator.userAgent
+      isSupported: supported,
+      deviceType: isMobile ? 'mobile' : 'desktop',
+      userAgent: navigator.userAgent,
+      windowSize: { width: window.innerWidth, height: window.innerHeight }
     });
-  }, [isSupported]);
+  }, []);
 
   const handleInstallClick = async () => {
     console.log('PWA: Install button clicked', { hasDeferredPrompt: !!deferredPrompt });
@@ -207,70 +294,134 @@ const PWAInstallButton = () => {
   };
 
   const getManualInstructions = () => {
-    const isChrome = /Chrome/i.test(navigator.userAgent);
+    const isChrome = /Chrome/i.test(navigator.userAgent) && !/Edge/i.test(navigator.userAgent);
     const isFirefox = /Firefox/i.test(navigator.userAgent);
     const isSafari = /Safari/i.test(navigator.userAgent) && !/Chrome/i.test(navigator.userAgent);
     const isEdge = /Edge|Edg/i.test(navigator.userAgent);
+    const isSamsung = /SamsungBrowser/i.test(navigator.userAgent);
+    const isAndroid = /Android/i.test(navigator.userAgent);
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
     if (deviceType === 'mobile') {
-      if (isChrome || isEdge) {
+      if (isAndroid) {
+        if (isChrome || isEdge) {
+          return {
+            title: "Install Aplikasi Pemilihan Bawaslu",
+            steps: [
+              "📱 Di Chrome Android:",
+              "1. Ketuk menu tiga titik (⋮) di pojok kanan atas",
+              "2. Pilih 'Install app' atau 'Add to Home screen'",
+              "3. Ketuk 'Install' untuk menambahkan ke layar utama",
+              "4. Aplikasi akan muncul sebagai aplikasi native di drawer"
+            ]
+          };
+        } else if (isFirefox) {
+          return {
+            title: "Install Aplikasi Pemilihan Bawaslu",
+            steps: [
+              "🦊 Di Firefox Android:",
+              "1. Ketuk menu tiga titik (⋮) di pojok kanan atas",
+              "2. Pilih 'Install' (jika tersedia) atau 'Add to Home Screen'",
+              "3. Ketuk 'Add' untuk install aplikasi",
+              "4. Buka dari layar utama untuk pengalaman terbaik"
+            ]
+          };
+        } else if (isSamsung) {
+          return {
+            title: "Install Aplikasi Pemilihan Bawaslu",
+            steps: [
+              "📱 Di Samsung Internet:",
+              "1. Ketuk menu (≡) di pojok kanan bawah",
+              "2. Pilih 'Add page to' → 'Home screen'",
+              "3. Ketuk 'Add' untuk install aplikasi",
+              "4. Aplikasi akan tersedia di layar utama"
+            ]
+          };
+        } else {
+          return {
+            title: "Install Aplikasi Pemilihan Bawaslu",
+            steps: [
+              "📱 Di Browser Android:",
+              "1. Cari menu 'Add to Home Screen' di pengaturan browser",
+              "2. Atau bookmark halaman ini untuk akses cepat",
+              "3. Beberapa browser akan menampilkan popup install otomatis",
+              "4. Gunakan Chrome atau Edge untuk pengalaman terbaik"
+            ]
+          };
+        }
+      } else if (isIOS) {
         return {
-          title: "Install Sistem Pemilihan Bawaslu",
+          title: "Install Aplikasi Pemilihan Bawaslu",
           steps: [
-            "1. Klik menu tiga titik (⋮) di pojok kanan atas browser",
-            "2. Pilih 'Install app' atau 'Add to Home screen'",
-            "3. Ketuk 'Install' untuk menambahkan ke layar utama"
-          ]
-        };
-      } else if (isFirefox) {
-        return {
-          title: "Install Sistem Pemilihan Bawaslu",
-          steps: [
-            "1. Klik ikon 'Home' di address bar",
-            "2. Pilih 'Add to Home Screen'",
-            "3. Ketuk 'Add' untuk install aplikasi"
-          ]
-        };
-      } else if (isSafari) {
-        return {
-          title: "Install Sistem Pemilihan Bawaslu",
-          steps: [
+            "🍎 Di Safari iOS:",
             "1. Ketuk tombol 'Share' (ikon persegi dengan panah ke atas)",
             "2. Scroll ke bawah dan pilih 'Add to Home Screen'",
-            "3. Ketuk 'Add' untuk install aplikasi"
+            "3. Edit nama aplikasi jika diperlukan",
+            "4. Ketuk 'Add' untuk install aplikasi",
+            "5. Aplikasi akan muncul di layar utama iPhone/iPad"
+          ]
+        };
+      } else {
+        return {
+          title: "Install Aplikasi Pemilihan Bawaslu",
+          steps: [
+            "📱 Instruksi Umum Mobile:",
+            "1. Cari opsi 'Add to Home Screen' di menu browser",
+            "2. Atau simpan sebagai bookmark untuk akses cepat",
+            "3. Aplikasi ini mendukung mode offline",
+            "4. Gunakan Chrome atau Safari untuk hasil terbaik"
           ]
         };
       }
     } else {
+      // Desktop instructions
       if (isChrome || isEdge) {
         return {
-          title: "Install Sistem Pemilihan Bawaslu",
+          title: "Install Aplikasi Pemilihan Bawaslu",
           steps: [
-            "1. Klik menu tiga titik (⋮) di pojok kanan atas browser",
-            "2. Pilih 'Install Sistem Pemilihan Bawaslu...'",
-            "3. Klik 'Install' pada dialog yang muncul"
+            "💻 Di Chrome/Edge Desktop:",
+            "1. Cari ikon install (+) di address bar sebelah kanan",
+            "2. Atau klik menu tiga titik (⋮) → 'Install Pemilihan Bawaslu...'",
+            "3. Klik 'Install' pada dialog yang muncul",
+            "4. Aplikasi akan terbuka sebagai aplikasi desktop terpisah",
+            "5. Pin ke taskbar untuk akses cepat"
           ]
         };
       } else if (isFirefox) {
         return {
-          title: "Install Sistem Pemilihan Bawaslu",
+          title: "Install Aplikasi Pemilihan Bawaslu",
           steps: [
-            "1. Klik ikon '+' di address bar (jika tersedia)",
+            "🦊 Di Firefox Desktop:",
+            "1. Cari ikon '+' di address bar (jika tersedia)",
             "2. Atau bookmark halaman ini untuk akses cepat",
-            "3. Firefox akan mengingat aplikasi ini"
+            "3. Firefox mendukung web app tanpa install formal",
+            "4. Gunakan Chrome/Edge untuk install sebagai aplikasi desktop"
+          ]
+        };
+      } else if (isSafari) {
+        return {
+          title: "Install Aplikasi Pemilihan Bawaslu",
+          steps: [
+            "🍎 Di Safari Desktop:",
+            "1. Bookmark halaman ini untuk akses cepat",
+            "2. Atau drag URL ke Dock untuk shortcut",
+            "3. Safari mendukung web app functionality",
+            "4. Gunakan Chrome/Edge untuk install formal"
+          ]
+        };
+      } else {
+        return {
+          title: "Install Aplikasi Pemilihan Bawaslu",
+          steps: [
+            "💻 Browser Desktop:",
+            "1. Bookmark halaman ini untuk akses cepat",
+            "2. Tambahkan shortcut ke desktop jika tersedia",
+            "3. Aplikasi web ini berfungsi di semua browser modern",
+            "4. Untuk pengalaman terbaik, gunakan Chrome atau Edge"
           ]
         };
       }
     }
-
-    return {
-      title: "Install Sistem Pemilihan Bawaslu",
-      steps: [
-        "1. Bookmark halaman ini untuk akses cepat",
-        "2. Atau tambahkan shortcut ke desktop/home screen",
-        "3. Browser Anda mendukung penggunaan aplikasi web ini"
-      ]
-    };
   };
 
   // Don't show button if app is already installed

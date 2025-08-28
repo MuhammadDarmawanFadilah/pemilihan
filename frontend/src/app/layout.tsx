@@ -23,14 +23,38 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Tren-Silapor - Sistem Pelaporan dan Pengawasan Pemilihan",
-  description: "Sistem Informasi Alumni Fakultas Kedokteran Universitas Jenderal Soedirman",
+  title: "Sistem Pemilihan Bawaslu - Aplikasi Voting Online",
+  description: "Sistem Pemilihan Bawaslu Online untuk Event Pemilihan - Progressive Web App",
+  manifest: "/manifest.json",
   icons: {
     icon: [
-      { url: "/logo.svg", type: "image/svg+xml" },
+      { url: "/icons/favicon.svg", type: "image/svg+xml" },
+      { url: "/icons/icon-32x32.svg", sizes: "32x32", type: "image/svg+xml" },
+      { url: "/icons/icon-16x16.svg", sizes: "16x16", type: "image/svg+xml" },
     ],
-    shortcut: "/logo.svg",
-    apple: "/logo.svg",
+    shortcut: "/icons/favicon.svg",
+    apple: [
+      { url: "/icons/apple-touch-icon.svg", sizes: "180x180", type: "image/svg+xml" },
+    ],
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Pemilihan Bawaslu",
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  openGraph: {
+    type: "website",
+    siteName: "Sistem Pemilihan Bawaslu",
+    title: "Sistem Pemilihan Bawaslu - Aplikasi Voting Online",
+    description: "Sistem Pemilihan Bawaslu Online untuk Event Pemilihan",
+  },
+  twitter: {
+    card: "summary",
+    title: "Sistem Pemilihan Bawaslu",
+    description: "Aplikasi Voting Online untuk Event Pemilihan",
   },
 };
 
@@ -45,10 +69,29 @@ export default async function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <link rel="icon" href="/logo.svg" type="image/svg+xml" />
-        <link rel="shortcut icon" href="/logo.svg" />
-        <link rel="apple-touch-icon" href="/logo.svg" />
+        {/* PWA and Mobile Meta Tags */}
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+        <meta name="theme-color" content="#f69435" />
+        <meta name="msapplication-navbutton-color" content="#f69435" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="Pemilihan Bawaslu" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="format-detection" content="telephone=no" />
+        
+        {/* Icons */}
+        <link rel="icon" href="/icons/favicon.svg" type="image/svg+xml" />
+        <link rel="shortcut icon" href="/icons/favicon.svg" />
+        <link rel="apple-touch-icon" href="/icons/apple-touch-icon.svg" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.svg" />
+        
+        {/* Manifest */}
         <link rel="manifest" href="/manifest.json" />
+        
+        {/* Prevent zooming on iOS */}
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+        
+        {/* Development scripts */}
         {process.env.NODE_ENV === 'development' && (
           <>
             <script src="/network-filter.js" defer></script>
