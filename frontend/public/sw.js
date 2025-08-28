@@ -1,11 +1,11 @@
 // Service Worker for PWA - Auto-generated
-// Generated at: 2025-08-28T01:26:12.073Z
-// Deployment ID: a6b4i9
+// Generated at: 2025-08-28T04:03:55.764Z
+// Deployment ID: ko6696
 
 // Dynamic cache name with timestamp for development
 const VERSION = '0.1.0';
-const BUILD_TIME = 1756344372057;
-const DEPLOYMENT_ID = 'a6b4i9';
+const BUILD_TIME = 1756353835748;
+const DEPLOYMENT_ID = 'ko6696';
 const isDev = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
 const CACHE_NAME = isDev ? `pemilihan-bawaslu-dev-${BUILD_TIME}` : `pemilihan-bawaslu-v${VERSION}-${DEPLOYMENT_ID}`;
 const OFFLINE_URL = '/offline';
@@ -16,7 +16,11 @@ const STATIC_CACHE_URLS = [
   '/offline',
   '/manifest.json',
   '/logo.svg',
-  '/favicon.ico'
+  '/favicon.ico',
+  // PWA primary icons
+  '/icons/icon-192x192.png',
+  '/icons/icon-512x512.png',
+  '/icons/apple-touch-icon.png'
 ];
 
 // Install event - cache static files

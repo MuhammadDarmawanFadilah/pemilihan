@@ -31,7 +31,8 @@ export const metadata: Metadata = {
       { url: "/icons/favicon-16x16.png", sizes: "16x16", type: "image/png" },
       { url: "/icons/favicon-32x32.png", sizes: "32x32", type: "image/png" },
       { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
-      { url: "/icons/icon-512x512.png", sizes: "512x512", type: "image/png" }
+      { url: "/icons/icon-512x512.png", sizes: "512x512", type: "image/png" },
+      { url: "/logo.svg", sizes: "any", type: "image/svg+xml" }
     ],
     shortcut: "/icons/favicon-32x32.png",
     apple: [
@@ -83,6 +84,7 @@ export default async function RootLayout({
   {/* Icons */}
   <link rel="icon" href="/icons/favicon-32x32.png" sizes="32x32" type="image/png" />
   <link rel="icon" href="/icons/favicon-16x16.png" sizes="16x16" type="image/png" />
+  <link rel="icon" href="/logo.svg" sizes="any" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" sizes="180x180" type="image/png" />
   <link rel="shortcut icon" href="/icons/favicon-32x32.png" />
         
