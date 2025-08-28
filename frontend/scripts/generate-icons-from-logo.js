@@ -35,6 +35,24 @@ async function generateIcons() {
     console.log(`✅ Generated ${outPath}`);
   }
 
+  // Generate SVG variants for key sizes (192, 512) directly from source SVG
+  try {
+    const raw = svgContent.toString();
+    const innerStart = raw.indexOf('>') + 1;
+    const innerEnd = raw.lastIndexOf('</svg>');
+    const inner = raw.substring(innerStart, innerEnd).trim();
+    const viewBoxMatch = raw.match(/viewBox="([^"]+)"/i);
+    const viewBox = viewBoxMatch ? viewBoxMatch[1] : '0 0 225 225';
+    for (const size of [192, 512]) {
+      const svgOut = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="${viewBox}">${inner}</svg>`;
+      const svgPath = path.join(OUTPUT_DIR, `icon-${size}x${size}.svg`);
+      await fs.promises.writeFile(svgPath, svgOut, 'utf8');
+      console.log(`✅ Generated ${svgPath}`);
+    }
+  } catch (e) {
+    console.warn('⚠️  Failed to generate SVG resized variants:', e.message);
+  }
+
   // Generate maskable versions (with padding for safe zone)
   for (const size of [192, 512]) {
     const outPath = path.join(OUTPUT_DIR, `icon-${size}x${size}-maskable.png`);
