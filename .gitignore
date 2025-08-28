@@ -130,7 +130,15 @@ dist
 
 # Gatsby files
 .cache/
+# Public build output (generic) but allow tracked PWA assets under frontend/public
 public
+!frontend/public/manifest.json
+!frontend/public/sw.js
+!frontend/public/offline.html
+!frontend/public/logo.svg
+!frontend/public/logo.png
+!frontend/public/icons/
+!frontend/public/icons/*.png
 
 # Storybook build outputs
 .out

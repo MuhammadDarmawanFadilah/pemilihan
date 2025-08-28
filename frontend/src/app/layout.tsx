@@ -28,13 +28,14 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
   icons: {
     icon: [
-      { url: "/icons/favicon.svg", type: "image/svg+xml" },
-      { url: "/icons/icon-32x32.svg", sizes: "32x32", type: "image/svg+xml" },
-      { url: "/icons/icon-16x16.svg", sizes: "16x16", type: "image/svg+xml" },
+      { url: "/icons/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/icons/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512x512.png", sizes: "512x512", type: "image/png" }
     ],
-    shortcut: "/icons/favicon.svg",
+    shortcut: "/icons/favicon-32x32.png",
     apple: [
-      { url: "/icons/apple-touch-icon.svg", sizes: "180x180", type: "image/svg+xml" },
+      { url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" }
     ],
   },
   appleWebApp: {
@@ -79,11 +80,11 @@ export default async function RootLayout({
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="format-detection" content="telephone=no" />
         
-        {/* Icons */}
-        <link rel="icon" href="/icons/favicon.svg" type="image/svg+xml" />
-        <link rel="shortcut icon" href="/icons/favicon.svg" />
-        <link rel="apple-touch-icon" href="/icons/apple-touch-icon.svg" />
-        <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.svg" />
+  {/* Icons */}
+  <link rel="icon" href="/icons/favicon-32x32.png" sizes="32x32" type="image/png" />
+  <link rel="icon" href="/icons/favicon-16x16.png" sizes="16x16" type="image/png" />
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" sizes="180x180" type="image/png" />
+  <link rel="shortcut icon" href="/icons/favicon-32x32.png" />
         
         {/* Manifest */}
         <link rel="manifest" href="/manifest.json" />
