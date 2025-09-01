@@ -19,6 +19,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -195,7 +198,9 @@ public class SubmissionLaporanService {
             Integer laporanId, 
             Integer jenisLaporanId, 
             Integer tahapanLaporanId,
-            Long pegawaiId) {
+            Long pegawaiId,
+            String startDate,
+            String endDate) {
         
         Pageable pageable = PageRequest.of(page, size, Sort.by("tanggalBuat").descending());
         Page<SubmissionLaporan> submissionPage;
@@ -226,6 +231,13 @@ public class SubmissionLaporanService {
                    submission.getJenisLaporan().getJenisLaporanId().equals(jenisLaporanId.longValue()))
             .filter(submission -> tahapanLaporanId == null || 
                    submission.getTahapanLaporan().getTahapanLaporanId().equals(tahapanLaporanId.longValue()))
+            .filter(submission -> {
+                // Date range filtering based on tanggalLaporan
+                if (startDate != null || endDate != null) {
+                    return isWithinDateRange(submission.getTanggalLaporan(), startDate, endDate);
+                }
+                return true;
+            })
             .map(this::convertToResponse)
             .toList();
         
@@ -491,5 +503,76 @@ public class SubmissionLaporanService {
         response.setFiles(files);
 
         return response;
+    }
+    
+    /**
+     * Helper method to check if a date string is within the specified date range
+     * @param tanggalLaporan the date string from the submission (format: YYYY-MM-DD or DD/MM/YYYY)
+     * @param startDate start date string (format: YYYY-MM-DD)
+     * @param endDate end date string (format: YYYY-MM-DD)
+     * @return true if the date is within range, false otherwise
+     */
+    private boolean isWithinDateRange(String tanggalLaporan, String startDate, String endDate) {
+        if (tanggalLaporan == null || tanggalLaporan.trim().isEmpty()) {
+            return false;
+        }
+        
+        try {
+            LocalDate laporanDate = parseDate(tanggalLaporan);
+            if (laporanDate == null) {
+                return false;
+            }
+            
+            LocalDate start = null;
+            LocalDate end = null;
+            
+            if (startDate != null && !startDate.trim().isEmpty()) {
+                start = LocalDate.parse(startDate, DateTimeFormatter.ISO_LOCAL_DATE);
+            }
+            
+            if (endDate != null && !endDate.trim().isEmpty()) {
+                end = LocalDate.parse(endDate, DateTimeFormatter.ISO_LOCAL_DATE);
+            }
+            
+            boolean afterStart = start == null || !laporanDate.isBefore(start);
+            boolean beforeEnd = end == null || !laporanDate.isAfter(end);
+            
+            return afterStart && beforeEnd;
+            
+        } catch (DateTimeParseException e) {
+            // If date parsing fails, exclude this record
+            return false;
+        }
+    }
+    
+    /**
+     * Helper method to parse date string in various formats
+     * @param dateString the date string to parse
+     * @return LocalDate object or null if parsing fails
+     */
+    private LocalDate parseDate(String dateString) {
+        if (dateString == null || dateString.trim().isEmpty()) {
+            return null;
+        }
+        
+        String cleanDate = dateString.trim();
+        
+        try {
+            // Try ISO format first (YYYY-MM-DD)
+            return LocalDate.parse(cleanDate, DateTimeFormatter.ISO_LOCAL_DATE);
+        } catch (DateTimeParseException e1) {
+            try {
+                // Try DD/MM/YYYY format
+                return LocalDate.parse(cleanDate, DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+            } catch (DateTimeParseException e2) {
+                try {
+                    // Try DD-MM-YYYY format
+                    return LocalDate.parse(cleanDate, DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+                } catch (DateTimeParseException e3) {
+                    // If all formats fail, return null
+                    return null;
+                }
+            }
+        }
     }
 }

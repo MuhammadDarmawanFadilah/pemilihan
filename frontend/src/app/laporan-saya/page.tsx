@@ -108,7 +108,9 @@ export default function LaporanSayaPage() {
     laporanId: '',
     jenisLaporanId: '',
     tahapanLaporanId: '',
-    pegawaiId: ''
+    pegawaiId: '',
+    startDate: '',
+    endDate: ''
   });
 
   // Input filter values (for form)
@@ -117,7 +119,9 @@ export default function LaporanSayaPage() {
     laporanId: '',
     jenisLaporanId: '',
     tahapanLaporanId: '',
-    pegawaiId: ''
+    pegawaiId: '',
+    startDate: '',
+    endDate: ''
   });
 
   const statusOptions = [
@@ -300,6 +304,8 @@ export default function LaporanSayaPage() {
       if (appliedFilters.laporanId) params.append('laporanId', appliedFilters.laporanId);
       if (appliedFilters.jenisLaporanId) params.append('jenisLaporanId', appliedFilters.jenisLaporanId);
       if (appliedFilters.tahapanLaporanId) params.append('tahapanLaporanId', appliedFilters.tahapanLaporanId);
+      if (appliedFilters.startDate) params.append('startDate', appliedFilters.startDate);
+      if (appliedFilters.endDate) params.append('endDate', appliedFilters.endDate);
       
       // For admin users, handle pegawai filter
       if (user?.role?.roleName === 'ADMIN' && appliedFilters.pegawaiId) {
@@ -354,7 +360,9 @@ export default function LaporanSayaPage() {
       laporanId: '',
       jenisLaporanId: '',
       tahapanLaporanId: '',
-      pegawaiId: user?.role?.roleName === 'ADMIN' ? 'all' : '' // Default to 'all' for admin
+      pegawaiId: user?.role?.roleName === 'ADMIN' ? 'all' : '', // Default to 'all' for admin
+      startDate: '',
+      endDate: ''
     };
     setInputFilters(emptyFilters);
     setAppliedFilters(emptyFilters);
@@ -594,8 +602,28 @@ export default function LaporanSayaPage() {
                 )}
               </div>
 
-              {/* Page Size Row */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              {/* Date Range Filters and Page Size Row */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="startDate">Tanggal Dari</Label>
+                  <Input
+                    id="startDate"
+                    type="date"
+                    value={inputFilters.startDate}
+                    onChange={(e) => setInputFilters(prev => ({ ...prev, startDate: e.target.value }))}
+                    placeholder="Pilih tanggal mulai"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="endDate">Tanggal Ke</Label>
+                  <Input
+                    id="endDate"
+                    type="date"
+                    value={inputFilters.endDate}
+                    onChange={(e) => setInputFilters(prev => ({ ...prev, endDate: e.target.value }))}
+                    placeholder="Pilih tanggal akhir"
+                  />
+                </div>
                 <div>
                   <Label htmlFor="pageSize">Items per Halaman</Label>
                   <Select

@@ -77,6 +77,8 @@ public class DetailLaporanController {
             @RequestParam(required = false) Integer jenisLaporanId,
             @RequestParam(required = false) Integer tahapanLaporanId,
             @RequestParam(required = false) String pegawaiId,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate,
             @RequestHeader(value = "Authorization", required = false) String token) {
         
         // Get current user from token to check their role
@@ -120,7 +122,7 @@ public class DetailLaporanController {
         }
         
         PaginatedResponse<DetailLaporanResponse> submissions = submissionLaporanService.getSubmissionsByUserPaginated(
-            userId, page, size, search, pemilihanId, laporanId, jenisLaporanId, tahapanLaporanId, pegawaiIdLong);
+            userId, page, size, search, pemilihanId, laporanId, jenisLaporanId, tahapanLaporanId, pegawaiIdLong, startDate, endDate);
         return ResponseEntity.ok(submissions);
     }
 
@@ -238,6 +240,8 @@ public class DetailLaporanController {
             @RequestParam(required = false) Integer jenisLaporanId,
             @RequestParam(required = false) Integer tahapanLaporanId,
             @RequestParam(required = false) String pegawaiIdFilter,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate,
             @RequestHeader(value = "Authorization", required = false) String token) {
         
         // Get current user from token to check their role
@@ -281,7 +285,7 @@ public class DetailLaporanController {
         }
         
         PaginatedResponse<DetailLaporanResponse> submissions = submissionLaporanService.getSubmissionsByUserPaginated(
-            pegawaiId, page, size, search, pemilihanId, laporanId, jenisLaporanId, tahapanLaporanId, pegawaiIdLong);
+            pegawaiId, page, size, search, pemilihanId, laporanId, jenisLaporanId, tahapanLaporanId, pegawaiIdLong, startDate, endDate);
         return ResponseEntity.ok(submissions);
     }
 
