@@ -15,6 +15,7 @@ import QuickStatsCards from '@/components/dashboard/QuickStatsCards';
 import MonthlyDataChart from '@/components/dashboard/MonthlyDataChart';
 import ActivityFeedCard from '@/components/dashboard/ActivityFeedCard';
 import { TrendingUp, Eye, MessageCircle, ThumbsUp, Download, FileText, Users, Calendar } from 'lucide-react';
+import TrenSilaporLogo from '@/components/branding/TrenSilaporLogo';
 
 const Dashboard = () => {
   const [overview, setOverview] = useState<DashboardOverview | null>(null);
@@ -134,17 +135,11 @@ const Dashboard = () => {
                 <AlertCircle className="h-6 w-6 text-red-600 dark:text-red-400" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                  Terjadi Kesalahan
-                </h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Gagal memuat data dashboard
-                </p>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Terjadi Kesalahan</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Gagal memuat data dashboard</p>
               </div>
             </div>
-            <AlertDescription className="text-gray-700 dark:text-gray-300 mb-4">
-              {error}
-            </AlertDescription>
+            <AlertDescription className="text-gray-700 dark:text-gray-300 mb-4">{error}</AlertDescription>
             <Button 
               variant="outline" 
               onClick={fetchDashboardData}
@@ -193,16 +188,19 @@ const Dashboard = () => {
           <div className="absolute inset-0 bg-gradient-to-r from-red-600/10 via-white/5 to-blue-600/10"></div>
           <div className="relative p-6 sm:p-8">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div className="space-y-2">
-                <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-red-600 to-blue-600 bg-clip-text text-transparent">
-                  Dashboard Tren-Silapor
-                </h1>
-                <p className="text-gray-600 dark:text-gray-300 text-lg">
-                  Sistem Pelaporan dan Pengawasan Pemilihan - Mewujudkan Pemilu yang Demokratis dan Berintegritas
-                </p>
-                <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                  <div className="w-2 h-2 bg-green-500 rounded-full pulse"></div>
-                  <span>Sistem berjalan normal • Monitoring aktif</span>
+              <div className="flex flex-col gap-4 w-full">
+                <div className="flex items-center gap-6 flex-wrap">
+                  <TrenSilaporLogo size={84} animate className="shrink-0" />
+                  <div className="flex items-center gap-3 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                    <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                      <span className="font-medium">Normal</span>
+                    </div>
+                    <span className="hidden sm:inline">•</span>
+                    <span>Monitoring aktif realtime</span>
+                    <span className="hidden md:inline">•</span>
+                    <span className="hidden md:inline">Update {new Date().toLocaleTimeString('id-ID')}</span>
+                  </div>
                 </div>
               </div>
               <div className="flex flex-col gap-2">
@@ -224,16 +222,11 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Organization Info Section */}
-        <div className="space-y-4 fade-in-delay-1">
-          <div className="flex items-center gap-3">
-            <div className="w-1 h-8 bg-gradient-to-b from-green-500 to-green-600 rounded-full"></div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              Informasi Sistem
-            </h2>
-          </div>
-          <OrganizationInfoCard organizationInfo={overview.organizationInfo} />
-        </div>        {/* Quick Stats Section */}
+        {/* Vision & Mission (Minimal Organization Info) */}
+        <div className="fade-in-delay-1">
+          <OrganizationInfoCard organizationInfo={overview.organizationInfo} minimal />
+        </div>
+        {/* Quick Stats Section */}
         <div className="space-y-4 fade-in-delay-2">
           <div className="flex items-center gap-3">
             <div className="w-1 h-8 bg-gradient-to-b from-orange-500 to-orange-600 rounded-full"></div>
@@ -589,10 +582,7 @@ const Dashboard = () => {
 
         {/* Footer Info */}
         <div className="text-center py-6 text-sm text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700">
-          <p>© 2025 Tren-Silapor - Sistem Pelaporan dan Pengawasan Pemilihan untuk Demokrasi yang Berkualitas</p>
-          <p className="mt-2 text-xs">
-            Dikembangkan untuk mendukung pengawasan pemilu yang transparan dan partisipatif
-          </p>
+          <p>© 2025 TrenSilapor</p>
         </div>
       </div>
     </div>
